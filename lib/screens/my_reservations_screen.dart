@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/reserva_service.dart';
@@ -281,7 +282,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PADEL NAVALES'),
+        title: Text(AppConfig.club.nombre),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_outlined, color: Colors.grey),
@@ -304,7 +305,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           children: [
             // Logo
             Image.asset(
-              'assets/images/fondo.png',
+              AppConfig.club.fondo,
               height: screenHeight * 0.12,
               fit: BoxFit.contain,
             ),
@@ -330,7 +331,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(20),
                                   child: Image.asset(
-                                    'assets/images/fondo.png',
+                                    AppConfig.club.fondo,
                                     height: screenHeight * 0.2,
                                     width: screenWidth * 0.5,
                                     fit: BoxFit.contain,
@@ -348,7 +349,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                               ),
                               SizedBox(height: screenHeight * 0.01),
                               Text(
-                                'Reserva tu primera pista en Navales Padel Club',
+                                'Reserva tu primera instalación en ',
                                 style: TextStyle(
                                   fontSize: screenWidth * 0.035,
                                   color: Colors.white70,
@@ -449,7 +450,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               const SizedBox(height: 16),
               _buildDetailRow(Icons.access_time, 'Hora:', reserva['horaInicio']),
               const SizedBox(height: 8),
-              _buildDetailRow(Icons.sports_tennis, 'Pista:', reserva['pistaId']),
+              _buildDetailRow(Icons.sports_tennis, 'Instalación:', reserva['instalacionId']),
               const SizedBox(height: 8),
               _buildDetailRow(Icons.timer, 'Duración:', '${reserva['duracionMinutos']} minutos'),
               const SizedBox(height: 16),
@@ -512,3 +513,5 @@ extension ListExtension<T> on List<T> {
     return (first, second);
   }
 }
+
+

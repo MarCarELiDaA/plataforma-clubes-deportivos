@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
@@ -10,14 +11,16 @@ import '../theme/app_theme.dart';
 class ConfirmationScreen extends StatefulWidget {
   final DateTime selectedDate;
   final String selectedTime;
-  final String pistaName;
+  final String instalacionId;
+  final String instalacionName;
   final int duration;
 
   const ConfirmationScreen({
     super.key,
     required this.selectedDate,
     required this.selectedTime,
-    required this.pistaName,
+    required this.instalacionId,
+    required this.instalacionName,
     required this.duration,
   });
 
@@ -78,7 +81,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       final reservaData = {
         'usuarioId': user.uid,
         'nombreUsuario': userName,
-        'pistaId': 'Pista Navales',
+        'instalacionId': widget.instalacionId,
         'fecha': dateFormat,
         'horaInicio': widget.selectedTime,
         'duracionMinutos': widget.duration,
@@ -86,7 +89,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         'fechaCreacionReserva': FieldValue.serverTimestamp(),
       };
 
-      final reservaId = await _reservaService.crearReservaConVerificacion(reservaData);
+      final reservaId = await _reservaService.crearReservaConVerificacion(reservaData, AppConfig.club.instalaciones.first);
 
       // Mostrar notificación de confirmación
       await _notificationService.showReservationConfirmation();
@@ -144,7 +147,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PADEL NAVALES'),
+        title: Text(AppConfig.club.nombre),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -176,7 +179,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
-                    'assets/images/fondo.png',
+                    AppConfig.club.fondo,
                     height: 100,
                     width: 100,
                     fit: BoxFit.contain,
@@ -211,7 +214,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailRow(Icons.sports_tennis, 'Pista:', widget.pistaName),
+                      _buildDetailRow(Icons.sports_tennis, 'Pista:', widget.instalacionName),
                       const Divider(color: Colors.white),
                       _buildDetailRow(Icons.calendar_today, 'Fecha:', dateFormat),
                       const Divider(color: Colors.white),
@@ -303,3 +306,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     );
   }
 }
+
+
+
+
+
+

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
@@ -335,7 +336,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Únete a nuestra comunidad de pádel y reserva tu pista de pádel en Navales',
+                        'Únete a nuestra comunidad y reserva en ${AppConfig.club.nombre}',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -682,6 +683,15 @@ TextFormField(
     super.dispose();
   }
 }
+
+
+
+
+
+
+
+
+
 
 
 

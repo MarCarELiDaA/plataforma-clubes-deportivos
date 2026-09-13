@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "furtivos_padel_club_flutter" "\0"
+            VALUE "CompanyName", "Clubes Deportivos" "\0"
+            VALUE "FileDescription", "clubes_deportivos" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "furtivos_padel_club_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "furtivos_padel_club_flutter.exe" "\0"
-            VALUE "ProductName", "furtivos_padel_club_flutter" "\0"
+            VALUE "InternalName", "clubes_deportivos" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Clubes Deportivos All rights reserved." "\0"
+            VALUE "OriginalFilename", "clubes_deportivos.exe" "\0"
+            VALUE "ProductName", "clubes_deportivos" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

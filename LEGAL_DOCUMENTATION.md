@@ -1,4 +1,4 @@
-# Documentación Legal - Furtivos Padel Club
+# Documentación Legal - Plataforma Clubes Deportivos
 
 ## 📋 Requisitos Legales para Distribución Pública
 

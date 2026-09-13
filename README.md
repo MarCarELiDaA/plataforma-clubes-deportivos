@@ -1,4 +1,4 @@
-# Furtivos Padel Club - Flutter App
+# Plataforma Clubes Deportivos - Flutter App
 
 Aplicación Flutter para gestión de reservas de pistas de pádel, migrada desde la aplicación Android original.
 
@@ -19,20 +19,38 @@ Aplicación Flutter para gestión de reservas de pistas de pádel, migrada desde
 ```
 lib/
 ├── main.dart                  # Punto de entrada de la aplicación
+├── config/                    # Configuración de la aplicación
+│   ├── app_config.dart       # Configuración principal
+│   └── club/                 # Configuración específica del club
+│       ├── club_config.dart          # Modelo de configuración del club
+│       ├── club_config_actual.dart   # Configuración actual (Pádel Navales)
+│       ├── legal_config.dart         # Modelo de configuración legal
+│       └── legal_config_actual.dart  # Configuración legal actual
 ├── models/                    # Modelos de datos
 │   ├── usuario.dart          # Modelo de usuario
 │   ├── reserva.dart          # Modelo de reserva
-│   └── pista_info.dart       # Modelo de información de pista
+│   └── club/                 # Modelos de club
+│       ├── club_config.dart          # Modelo de configuración del club
+│       └── instalacion.dart           # Modelo genérico de instalación
 ├── services/                  # Servicios de Firebase
-│   ├── firebase_service.dart # Servicio de inicialización de Firebase
 │   ├── auth_service.dart     # Servicio de autenticación
-│   └── reserva_service.dart  # Servicio de reservas
+│   ├── reserva_service.dart  # Servicio de reservas
+│   ├── admin_service.dart    # Servicio de administración
+│   └── notification_service.dart # Servicio de notificaciones
 ├── screens/                   # Pantallas de la aplicación
+│   ├── splash_screen.dart    # Pantalla de carga
 │   ├── login_screen.dart     # Pantalla de login
 │   ├── register_screen.dart  # Pantalla de registro
 │   ├── home_screen.dart      # Pantalla principal (reservas)
 │   ├── confirmation_screen.dart # Pantalla de confirmación
-│   └── my_reservations_screen.dart # Pantalla de mis reservas
+│   ├── my_reservations_screen.dart # Pantalla de mis reservas
+│   ├── info_screen.dart      # Pantalla de información del club
+│   ├── profile_screen.dart   # Pantalla de perfil
+│   ├── admin_screen.dart     # Pantalla de administración
+│   ├── terms_screen.dart     # Pantalla de términos de uso
+│   └── privacy_screen.dart   # Pantalla de política de privacidad
+├── theme/                     # Tema de la aplicación
+│   └── app_theme.dart        # Configuración de tema
 └── utils/                     # Utilidades
     └── network_utils.dart    # Utilidades de red
 ```
@@ -49,7 +67,6 @@ lib/
 
 La aplicación ya está configurada con las credenciales del proyecto Firebase original:
 
-- **Project ID**: furtivosxml
 - **API Key**: AIzaSyCgzQj-l2smjxWVy4fuhx8Ju6c5K8_2BYY
 - **App ID**: 1:313903258233:android:5c81898e0f2601866192a8
 
@@ -70,7 +87,7 @@ Las dependencias principales ya están configuradas en `pubspec.yaml`:
 ### Instalar dependencias
 
 ```bash
-cd furtivos_padel_club_flutter
+cd clubes_deportivos
 flutter pub get
 ```
 
@@ -131,7 +148,7 @@ La aplicación utiliza la misma base de datos Firebase Firestore que la aplicaci
 **reservas**
 - usuarioId: string
 - nombreUsuario: string
-- pistaId: string
+- instalacionId: string
 - fecha: string (formato yyyy-MM-dd)
 - horaInicio: string (formato HH:mm)
 - duracionMinutos: int

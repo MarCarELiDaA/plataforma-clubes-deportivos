@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userEmail = user.email ?? '';
       
       // El administrador no necesita verificación de email
-      if (userEmail != 'martin.bautista.sanchez@gmail.com' && !isVerified) {
+      if (!AppConfig.esAdministrador(userEmail) && !isVerified) {
         await _authService.signOut();
         setState(() {
           _errorMessage = 'Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.';
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       
-      if (userEmail != 'martin.bautista.sanchez@gmail.com') {
+      if (!AppConfig.esAdministrador(userEmail)) {
         if (userStatus == 'pending') {
           await _authService.signOut();
           setState(() {
@@ -132,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userEmail = _authService.currentUser?.email ?? '';
       
       // El administrador no necesita verificación de email
-      if (userEmail != 'martin.bautista.sanchez@gmail.com' && !isVerified) {
+      if (!AppConfig.esAdministrador(userEmail) && !isVerified) {
         await _authService.signOut();
         setState(() {
           _errorMessage = 'Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.';
@@ -159,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       
-      if (userEmail != 'martin.bautista.sanchez@gmail.com') {
+      if (!AppConfig.esAdministrador(userEmail)) {
         if (userStatus == 'pending') {
           await _authService.signOut();
           setState(() {
@@ -414,7 +415,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: Image.asset(
-                            'assets/images/fondo.png',
+                            AppConfig.club.fondo,
                             height: 200,
                             width: 250,
                             fit: BoxFit.contain,
@@ -423,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
                       Text(
-                        'PADEL NAVALES',
+                        AppConfig.club.nombre,
                         style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           color: AppTheme.accentGreen,
                           fontWeight: FontWeight.bold,
@@ -573,5 +574,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 }
+
 
 

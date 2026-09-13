@@ -1,4 +1,4 @@
-package com.example.furtivosxml
+package com.clubesdeportivos.app
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

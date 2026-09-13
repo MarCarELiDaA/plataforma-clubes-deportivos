@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 
 class InfoScreen extends StatelessWidget {
-  const InfoScreen({super.key});
+  InfoScreen({super.key});
 
-  final String direccion = 'Camino Martín Vicente, 4\n37882 Navales (Salamanca)';
-  final String horario = 'Lunes a Domingo\n06:30 – 23:00';
-  final String telefono = '923 30 01 83 '; // Número de ejemplo
-  final String email = 'aytonavales@yahoo.es'; // Email de ejemplo
+  final String direccion = AppConfig.club.direccion;
+  final String horario = AppConfig.club.horario;
+  final String telefono = AppConfig.club.telefono; // Número de ejemplo
+  final String email = AppConfig.club.email; // Email de ejemplo
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +59,14 @@ class InfoScreen extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: Image.asset(
-                          'assets/images/pistanavales.png',
+                          AppConfig.club.logo,
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      'Club de Pádel de Navales',
+                      AppConfig.club.nombre,
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -148,3 +149,7 @@ class InfoScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+

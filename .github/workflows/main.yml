@@ -32,7 +32,7 @@ jobs:
       - name: Upload iOS archive
         uses: actions/upload-artifact@v4
         with:
-          name: padel-navales-ios-release
+          name: clubes-deportivos-ios-release
           path: |
             build/ios/archive/*.xcarchive
             build/ios/ipa/*.ipa

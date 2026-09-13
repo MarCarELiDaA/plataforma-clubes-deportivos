@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
+import '../models/club/instalacion.dart';
 import '../services/auth_service.dart';
 import '../services/reserva_service.dart';
-import '../models/pista_info.dart';
-import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
 import 'my_reservations_screen.dart';
 import 'login_screen.dart';
@@ -25,12 +25,13 @@ class _HomeScreenState extends State<HomeScreen>
   final _reservaService = ReservaService();
 
   DateTime? _selectedDate;
-  PistaInfo? _pistaInfo;
   List<String> _availableTimes = [];
   List<String> _reservedTimes = [];
   bool _isLoading = false;
-  bool _isLoadingPista = false;
   String _userRole = 'user';
+
+  Instalacion get _instalacionActual =>
+      AppConfig.club.instalaciones.first;
 
   StreamSubscription<List<String>>? _reservedTimesSubscription;
 
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadPistaInfo();
+    _loadInstalacionConfig();
     _checkUserRole();
   }
 
@@ -86,77 +87,31 @@ class _HomeScreenState extends State<HomeScreen>
     if (user != null && mounted) {
       setState(() {
         _userRole =
-            user.email == 'martin.bautista.sanchez@gmail.com'
+            AppConfig.esAdministrador(user.email)
                 ? 'admin'
                 : 'user';
       });
     }
   }
 
-  Future<void> _loadPistaInfo() async {
-    if (!await NetworkUtils.isNetworkAvailable()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No hay conexión a internet'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+  Future<void> _loadInstalacionConfig() async {
+    final instalaciones = AppConfig.club.instalaciones;
 
+    if (instalaciones.isEmpty) {
       setState(() {
-        _availableTimes = [
-          '06:30',
-          '08:00',
-          '09:30',
-          '11:00',
-          '12:30',
-          '14:00',
-          '15:30',
-          '17:00',
-          '18:30',
-          '20:00',
-          '21:30',
-          '23:00',
-        ];
-        _isLoadingPista = false;
+        _availableTimes = [];
+        
       });
-
       return;
     }
 
+    final instalacion = _instalacionActual;
+
     setState(() {
-      _isLoadingPista = true;
+      _availableTimes = instalacion.horarios;
+      
     });
-
-    final pistaInfo = await _reservaService.getPistaInfo();
-
-    if (mounted) {
-      setState(() {
-        _pistaInfo = pistaInfo;
-
-        _availableTimes =
-            pistaInfo?.franjasDisponiblesPorDefecto ??
-            [
-              '06:30',
-              '08:00',
-              '09:30',
-              '11:00',
-              '12:30',
-              '14:00',
-              '15:30',
-              '17:00',
-              '18:30',
-              '20:00',
-              '21:30',
-              '23:00',
-            ];
-
-        _isLoadingPista = false;
-      });
-    }
   }
-
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -189,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _reservedTimesSubscription =
         _reservaService
-            .getHorariosReservadosStream(dateFormat)
+            .getHorariosReservadosStream(_instalacionActual.id, dateFormat)
             .listen(
       (reservedTimes) {
         if (mounted) {
@@ -246,6 +201,7 @@ class _HomeScreenState extends State<HomeScreen>
               await _reservaService.cumpleLimiteReservasPorDia(
             user.uid,
             dateFormat,
+            AppConfig.club.instalaciones.first,
           );
 
           if (!puedeReservar) {
@@ -268,6 +224,7 @@ class _HomeScreenState extends State<HomeScreen>
             user.uid,
             dateFormat,
             time,
+            AppConfig.club.instalaciones.first,
           );
 
           if (!noEsConsecutiva) {
@@ -308,10 +265,9 @@ class _HomeScreenState extends State<HomeScreen>
         builder: (context) => ConfirmationScreen(
           selectedDate: _selectedDate!,
           selectedTime: time,
-          pistaName:
-              _pistaInfo?.nombrePista ?? 'Pista Padel Navales',
-          duration:
-              _pistaInfo?.duracionPartidoMinutos ?? 90,
+          instalacionId: _instalacionActual.id,
+          instalacionName: _instalacionActual.nombre,
+          duration: _instalacionActual.duracionReservaMinutos,
         ),
       ),
     );
@@ -372,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen>
                 height: buttonHeight,
                 child: ElevatedButton.icon(
                   onPressed:
-                      _isLoadingPista ? null : _selectDate,
+                      _selectDate,
                   icon: const Icon(
                     Icons.calendar_today_outlined,
                   ),
@@ -416,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen>
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const InfoScreen(),
+                  builder: (context) => InfoScreen(),
                 ),
               );
             },
@@ -577,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen>
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              'PADEL NAVALES',
+              AppConfig.club.nombre,
               style: TextStyle(
                 fontSize: isWeb ? 20 : 18,
                 fontWeight: FontWeight.bold,
@@ -636,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen>
                         SizedBox(
                           height: isWeb ? 80 : 110,
                           child: Image.asset(
-                            'assets/images/fondo.png',
+                            AppConfig.club.fondo,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -707,4 +663,17 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

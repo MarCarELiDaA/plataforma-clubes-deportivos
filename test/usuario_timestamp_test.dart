@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:padel_navales/models/usuario.dart';
+import 'package:clubes_deportivos/models/usuario.dart';
 
 void main() {
   group('Usuario Simplificado Tests', () {

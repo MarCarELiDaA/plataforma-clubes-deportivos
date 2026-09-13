@@ -1,4 +1,4 @@
-# Requisitos Técnicos para iOS - Furtivos Padel Club
+# Requisitos Técnicos para iOS - Plataforma Clubes Deportivos
 
 ## 🚨 ESTADO ACTUAL PARA iPHONE: ❌ NO FUNCIONA
 
@@ -41,7 +41,7 @@
 6. **Configurar Firebase SDK** en proyecto iOS
 
 #### Documentación necesaria:
-- Bundle ID único (ej: com.furtivos.padelclub)
+- Bundle ID único (ej: com.clubesdeportivos.app)
 - App ID específico para iOS
 - Team ID de Apple Developer
 

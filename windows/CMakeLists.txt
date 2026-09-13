@@ -1,10 +1,10 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(furtivos_padel_club_flutter LANGUAGES CXX)
+project(clubes_deportivos LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "furtivos_padel_club_flutter")
+set(BINARY_NAME "clubes_deportivos")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

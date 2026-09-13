@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id("com.android.application")
     id("kotlin-android")
     id("com.google.gms.google-services")
@@ -16,7 +16,7 @@ android {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
     }
     
-    namespace = "com.padelnavales.app"
+    namespace = "com.clubesdeportivos.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.padelnavales.app"
+        applicationId = "com.clubesdeportivos.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

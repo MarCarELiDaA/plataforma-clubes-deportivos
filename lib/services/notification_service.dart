@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -62,7 +62,7 @@ class NotificationService {
         AndroidNotificationDetails(
       'reservas_channel',
       'Reservas',
-      channelDescription: 'Notificaciones de reservas de pádel',
+      channelDescription: 'Notificaciones de reservas del club',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -129,7 +129,7 @@ class NotificationService {
         AndroidNotificationDetails(
       'reservas_channel',
       'Reservas',
-      channelDescription: 'Notificaciones de reservas de pádel',
+      channelDescription: 'Notificaciones de reservas del club',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -143,7 +143,7 @@ class NotificationService {
     await _notificationsPlugin.zonedSchedule(
       id: reservaId.hashCode,
       title: '⏰ Recordatorio de reserva',
-      body: 'Tienes una reserva de la pista de pádel dentro de una hora.',
+      body: 'Tienes una reserva próximamente.',
       scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
       notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -158,7 +158,7 @@ class NotificationService {
         AndroidNotificationDetails(
       'reservas_channel',
       'Reservas',
-      channelDescription: 'Notificaciones de reservas de pádel',
+      channelDescription: 'Notificaciones de reservas del club',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -185,3 +185,4 @@ class NotificationService {
     );
   }
 }
+

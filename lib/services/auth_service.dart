@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../config/app_config.dart';
 import '../models/usuario.dart';
 
 class AuthService {
@@ -47,7 +48,7 @@ class AuthService {
     String finalRole = role;
     String finalStatus = 'pending';
 
-    if (email == 'martin.bautista.sanchez@gmail.com') {
+    if (AppConfig.esAdministrador(email)) {
       finalRole = 'admin';
       finalStatus = 'approved';
     }
@@ -163,7 +164,7 @@ class AuthService {
           String newStatus = 'pending';
 
           // Si es el administrador, aprobar automáticamente
-          if (userEmail == 'martin.bautista.sanchez@gmail.com') {
+          if (AppConfig.esAdministrador(userEmail)) {
             newStatus = 'approved';
           }
 
@@ -203,7 +204,7 @@ class AuthService {
           String newRole = 'user';
 
           // Si es el administrador, asignar rol admin
-          if (userEmail == 'martin.bautista.sanchez@gmail.com') {
+          if (AppConfig.esAdministrador(userEmail)) {
             newRole = 'admin';
           }
 
@@ -247,7 +248,7 @@ class AuthService {
         bool needsUpdate = false;
 
         // Si es el administrador, aprobar automáticamente y asignar rol admin
-        if (userEmail == 'martin.bautista.sanchez@gmail.com') {
+        if (AppConfig.esAdministrador(userEmail)) {
           newStatus = 'approved';
           newRole = 'admin';
           needsUpdate = true;

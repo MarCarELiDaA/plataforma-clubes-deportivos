@@ -7,7 +7,7 @@ enum EstadoReserva {
 class Reserva {
   final String usuarioId;
   final String nombreUsuario;
-  final String pistaId;
+  final String instalacionId;
   final String fecha;
   final String horaInicio;
   final int duracionMinutos;
@@ -17,7 +17,7 @@ class Reserva {
   Reserva({
     required this.usuarioId,
     required this.nombreUsuario,
-    required this.pistaId,
+    required this.instalacionId,
     required this.fecha,
     required this.horaInicio,
     required this.duracionMinutos,
@@ -29,7 +29,7 @@ class Reserva {
     return Reserva(
       usuarioId: map['usuarioId'] ?? '',
       nombreUsuario: map['nombreUsuario'] ?? '',
-      pistaId: map['pistaId'] ?? '',
+      instalacionId: map['instalacionId'] ?? '',
       fecha: map['fecha'] ?? '',
       horaInicio: map['horaInicio'] ?? '',
       duracionMinutos: map['duracionMinutos'] ?? 0,
@@ -42,7 +42,7 @@ class Reserva {
     return {
       'usuarioId': usuarioId,
       'nombreUsuario': nombreUsuario,
-      'pistaId': pistaId,
+      'instalacionId': instalacionId,
       'fecha': fecha,
       'horaInicio': horaInicio,
       'duracionMinutos': duracionMinutos,
