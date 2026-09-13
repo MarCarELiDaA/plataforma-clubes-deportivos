@@ -1,4 +1,4 @@
-# Plataforma Clubes Deportivos - Flutter App
+﻿# Plataforma Clubes Deportivos - Flutter App
 
 Aplicación Flutter para gestión de reservas de pistas de pádel, migrada desde la aplicación Android original.
 
@@ -68,7 +68,6 @@ lib/
 La aplicación ya está configurada con las credenciales del proyecto Firebase original:
 
 - **API Key**: AIzaSyCgzQj-l2smjxWVy4fuhx8Ju6c5K8_2BYY
-- **App ID**: 1:313903258233:android:5c81898e0f2601866192a8
 
 El archivo `google-services.json` ya está configurado en `android/app/`.
 
@@ -183,3 +182,4 @@ Para cualquier problema con la configuración de Firebase, consulta la documenta
 - [Firebase Flutter Setup](https://firebase.google.com/docs/flutter/setup)
 - [Firebase Auth](https://firebase.google.com/docs/auth/flutter/start)
 - [Cloud Firestore](https://firebase.google.com/docs/firestore/quickstart)
+

@@ -7,8 +7,6 @@ import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
 import '../config/legal_config.dart';
 import 'login_screen.dart';
-import 'terms_screen.dart';
-import 'privacy_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -36,22 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     // Validaciones de aceptaciones obligatorias
-    if (!_aceptaCondiciones) {
-      setState(() {
-        _errorMessage = 'Debes leer las Condiciones de Uso hasta el final antes de aceptarlas';
+    
 
-      });
-      return;
-    }
-
-    if (!_aceptaPrivacidad) {
-      setState(() {
-        _errorMessage = 'Debes leer la Política de Privacidad hasta el final antes de aceptarla';
-      });
-
-
-      return;
-    }
+    
 
     // Validar el resto del formulario después de las aceptaciones
     if (!_formKey.currentState!.validate()) return;
@@ -565,20 +550,13 @@ TextFormField(
                       _buildCheckboxSection(
                         'He leído y acepto las Condiciones de Uso',
                         _aceptaCondiciones,
-                        null, // Checkbox no interactivo - solo se marca desde TermsScreen
-                        onTap: () async {
-                          final aceptado = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (context) => const TermsScreen(),
-                            ),
-                          );
-                          if (aceptado == true && mounted) {
-                            setState(() {
-                              _aceptaCondiciones = true;
-                              _errorMessage = null; // Limpiar error al aceptar
-                            });
-                          }
+                        (value) {
+                          setState(() {
+                            _aceptaCondiciones = value ?? false;
+                            _errorMessage = null;
+                          });
                         },
+                        onTap: null,
                       ),
 
                       const SizedBox(height: 12),
@@ -587,20 +565,13 @@ TextFormField(
                       _buildCheckboxSection(
                         'He leído y acepto la Política de Privacidad',
                         _aceptaPrivacidad,
-                        null, // Checkbox no interactivo - solo se marca desde PrivacyScreen
-                        onTap: () async {
-                          final aceptado = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (context) => const PrivacyScreen(),
-                            ),
-                          );
-                          if (aceptado == true && mounted) {
-                            setState(() {
-                              _aceptaPrivacidad = true;
-                              _errorMessage = null; // Limpiar error al aceptar
-                            });
-                          }
+                        (value) {
+                          setState(() {
+                            _aceptaPrivacidad = value ?? false;
+                            _errorMessage = null;
+                          });
                         },
+                        onTap: null,
                       ),
 
                       const SizedBox(height: 24),
@@ -683,6 +654,8 @@ TextFormField(
     super.dispose();
   }
 }
+
+
 
 
 

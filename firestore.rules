@@ -1,4 +1,4 @@
-rules_version = '2';
+﻿rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -8,49 +8,23 @@ service cloud.firestore {
     // ============================================================
     match /usuarios/{userId} {
 
-      // ------------------------------------------------------------
-      // LECTURA
-      // ------------------------------------------------------------
-
       // El administrador puede leer todos los usuarios
       allow read: if request.auth != null &&
-                    (get(
-                      /databases/$(database)/documents/usuarios/$(request.auth.uid)
-                    ).data.email == 'martin.bautista.sanchez@gmail.com' ||
                     get(
-                      /databases/$(database)/documents/usuarios/$(request.auth.uid)
-                    ).data.email == 'rubengonzalez10@yahoo.es');
+                      /databases//documents/usuarios/
+                    ).data.email == 'martin.bautista.sanchez@gmail.com';
 
       // Un usuario normal solo puede leer su propio documento
       allow read: if request.auth != null &&
                     request.auth.uid == userId;
 
-
-      // ------------------------------------------------------------
-      // ADMINISTRADOR
-      // ------------------------------------------------------------
-
       // El administrador puede gestionar cualquier usuario
       allow write: if request.auth != null &&
-                     (get(
-                       /databases/$(database)/documents/usuarios/$(request.auth.uid)
-                     ).data.email == 'martin.bautista.sanchez@gmail.com' ||
                      get(
-                       /databases/$(database)/documents/usuarios/$(request.auth.uid)
-                     ).data.email == 'rubengonzalez10@yahoo.es');
+                       /databases//documents/usuarios/
+                     ).data.email == 'martin.bautista.sanchez@gmail.com';
 
-
-      // ------------------------------------------------------------
-      // CREACIÓN DE USUARIOS
-      // ------------------------------------------------------------
-
-      // Un usuario normal solo puede crear su propio documento.
-      //
-      // El registro actual de la aplicación crea usuarios con:
-      // role   = user
-      // status = pending
-      //
-      // Las aceptaciones legales deben existir y ser true.
+      // Un usuario normal solo puede crear su propio documento
       allow create: if request.auth != null &&
                      request.auth.uid == userId &&
                      request.resource.data.role == 'user' &&
@@ -58,22 +32,8 @@ service cloud.firestore {
                      request.resource.data.aceptaCondiciones == true &&
                      request.resource.data.aceptaPrivacidad == true;
 
-
-      // ------------------------------------------------------------
-      // ACTUALIZACIÓN DE USUARIOS
-      // ------------------------------------------------------------
-
       // Un usuario normal puede modificar únicamente sus datos
       // personales permitidos.
-      //
-      // No puede modificar:
-      // - role
-      // - status
-      // - email
-      // - fechaRegistro
-      // - aceptaciones legales
-      // - fecha de aceptaciones
-      // - versiones legales
       allow update: if request.auth != null &&
                     request.auth.uid == userId &&
 
@@ -108,7 +68,7 @@ service cloud.firestore {
     // ============================================================
     // RESERVAS
     // ============================================================
-    match eservas/{reservaId} {
+    match /reservas/{reservaId} {
 
       // Usuarios autenticados pueden consultar reservas
       allow read: if request.auth != null;

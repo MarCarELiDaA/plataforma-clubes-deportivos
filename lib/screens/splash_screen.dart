@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../firebase_options.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
 import 'login_screen.dart';
@@ -24,16 +25,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Inicializar Firebase
+      // Inicializar Firebase (lee configuración desde google-services.json y GoogleService-Info.plist)
       await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: "AIzaSyCgzQj-l2smjxWVy4fuhx8Ju6c5K8_2BYY",
-          authDomain: "furtivosxml.firebaseapp.com",
-          projectId: "furtivosxml",
-          storageBucket: "furtivosxml.firebasestorage.app",
-          messagingSenderId: "313903258233",
-          appId: "1:313903258233:android:8895d4f57c37b3b66192a8",
-        ),
+        options: DefaultFirebaseOptions.currentPlatform,
       );
 
       // Cerrar cualquier sesión de Firebase que haya quedado persistida.
