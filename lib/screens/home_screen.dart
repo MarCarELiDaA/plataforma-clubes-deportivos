@@ -1,16 +1,13 @@
-import 'dart:async';
+﻿
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
-import '../models/club/instalacion.dart';
 import '../services/auth_service.dart';
-import '../services/reserva_service.dart';
-import '../theme/app_theme.dart';
-import 'my_reservations_screen.dart';
-import 'login_screen.dart';
-import 'confirmation_screen.dart';
-import 'info_screen.dart';
 import 'admin_screen.dart';
+import 'info_screen.dart';
+import 'login_screen.dart';
+import 'my_reservations_screen.dart';
 import 'profile_screen.dart';
+import 'reserva_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,31 +19,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver {
   final _authService = AuthService();
-  final _reservaService = ReservaService();
 
-  DateTime? _selectedDate;
-  List<String> _availableTimes = [];
-  List<String> _reservedTimes = [];
-  bool _isLoading = false;
   String _userRole = 'user';
 
-  Instalacion get _instalacionActual =>
-      AppConfig.club.instalaciones.first;
-
-  StreamSubscription<List<String>>? _reservedTimesSubscription;
+  Color get _accent => const Color(0xFF16A36A);
+  Color get _accentSoft => const Color(0xFFE8F7F0);
+  Color get _background => const Color(0xFFF7F8FA);
+  Color get _textPrimary => const Color(0xFF18221D);
+  Color get _textSecondary => const Color(0xFF69746E);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadInstalacionConfig();
     _checkUserRole();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _reservedTimesSubscription?.cancel();
     super.dispose();
   }
 
@@ -75,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen>
             );
           }
         }
-      } catch (e) {
+      } catch (_) {
         // Error silenciado para producción.
       }
     }
@@ -87,188 +78,47 @@ class _HomeScreenState extends State<HomeScreen>
     if (user != null && mounted) {
       setState(() {
         _userRole =
-            AppConfig.esAdministrador(user.email)
-                ? 'admin'
-                : 'user';
+            AppConfig.esAdministrador(user.email) ? 'admin' : 'user';
       });
     }
   }
 
-  Future<void> _loadInstalacionConfig() async {
-    final instalaciones = AppConfig.club.instalaciones;
-
-    if (instalaciones.isEmpty) {
-      setState(() {
-        _availableTimes = [];
-        
-      });
-      return;
-    }
-
-    final instalacion = _instalacionActual;
-
-    setState(() {
-      _availableTimes = instalacion.horarios;
-      
-    });
-  }
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(
-        const Duration(days: 10),
-      ),
-    );
-
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedDate = picked;
-        _reservedTimes = [];
-      });
-
-      _loadReservedTimes(picked);
-    }
-  }
-
-  void _loadReservedTimes(DateTime date) {
-    _reservedTimesSubscription?.cancel();
-
-    final dateFormat =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    _reservedTimesSubscription =
-        _reservaService
-            .getHorariosReservadosStream(_instalacionActual.id, dateFormat)
-            .listen(
-      (reservedTimes) {
-        if (mounted) {
-          setState(() {
-            _reservedTimes = reservedTimes;
-            _isLoading = false;
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      },
-    );
-  }
-
-  bool _isTimePast(String time) {
-    if (_selectedDate == null) return false;
-
-    final now = DateTime.now();
-
-    final selectedDate = DateTime(
-      _selectedDate!.year,
-      _selectedDate!.month,
-      _selectedDate!.day,
-    );
-
-    final timeParts = time.split(':');
-
-    final selectedTime = DateTime(
-      selectedDate.year,
-      selectedDate.month,
-      selectedDate.day,
-      int.parse(timeParts[0]),
-      int.parse(timeParts[1]),
-    );
-
-    return now.isAfter(selectedTime);
-  }
-
-  Future<void> _selectTime(String time) async {
-    if (_selectedDate != null) {
-      final user = _authService.currentUser;
-
-      if (user != null) {
-        final dateFormat =
-            '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-
-        try {
-          final puedeReservar =
-              await _reservaService.cumpleLimiteReservasPorDia(
-            user.uid,
-            dateFormat,
-            AppConfig.club.instalaciones.first,
-          );
-
-          if (!puedeReservar) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Ya tienes dos reservas para este día',
-                  ),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-
-            return;
-          }
-
-          final noEsConsecutiva =
-              await _reservaService.noEsConsecutivaConReservasExistentes(
-            user.uid,
-            dateFormat,
-            time,
-            AppConfig.club.instalaciones.first,
-          );
-
-          if (!noEsConsecutiva) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'No puedes reservar horarios consecutivos. Debe existir un bloque de 1 hora y 30 minutos entre tus reservas.',
-                  ),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-
-            return;
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Error al verificar disponibilidad. Inténtalo de nuevo.',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-
-          return;
-        }
-      }
-    }
-
-    if (!mounted) return;
-
+  void _openReserva() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ConfirmationScreen(
-          selectedDate: _selectedDate!,
-          selectedTime: time,
-          instalacionId: _instalacionActual.id,
-          instalacionName: _instalacionActual.nombre,
-          duration: _instalacionActual.duracionReservaMinutos,
-        ),
+        builder: (context) => const ReservaScreen(),
+      ),
+    );
+  }
+
+  void _openMisReservas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MyReservationsScreen(),
+      ),
+    );
+  }
+
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ProfileScreen(),
+      ),
+    );
+  }
+
+  void _openInfo() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => InfoScreen(),
+      ),
+    );
+  }
+
+  void _openAdmin() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminScreen(),
       ),
     );
   }
@@ -276,30 +126,64 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.primaryBlue,
-        title: const Text(
-          'Cerrar Sesión',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          '¿Estás seguro de que quieres cerrar sesión?',
-          style: TextStyle(color: Colors.white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.destructiveRed,
+          title: Text(
+            'Cerrar sesión',
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
-            child: const Text('Cerrar Sesión'),
           ),
-        ],
-      ),
+          content: Text(
+            '¿Estás seguro de que quieres cerrar sesión?',
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFD94B4B),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm == true) {
@@ -315,365 +199,677 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Widget _buildActionButtons(bool isWeb) {
-    final buttonHeight = isWeb ? 44.0 : 52.0;
-    final fontSize = isWeb ? 14.0 : 16.0;
+  Widget _buildDrawer(BuildContext context) {
+    final user = _authService.currentUser;
 
-    return Column(
-      children: [
-        Row(
+    final userName =
+        user?.displayName?.trim().isNotEmpty == true
+            ? user!.displayName!
+            : user?.email ?? 'Usuario';
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
           children: [
-            Expanded(
-              child: SizedBox(
-                height: buttonHeight,
-                child: ElevatedButton.icon(
-                  onPressed:
-                      _selectDate,
-                  icon: const Icon(
-                    Icons.calendar_today_outlined,
-                  ),
-                  label: Text(
-                    'Reservar Pista',
-                    style: TextStyle(fontSize: fontSize),
-                  ),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7FBF9),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: _accent.withValues(alpha: 0.12),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: buttonHeight,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const MyReservationsScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.list_alt_outlined,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
                   ),
-                  label: Text(
-                    'Mis Reservas',
-                    style: TextStyle(fontSize: fontSize),
-                  ),
-                ),
+                ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: buttonHeight,
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => InfoScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.info_outline),
-            label: Text(
-              'Información del Club',
-              style: TextStyle(fontSize: fontSize),
-            ),
-          ),
-        ),
-        if (_userRole == 'admin') ...[
-          const SizedBox(height: 10),
-          SizedBox(
-            height: buttonHeight,
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AdminScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.admin_panel_settings,
-              ),
-              label: Text(
-                'Panel Admin',
-                style: TextStyle(fontSize: fontSize),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentYellow,
-                foregroundColor: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTimeGrid(bool isWeb) {
-    final columns = isWeb ? 4 : 3;
-
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: isWeb ? 2.8 : 2.2,
-        crossAxisSpacing: isWeb ? 10 : 8,
-        mainAxisSpacing: isWeb ? 8 : 8,
-      ),
-      itemCount: _availableTimes.length,
-      itemBuilder: (context, index) {
-        final time = _availableTimes[index];
-
-        final isReserved =
-            _reservedTimes.contains(time);
-
-        final isPast = _isTimePast(time);
-
-        final isAvailable =
-            !isReserved && !isPast;
-
-        return Card(
-          margin: EdgeInsets.zero,
-          elevation: isAvailable ? 3 : 1,
-          color: isAvailable
-              ? AppTheme.accentGreen
-              : isReserved
-                  ? AppTheme.accentYellow
-                  : Colors.red,
-          child: InkWell(
-            onTap:
-                isAvailable
-                    ? () => _selectTime(time)
-                    : null,
-            borderRadius: BorderRadius.circular(10),
-            child: Center(
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    isReserved
-                        ? Icons.block
-                        : isPast
-                            ? Icons.history
-                            : Icons.access_time,
-                    color: isAvailable
-                        ? Colors.white
-                        : Colors.white70,
-                    size: isWeb ? 20 : 22,
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.black.withValues(alpha: 0.06),
+                          ),
+                        ),
+                        child: AppConfig.club.logo.isNotEmpty
+                            ? Image.asset(
+                                AppConfig.club.logo,
+                                fit: BoxFit.contain,
+                              )
+                            : Icon(
+                                Icons.sports_tennis_rounded,
+                                color: _accent,
+                                size: 27,
+                              ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Text(
+                          AppConfig.club.nombre,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _textPrimary,
+                            fontSize: 17,
+                            height: 1.2,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 7),
+                  const SizedBox(height: 17),
                   Text(
-                    isReserved
-                        ? 'RESERVADO'
-                        : isPast
-                            ? 'PASADA'
-                            : time,
+                    userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isWeb ? 13 : 14,
+                      color: _textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppConfig.club.deporte,
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+                children: [
+                  _drawerSection('CUENTA'),
+                  _drawerItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Mi perfil',
+                    onTap: _openProfile,
+                  ),
+                  const SizedBox(height: 16),
+                  _drawerSection('RESERVAS'),
+                  _drawerItem(
+                    icon: Icons.calendar_month_rounded,
+                    title: 'Reservar pista',
+                    highlighted: true,
+                    onTap: _openReserva,
+                  ),
+                  _drawerItem(
+                    icon: Icons.event_available_rounded,
+                    title: 'Mis reservas',
+                    onTap: _openMisReservas,
+                  ),
+                  const SizedBox(height: 16),
+                  _drawerSection('CLUB'),
+                  _drawerItem(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Información del club',
+                    onTap: _openInfo,
+                  ),
+                  if (_userRole == 'admin') ...[
+                    const SizedBox(height: 16),
+                    _drawerSection('ADMINISTRACIÓN'),
+                    _drawerItem(
+                      icon: Icons.admin_panel_settings_outlined,
+                      title: 'Panel de administración',
+                      onTap: _openAdmin,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.only(top: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: Color(0xFFD94B4B),
+                ),
+                title: const Text(
+                  'Cerrar sesión',
+                  style: TextStyle(
+                    color: Color(0xFFD94B4B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: _logout,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerSection(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 7),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: _accent,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool highlighted = false,
+  }) {
+    return ListTile(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      tileColor: highlighted ? _accentSoft : Colors.transparent,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 2,
+      ),
+      leading: Icon(
+        icon,
+        color: highlighted ? _accent : _textSecondary,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: highlighted ? _textPrimary : _textSecondary,
+          fontSize: 14,
+          fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+        ),
+      ),
+      trailing: highlighted
+          ? Icon(
+              Icons.chevron_right_rounded,
+              color: _accent,
+              size: 20,
+            )
+          : null,
+      onTap: () {
+        Navigator.of(context).pop();
+        onTap();
       },
     );
   }
 
-  Widget _buildEmptyState(bool isWeb) {
-    return Center(
-      child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.sports_tennis,
-            size: isWeb ? 70 : 100,
-            color: AppTheme.accentGreen,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Selecciona una fecha para ver los horarios disponibles',
-            style: TextStyle(
-              fontSize: isWeb ? 16 : 18,
-              color: AppTheme.accentWhite,
-            ),
-            textAlign: TextAlign.center,
+  Widget _buildHero({
+    required double height,
+    required double padding,
+    required bool compact,
+  }) {
+    final hasImage = AppConfig.club.fondo.trim().isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      height: height,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          compact ? 26 : 30,
+        ),
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.06),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
           ),
         ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (hasImage)
+            Image.asset(
+              AppConfig.club.fondo,
+              fit: BoxFit.cover,
+            )
+          else
+            Container(
+              color: const Color(0xFFF1F5F3),
+            ),
+          if (hasImage)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.96),
+                    Colors.white.withValues(alpha: 0.84),
+                    Colors.white.withValues(alpha: 0.18),
+                  ],
+                ),
+              ),
+            ),
+          if (hasImage)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.40),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.all(padding),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 620,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _accentSoft,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: _accent.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: _accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppConfig.club.deporte,
+                            style: TextStyle(
+                              color: _accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Bienvenido a',
+                      style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: compact ? 16 : 18,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppConfig.club.nombre,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _textPrimary,
+                        fontSize: compact ? 29 : 42,
+                        height: 1.08,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Reserva tu pista de forma rápida y disfruta de tu club.',
+                      style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: compact ? 13 : 15,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton.icon(
+                        onPressed: _openReserva,
+                        icon: const Icon(
+                          Icons.calendar_month_rounded,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Reservar pista',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _accent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 22,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required bool primary,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: primary
+                  ? _accent.withValues(alpha: 0.14)
+                  : Colors.black.withValues(alpha: 0.06),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: primary
+                    ? _accent.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.045),
+                blurRadius: 22,
+                offset: const Offset(0, 9),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: primary
+                      ? _accentSoft
+                      : const Color(0xFFF4F6F5),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: _accent,
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: _textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: _accent.withValues(alpha: 0.65),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWeb = constraints.maxWidth >= 800;
-
-        final maxContentWidth =
-            isWeb ? 1050.0 : double.infinity;
-
-        final horizontalPadding =
-            isWeb ? 24.0 : 16.0;
-
-        final verticalPadding =
-            isWeb ? 12.0 : 16.0;
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              AppConfig.club.nombre,
-              style: TextStyle(
-                fontSize: isWeb ? 20 : 18,
-                fontWeight: FontWeight.bold,
+    return Scaffold(
+      backgroundColor: _background,
+      drawer: _buildDrawer(context),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: _textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        leading: Builder(
+          builder: (context) {
+            return IconButton(
+              tooltip: 'Menú',
+              icon: Icon(
+                Icons.menu_rounded,
+                size: 27,
+                color: _textPrimary,
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(
-                  Icons.person,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const ProfileScreen(),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.logout_outlined,
-                  color: Colors.grey,
-                ),
-                onPressed: _logout,
-              ),
-            ],
-          ),
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryBlue,
-                  AppTheme.backgroundDark,
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: maxContentWidth,
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          },
+        ),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            if (AppConfig.club.logo.isNotEmpty)
+              Container(
+                width: 36,
+                height: 36,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.06),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                      vertical: verticalPadding,
-                    ),
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          height: isWeb ? 80 : 110,
-                          child: Image.asset(
-                            AppConfig.club.fondo,
-                            fit: BoxFit.contain,
-                          ),
+                ),
+                child: Image.asset(
+                  AppConfig.club.logo,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            if (AppConfig.club.logo.isNotEmpty)
+              const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                AppConfig.club.nombre,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            icon: Icon(
+              Icons.logout_rounded,
+              color: _textPrimary,
+            ),
+            onPressed: _logout,
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 900;
+
+            final contentWidth =
+                constraints.maxWidth > 1280 ? 1280.0 : constraints.maxWidth;
+
+            final horizontalPadding = isDesktop ? 24.0 : 16.0;
+
+            final heroHeight = isDesktop ? 420.0 : 350.0;
+
+            final heroPadding = isDesktop ? 42.0 : 24.0;
+
+            return Center(
+              child: SizedBox(
+                width: contentWidth,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    18,
+                    horizontalPadding,
+                    32,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHero(
+                        height: heroHeight,
+                        padding: heroPadding,
+                        compact: !isDesktop,
+                      ),
+                      const SizedBox(height: 28),
+                      Text(
+                        'Accesos rápidos',
+                        style: TextStyle(
+                          color: _textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.3,
                         ),
+                      ),
+                      const SizedBox(height: 13),
+                      LayoutBuilder(
+                        builder: (context, quickConstraints) {
+                          final twoColumns =
+                              quickConstraints.maxWidth >= 700;
 
-                        SizedBox(
-                          height: isWeb ? 10 : 16,
-                        ),
+                          final cardWidth = twoColumns
+                              ? (quickConstraints.maxWidth - 14) / 2
+                              : quickConstraints.maxWidth;
 
-                        _buildActionButtons(isWeb),
-
-                        SizedBox(
-                          height: isWeb ? 12 : 16,
-                        ),
-
-                        if (_selectedDate != null) ...[
-                          Text(
-                            'Fecha seleccionada: '
-                            '${_selectedDate!.day}/'
-                            '${_selectedDate!.month}/'
-                            '${_selectedDate!.year}',
-                            style: TextStyle(
-                              fontSize:
-                                  isWeb ? 16 : 18,
-                              fontWeight:
-                                  FontWeight.bold,
-                              color:
-                                  AppTheme.accentWhite,
-                            ),
-                            textAlign:
-                                TextAlign.center,
-                          ),
-
-                          SizedBox(
-                            height: isWeb ? 10 : 14,
-                          ),
-
-                          if (_isLoading)
-                            const Expanded(
-                              child: Center(
-                                child:
-                                    CircularProgressIndicator(),
-                              ),
-                            )
-                          else
-                            Expanded(
-                              child: Center(
-                                child: _buildTimeGrid(
-                                  isWeb,
+                          return Wrap(
+                            spacing: 14,
+                            runSpacing: 14,
+                            children: [
+                              SizedBox(
+                                width: cardWidth,
+                                child: _buildQuickCard(
+                                  icon: Icons.calendar_month_rounded,
+                                  title: 'Reservar pista',
+                                  subtitle:
+                                      'Consulta horarios y disponibilidad.',
+                                  primary: true,
+                                  onTap: _openReserva,
                                 ),
                               ),
-                            ),
-                        ] else
-                          Expanded(
-                            child:
-                                _buildEmptyState(
-                              isWeb,
-                            ),
-                          ),
-                      ],
-                    ),
+                              SizedBox(
+                                width: cardWidth,
+                                child: _buildQuickCard(
+                                  icon: Icons.event_available_rounded,
+                                  title: 'Mis reservas',
+                                  subtitle:
+                                      'Consulta y gestiona tus reservas.',
+                                  primary: false,
+                                  onTap: _openMisReservas,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildQuickCard(
+                        icon: Icons.info_outline_rounded,
+                        title: 'Información del club',
+                        subtitle:
+                            'Dirección, instalaciones, horarios y normas.',
+                        primary: false,
+                        onTap: _openInfo,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

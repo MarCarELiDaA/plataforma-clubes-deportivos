@@ -7,6 +7,8 @@ import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
 import '../config/legal_config.dart';
 import 'login_screen.dart';
+import 'privacy_screen.dart';
+import 'terms_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,13 +19,14 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nombreController = TextEditingController();
+
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _telefonoController = TextEditingController();
-  final _nivelPadelController = TextEditingController();
-  final _authService = AuthService();
+  final _phoneController = TextEditingController();
+
+  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -32,18 +35,92 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _aceptaCondiciones = false;
   bool _aceptaPrivacidad = false;
 
+  // Indica si el usuario ha abierto y aceptado cada documento.
+  bool _haAceptadoCondiciones = false;
+  bool _haAceptadoPrivacidad = false;
+
+  String? _nivelPadel;
+
+  final List<String> _nivelesPadel = [
+    'Iniciación',
+    'Medio',
+    'Avanzado',
+    'Competición',
+  ];
+
+  Future<void> _openTerms() async {
+    if (_isLoading) return;
+
+    final accepted = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => const TermsScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (accepted == true) {
+      setState(() {
+        _haAceptadoCondiciones = true;
+        _aceptaCondiciones = true;
+        _errorMessage = null;
+      });
+    }
+  }
+
+  Future<void> _openPrivacy() async {
+    if (_isLoading) return;
+
+    final accepted = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => const PrivacyScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (accepted == true) {
+      setState(() {
+        _haAceptadoPrivacidad = true;
+        _aceptaPrivacidad = true;
+        _errorMessage = null;
+      });
+    }
+  }
+
+  Future<bool> _checkEmailExistsInFirestore(String email) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      return snapshot.docs.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _register() async {
     // Validaciones de aceptaciones obligatorias
-    
-
-    
+    if (!_aceptaCondiciones || !_aceptaPrivacidad) {
+      setState(() {
+        _errorMessage =
+            'Debes leer y aceptar las Condiciones de Uso y la Política de Privacidad.';
+      });
+      return;
+    }
 
     // Validar el resto del formulario después de las aceptaciones
     if (!_formKey.currentState!.validate()) return;
 
-    if (!await NetworkUtils.isNetworkAvailable()) {
+    final hasConnection = await NetworkUtils.isNetworkAvailable();
+
+    if (!hasConnection) {
       setState(() {
-        _errorMessage = NetworkUtils.errorNoInternet;
+        _errorMessage =
+            'No hay conexión a Internet. Comprueba tu conexión e inténtalo de nuevo.';
       });
       return;
     }
@@ -53,154 +130,175 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _errorMessage = null;
     });
 
+    final email = _emailController.text.trim();
+    User? createdUser;
+
     try {
-      final email = _emailController.text.trim();
+      final emailExists = await _checkEmailExistsInFirestore(email);
 
-      // Primero verificar si el email ya existe en Firestore
-      final emailExistsInFirestore =
-          await _checkEmailExistsInFirestore(email);
-
-      if (emailExistsInFirestore) {
-        if (mounted) {
-          setState(() {
-            _errorMessage =
-                'Ya existe una cuenta con este email en el sistema.';
-            _isLoading = false;
-          });
-        }
+      if (emailExists) {
+        setState(() {
+          _errorMessage = 'Ya existe una cuenta con este correo electrónico.';
+          _isLoading = false;
+        });
         return;
       }
 
-      // Crear usuario en Firebase Auth
-      final userCredential =
+      final credential =
           await _authService.createUserWithEmailAndPassword(
         email,
-        _passwordController.text.trim(),
+        _passwordController.text,
       );
 
-      final userId = userCredential.user?.uid;
+      createdUser = credential.user;
 
-      if (userId != null) {
-        try {
-          await _authService.saveUserData(
-            userId,
-            _nombreController.text.trim(),
-            email,
-            _telefonoController.text.trim().isEmpty
-                ? null
-                : _telefonoController.text.trim(),
-            _nivelPadelController.text.trim().isEmpty
-                ? null
-                : double.tryParse(_nivelPadelController.text.trim()),
-            aceptaCondiciones: _aceptaCondiciones,
-            aceptaPrivacidad: _aceptaPrivacidad,
-            versionCondiciones: LegalConfig.versionCondiciones,
-            versionPrivacidad: LegalConfig.versionPrivacidad,
-          );
-
-          // Enviar email de verificación
-          try {
-            await _authService.sendEmailVerification();
-          } catch (emailError) {
-            // Error silenciado para producción
-          }
-
-          // Cerrar sesión después del registro
-          await _authService.signOut();
-
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const LoginScreen(),
-              ),
-            );
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Tu cuenta ha sido creada. Revisa tu email para verificarla. Después de verificar, aparecerá pendiente de aprobación.',
-                ),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 8),
-              ),
-            );
-          }
-        } catch (firestoreError) {
-          // Si falla Firestore, eliminar el usuario de Firebase Auth
-          // Error silenciado para producción
-
-          await _authService.currentUser?.delete();
-          await _authService.signOut();
-
-          if (mounted) {
-            setState(() {
-              _errorMessage =
-                  'Error al guardar datos del usuario. Por favor, intenta de nuevo.';
-              _isLoading = false;
-            });
-          }
-
-          return;
-        }
+      if (createdUser == null) {
+        throw Exception('No se pudo crear el usuario.');
       }
+
+      await _authService.saveUserData(
+        createdUser.uid,
+        _nameController.text.trim(),
+        email,
+        _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        _nivelPadel == null
+            ? null
+            : double.tryParse(_nivelPadel!),
+        aceptaCondiciones: _aceptaCondiciones,
+        aceptaPrivacidad: _aceptaPrivacidad,
+        versionCondiciones: LegalConfig.versionCondiciones,
+        versionPrivacidad: LegalConfig.versionPrivacidad,
+      );
+
+      await createdUser.sendEmailVerification();
+
+      await FirebaseAuth.instance.signOut();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const LoginScreen(),
+        ),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cuenta creada correctamente. Revisa tu correo para verificarla.',
+          ),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        final email = _emailController.text.trim();
-
-        final emailExistsInFirestore =
-            await _checkEmailExistsInFirestore(email);
-
-        if (!emailExistsInFirestore) {
-          if (mounted) {
-            setState(() {
-              _errorMessage =
-                  'Este email estaba registrado pero fue eliminado. Contacta al administrador para que lo elimine completamente del sistema.';
-              _isLoading = false;
-            });
-          }
-
-          return;
-        }
+      if (createdUser != null) {
+        try {
+          await createdUser.delete();
+        } catch (_) {}
       }
 
-      if (mounted) {
-        setState(() {
-          _errorMessage = _getErrorMessage(e.code);
-          _isLoading = false;
-        });
+      String message;
+
+      switch (e.code) {
+        case 'email-already-in-use':
+          message = 'Ya existe una cuenta con este correo electrónico.';
+          break;
+        case 'invalid-email':
+          message = 'El correo electrónico no es válido.';
+          break;
+        case 'weak-password':
+          message = 'La contraseña es demasiado débil.';
+          break;
+        case 'network-request-failed':
+          message =
+              'No hay conexión a Internet. Comprueba tu conexión e inténtalo de nuevo.';
+          break;
+        default:
+          message = 'No se pudo crear la cuenta. Inténtalo de nuevo.';
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Error al crear cuenta: ${e.toString()}';
-          _isLoading = false;
-        });
+
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = message;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (createdUser != null) {
+        try {
+          await createdUser.delete();
+        } catch (_) {}
       }
+
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'No se pudo crear la cuenta. Inténtalo de nuevo.';
+        _isLoading = false;
+      });
     }
   }
 
-  Future<bool> _checkEmailExistsInFirestore(String email) async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .where('email', isEqualTo: email)
-          .get();
-
-      return snapshot.docs.isNotEmpty;
-    } catch (e) {
-      // Error silenciado para producción
-      return false;
-    }
-  }
-
-  String _getErrorMessage(String code) {
-    const errorMessages = {
-      'email-already-in-use': 'Ya existe una cuenta con este email',
-      'invalid-email': 'Email inválido',
-      'weak-password': 'La contraseña es muy débil',
-    };
-
-    return errorMessages[code] ?? 'Error de registro: $code';
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    String? hintText,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      prefixIcon: Icon(
+        icon,
+        color: AppTheme.accentGreen,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      labelStyle: const TextStyle(
+        color: Color(0xFF667085),
+        fontSize: 14,
+      ),
+      hintStyle: const TextStyle(
+        color: Color(0xFF98A2B3),
+        fontSize: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Color(0xFFE4E7EC),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Color(0xFFE4E7EC),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppTheme.accentGreen,
+          width: 1.5,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 1.5,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
+    );
   }
 
   Widget _buildCheckboxSection(
@@ -208,34 +306,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
     bool value,
     Function(bool?)? onChanged, {
     VoidCallback? onTap,
+    bool enabled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE4E7EC),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: CheckboxListTile(
         value: value,
-        onChanged: _isLoading ? null : onChanged,
+        onChanged: _isLoading || !enabled ? null : onChanged,
         title: Row(
           children: [
             Expanded(
               child: Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
+                  color: Color(0xFF344054),
+                  fontSize: 13,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
             if (onTap != null)
               TextButton(
-                onPressed: onTap,
+                onPressed: _isLoading ? null : onTap,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.accentGreen,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
+                ),
                 child: const Text(
-                  'Ver documento',
+                  'Leer',
                   style: TextStyle(
-                    color: AppTheme.accentGreen,
                     fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -243,10 +361,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
+          horizontal: 10,
+          vertical: 7,
         ),
         activeColor: AppTheme.accentGreen,
+        checkColor: Colors.white,
       ),
     );
   }
@@ -254,390 +373,437 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Crear Cuenta'),
-        backgroundColor: AppTheme.primaryBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
+        title: Text(
+          'Crear cuenta',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
-          onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.logout_outlined,
-              color: Colors.red,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlue,
-              AppTheme.backgroundDark,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 400,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.person_add_outlined,
-                        size: 80,
-                        color: AppTheme.accentGreen,
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Crear Cuenta',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
-                            ?.copyWith(
-                              color: Colors.white,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Únete a nuestra comunidad y reserva en ${AppConfig.club.nombre}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(
-                              color: Colors.white70,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding =
+                constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
-                      // NOMBRE
-                      TextFormField(
-                        controller: _nombreController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre Completo',
-                          prefixIcon: Icon(
-                            Icons.person_outlined,
-                          ),
-                        ),
-                        enableIMEPersonalizedLearning: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'El nombre es requerido';
-                          }
-
-                          if (value.length < 3) {
-                            return 'El nombre debe tener al menos 3 caracteres';
-                          }
-
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // EMAIL
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                          ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [
-                          AutofillHints.email,
-                        ],
-                        enableSuggestions: true,
-                        enableIMEPersonalizedLearning: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'El email es requerido';
-                          }
-
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
-                            return 'Email inválido';
-                          }
-
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // CONTRASEÑA
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(
-                            Icons.lock_outlined,
-                          ),
-                        ),
-                        obscureText: true,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [
-                          AutofillHints.newPassword,
-                        ],
-                        enableSuggestions: true,
-                        enableIMEPersonalizedLearning: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'La contraseña es requerida';
-                          }
-
-                          if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
-                          }
-
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // CONFIRMAR CONTRASEÑA
-                      TextFormField(
-                        controller: _confirmPasswordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirmar Contraseña',
-                          prefixIcon: Icon(
-                            Icons.lock_outlined,
-                          ),
-                        ),
-                        obscureText: true,
-                        textInputAction: TextInputAction.next,
-                        enableSuggestions: true,
-                        enableIMEPersonalizedLearning: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Debes confirmar la contraseña';
-                          }
-
-                          if (value != _passwordController.text) {
-                            return 'Las contraseñas no coinciden';
-                          }
-
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                     // TELÉFONO
-TextFormField(
-  controller: _telefonoController,
-  decoration: const InputDecoration(
-    labelText: 'Teléfono (opcional)',
-    prefixIcon: Icon(
-      Icons.phone_outlined,
-    ),
-  ),
-  keyboardType: TextInputType.phone,
-  maxLength: 9,
-  enableIMEPersonalizedLearning: false,
-  validator: (value) {
-    if (value != null && value.isNotEmpty) {
-      if (!RegExp(r'^[0-9]{9}$').hasMatch(value)) {
-        return 'El teléfono debe tener 9 dígitos';
-      }
-    }
-
-    return null;
-  },
-  enabled: !_isLoading,
-),
-                      const SizedBox(height: 16),
-
-                      // NIVEL DE PÁDEL
-                      // NIVEL DE PÁDEL
-                      DropdownButtonFormField<String>(
-                        initialValue: _nivelPadelController.text.isEmpty
-                            ? null
-                            : _nivelPadelController.text,
-                        decoration: const InputDecoration(
-                          labelText: 'Nivel de Pádel',
-                          prefixIcon: Icon(Icons.star_outline),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: '1.0',
-                            child: Text('Iniciación'),
-                          ),
-                          DropdownMenuItem(
-                            value: '3.25',
-                            child: Text('3.25'),
-                          ),
-                          DropdownMenuItem(
-                            value: '3.50',
-                            child: Text('3.50'),
-                          ),
-                          DropdownMenuItem(
-                            value: '3.75',
-                            child: Text('3.75'),
-                          ),
-                          DropdownMenuItem(
-                            value: '4.00',
-                            child: Text('4.00'),
-                          ),
-                          DropdownMenuItem(
-                            value: '4.25',
-                            child: Text('4.25'),
-                          ),
-                          DropdownMenuItem(
-                            value: '4.50',
-                            child: Text('4.50'),
-                          ),
-                          DropdownMenuItem(
-                            value: '4.75',
-                            child: Text('4.75'),
-                          ),
-                          DropdownMenuItem(
-                            value: '5.00',
-                            child: Text('5.00'),
-                          ),
-                          DropdownMenuItem(
-                            value: '5.01',
-                            child: Text('Más de 5'),
-                          ),
-                        ],
-                        onChanged: _isLoading
-                            ? null
-                            : (value) {
-                                _nivelPadelController.text = value ?? '';
-                              },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return null;
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // CONDICIONES DE USO
-                      _buildCheckboxSection(
-                        'He leído y acepto las Condiciones de Uso',
-                        _aceptaCondiciones,
-                        (value) {
-                          setState(() {
-                            _aceptaCondiciones = value ?? false;
-                            _errorMessage = null;
-                          });
-                        },
-                        onTap: null,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // POLÍTICA DE PRIVACIDAD
-                      _buildCheckboxSection(
-                        'He leído y acepto la Política de Privacidad',
-                        _aceptaPrivacidad,
-                        (value) {
-                          setState(() {
-                            _aceptaPrivacidad = value ?? false;
-                            _errorMessage = null;
-                          });
-                        },
-                        onTap: null,
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // ERROR
-                      if (_errorMessage != null)
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                24,
+                horizontalPadding,
+                32,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 650,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorRed.withValues(
-                              alpha: 0.1,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: AppTheme.errorRed,
+                              color: const Color(0xFFE4E7EC),
                             ),
-                          ),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: AppTheme.errorRed,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-
-                      const SizedBox(height: 24),
-
-                      // BOTÓN CREAR CUENTA
-        ElevatedButton(
-  onPressed: _isLoading ? null : _register,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: 0.035,
                                 ),
-                              )
-                            : const Text(
-                                'Crear Cuenta',
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Crea tu cuenta',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                      ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Completa tus datos para comenzar.',
+                                style: TextStyle(
+                                  color: Color(0xFF667085),
+                                  fontSize: 14,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 28),
 
-                      const SizedBox(height: 16),
+                              // NOMBRE Y APELLIDOS
+                              TextFormField(
+                                controller: _nameController,
+                                enabled: !_isLoading,
+                                textCapitalization:
+                                    TextCapitalization.words,
+                                decoration: _inputDecoration(
+                                  label: 'Nombre y apellidos',
+                                  icon: Icons.person_outline,
+                                ),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return 'Introduce tu nombre y apellidos';
+                                  }
+                                  return null;
+                                },
+                              ),
 
-                      TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                Navigator.of(context).pop();
-                              },
-                        child: const Text(
-                          '¿Ya tienes cuenta? Inicia sesión',
+                              const SizedBox(height: 16),
+
+                              // EMAIL
+                              TextFormField(
+                                controller: _emailController,
+                                enabled: !_isLoading,
+                                keyboardType:
+                                    TextInputType.emailAddress,
+                                decoration: _inputDecoration(
+                                  label: 'Correo electrónico',
+                                  icon: Icons.email_outlined,
+                                ),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return 'Introduce tu correo electrónico';
+                                  }
+
+                                  final emailRegex = RegExp(
+                                    r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                  );
+
+                                  if (!emailRegex.hasMatch(
+                                    value.trim(),
+                                  )) {
+                                    return 'Introduce un correo válido';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // CONTRASEÑA
+                              TextFormField(
+                                controller: _passwordController,
+                                enabled: !_isLoading,
+                                obscureText: true,
+                                decoration: _inputDecoration(
+                                  label: 'Contraseña',
+                                  icon: Icons.lock_outline,
+                                ),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.isEmpty) {
+                                    return 'Introduce una contraseña';
+                                  }
+
+                                  if (value.length < 6) {
+                                    return 'La contraseña debe tener al menos 6 caracteres';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // CONFIRMAR CONTRASEÑA
+                              TextFormField(
+                                controller:
+                                    _confirmPasswordController,
+                                enabled: !_isLoading,
+                                obscureText: true,
+                                decoration: _inputDecoration(
+                                  label: 'Confirmar contraseña',
+                                  icon: Icons.lock_outline,
+                                ),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.isEmpty) {
+                                    return 'Confirma tu contraseña';
+                                  }
+
+                                  if (value !=
+                                      _passwordController.text) {
+                                    return 'Las contraseñas no coinciden';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // TELÉFONO
+                              TextFormField(
+                                controller: _phoneController,
+                                enabled: !_isLoading,
+                                keyboardType: TextInputType.phone,
+                                decoration: _inputDecoration(
+                                  label: 'Teléfono (opcional)',
+                                  icon: Icons.phone_outlined,
+                                ),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return null;
+                                  }
+
+                                  final phone = value.trim();
+
+                                  if (!RegExp(r'^\d{9}$')
+                                      .hasMatch(phone)) {
+                                    return 'El teléfono debe tener 9 dígitos';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // NIVEL DE PÁDEL
+                              DropdownButtonFormField<String>(
+                                initialValue: _nivelPadel,
+                                decoration: _inputDecoration(
+                                  label: 'Nivel de pádel',
+                                  icon: Icons.sports_tennis,
+                                ),
+                                items: _nivelesPadel.map((nivel) {
+                                  return DropdownMenuItem<String>(
+                                    value: nivel,
+                                    child: Text(nivel),
+                                  );
+                                }).toList(),
+                                onChanged: _isLoading
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _nivelPadel = value;
+                                          _errorMessage = null;
+                                        });
+                                      },
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.isEmpty) {
+                                    return 'Selecciona tu nivel de pádel';
+                                  }
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // ACEPTACIÓN LEGAL
+                              const Text(
+                                'Información legal',
+                                style: TextStyle(
+                                  color: Color(0xFF344054),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              _buildCheckboxSection(
+                                'He leído y acepto las Condiciones de Uso',
+                                _aceptaCondiciones,
+                                _haAceptadoCondiciones
+                                    ? (value) {
+                                        setState(() {
+                                          _aceptaCondiciones =
+                                              value ?? false;
+                                          _errorMessage = null;
+                                        });
+                                      }
+                                    : null,
+                                onTap: _openTerms,
+                                enabled: _haAceptadoCondiciones,
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              _buildCheckboxSection(
+                                'He leído y acepto la Política de Privacidad',
+                                _aceptaPrivacidad,
+                                _haAceptadoPrivacidad
+                                    ? (value) {
+                                        setState(() {
+                                          _aceptaPrivacidad =
+                                              value ?? false;
+                                          _errorMessage = null;
+                                        });
+                                      }
+                                    : null,
+                                onTap: _openPrivacy,
+                                enabled: _haAceptadoPrivacidad,
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              const Text(
+                                'Para continuar, abre cada documento, léelo y pulsa «Acepto» al final.',
+                                style: TextStyle(
+                                  color: Color(0xFF667085),
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
+                              ),
+
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 18),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF1F0),
+                                    borderRadius:
+                                        BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFFECACA),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: const TextStyle(
+                                            color: Color(0xFFB42318),
+                                            fontSize: 13,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 24),
+
+                              SizedBox(
+                                height: 54,
+                                child: FilledButton(
+                                  onPressed:
+                                      _isLoading ? null : _register,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        AppTheme.accentGreen,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        AppTheme.accentGreen
+                                            .withValues(alpha: 0.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child:
+                                              CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Crear cuenta',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 20),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '¿Ya tienes cuenta?',
+                              style: TextStyle(
+                                color: Color(0xFF667085),
+                                fontSize: 14,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                              child: Text(
+                                'Inicia sesión',
+                                style: TextStyle(
+                                  color: AppTheme.accentGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        Center(
+                          child: Text(
+                            AppConfig.club.nombre,
+                            style: const TextStyle(
+                              color: Color(0xFF98A2B3),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -645,28 +811,11 @@ TextFormField(
 
   @override
   void dispose() {
-    _nombreController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _telefonoController.dispose();
-    _nivelPadelController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

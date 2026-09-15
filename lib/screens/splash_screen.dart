@@ -14,9 +14,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _isInitialized = false;
-  String _statusText = 'Cargando';
-
   @override
   void initState() {
     super.initState();
@@ -25,82 +22,102 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Inicializar Firebase (lee configuración desde google-services.json y GoogleService-Info.plist)
+      // Inicialización de Firebase mientras se mantiene el splash.
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
 
-      // Cerrar cualquier sesión de Firebase que haya quedado persistida.
-      // La aplicación solicitará las credenciales cada vez que se abra.
+      // La aplicación debe comenzar siempre con la sesión cerrada.
       await FirebaseAuth.instance.signOut();
 
-      setState(() {
-        _statusText = 'Cargando';
-      });
-
-      // Inicializar notificaciones
+      // En Web no hace nada.
+      // En Android/iOS prepara las notificaciones.
       await NotificationService().initialize();
-
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-
-        // Navegar a Login después de inicializar
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _statusText = 'Error de inicialización';
-        });
-
-        // En caso de error, navegar igualmente a Login para manejarlo allí
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
-          }
-        });
-      }
+    } catch (_) {
+      // Si alguna inicialización falla, continuamos igualmente
+      // hacia el login. No añadimos esperas artificiales.
     }
+
+    if (!mounted) return;
+
+    // Sustituimos directamente el splash por el login,
+    // sin animación ni pantalla intermedia.
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const LoginScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071A42),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 32),
-            if (!_isInitialized)
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.accentGreen,
-                ),
-                strokeWidth: 4,
-              )
-            else
-              const Icon(
-                Icons.check_circle,
-                color: AppTheme.accentGreen,
-                size: 48,
-              ),
-            const SizedBox(height: 24),
-            Text(
-              _statusText,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: AppTheme.accentGreen,
-                    fontWeight: FontWeight.bold,
+      backgroundColor: AppTheme.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: AppTheme.borderSoft,
+                    ),
+                    boxShadow: AppTheme.softShadow,
                   ),
-              textAlign: TextAlign.center,
+                  child: Icon(
+                    Icons.sports_tennis_rounded,
+                    size: 52,
+                    color: AppTheme.success,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                Text(
+                  'Clubes Deportivos',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: const Color(0xFF1D2939),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  'Preparando la aplicación',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: AppTheme.success,
+                    strokeWidth: 2.4,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

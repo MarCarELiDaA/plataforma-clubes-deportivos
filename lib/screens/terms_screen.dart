@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
+import '../theme/app_theme.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -127,6 +128,42 @@ class TermsScreen extends StatelessWidget {
               'Para cualquier cuestión relacionada con estos términos, puede contactar '
               'con ${legal.responsable} a través de ${legal.email}.',
             ),
+
+            const SizedBox(height: 32),
+
+            Align(
+              alignment: Alignment.center,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(
+                  Icons.check_rounded,
+                  size: 20,
+                ),
+                label: const Text(
+                  'Acepto',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),

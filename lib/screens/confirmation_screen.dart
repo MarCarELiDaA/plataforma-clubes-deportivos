@@ -40,7 +40,13 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
 
   String _calculateEndTime(String startTime, int durationMinutes) {
     final parts = startTime.split(':');
-    final dateTime = DateTime(2024, 1, 1, int.parse(parts[0]), int.parse(parts[1]));
+    final dateTime = DateTime(
+      2024,
+      1,
+      1,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
     final endTime = dateTime.add(Duration(minutes: durationMinutes));
     return '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
   }
@@ -73,10 +79,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         throw Exception('Usuario no autenticado');
       }
 
-      final userDoc = await _firestore.collection('usuarios').doc(user.uid).get();
+      final userDoc =
+          await _firestore.collection('usuarios').doc(user.uid).get();
       final userName = userDoc.data()?['nombre'] ?? user.email ?? 'Usuario';
 
-      final dateFormat = '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
+      final dateFormat =
+          '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
 
       final reservaData = {
         'usuarioId': user.uid,
@@ -89,7 +97,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         'fechaCreacionReserva': FieldValue.serverTimestamp(),
       };
 
-      final reservaId = await _reservaService.crearReservaConVerificacion(reservaData, AppConfig.club.instalaciones.first);
+      final reservaId = await _reservaService.crearReservaConVerificacion(
+        reservaData,
+        AppConfig.club.instalaciones.first,
+      );
 
       // Mostrar notificación de confirmación
       await _notificationService.showReservationConfirmation();
@@ -142,173 +153,431 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final endTime = _calculateEndTime(widget.selectedTime, widget.duration);
-    final dateFormat = '${widget.selectedDate.day}/${widget.selectedDate.month}/${widget.selectedDate.year}';
+    final endTime = _calculateEndTime(
+      widget.selectedTime,
+      widget.duration,
+    );
+
+    final dateFormat =
+        '${widget.selectedDate.day}/${widget.selectedDate.month}/${widget.selectedDate.year}';
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text(AppConfig.club.nombre),
+        backgroundColor: AppTheme.surface,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlue,
-              AppTheme.backgroundDark,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.accentGreen.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    AppConfig.club.fondo,
-                    height: 100,
-                    width: 100,
-                    fit: BoxFit.contain,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                horizontal: isWide ? 32 : 20,
+                vertical: 24,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 900,
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _isConfirmed ? '¡Reserva Confirmada!' : 'Confirmar Reserva',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _isConfirmed 
-                    ? 'Tu pista ha sido reservada exitosamente'
-                    : 'Revisa los detalles de tu reserva',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              Card(
-                elevation: 4,
-                color: AppTheme.accentGreen,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildDetailRow(Icons.sports_tennis, 'Pista:', widget.instalacionName),
-                      const Divider(color: Colors.white),
-                      _buildDetailRow(Icons.calendar_today, 'Fecha:', dateFormat),
-                      const Divider(color: Colors.white),
-                      _buildDetailRow(Icons.access_time, 'Hora:', '${widget.selectedTime} - $endTime'),
-                      const Divider(color: Colors.white),
-                      _buildDetailRow(Icons.timer, 'Duración:', '${widget.duration} minutos'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              if (_isConfirmed)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentGreen,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white, size: 24),
-                      SizedBox(width: 12),
-                      Text(
-                        'Reserva Confirmada',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      _buildHeader(context, isWide),
+                      const SizedBox(height: 28),
+                      _buildReservationCard(
+                        context,
+                        dateFormat,
+                        endTime,
+                        isWide,
                       ),
+                      const SizedBox(height: 24),
+                      _buildActionSection(context, isWide),
                     ],
                   ),
-                )
-              else
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _confirmReservation,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Confirmar Reserva'),
                 ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: _isLoading ? null : _returnWithRefresh,
-                child: const Text('Volver'),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildHeader(BuildContext context, bool isWide) {
+    final titleStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
+          color: AppTheme.textPrimary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
+        );
+
+    return Column(
+      children: [
+        Container(
+          width: isWide ? 100 : 84,
+          height: isWide ? 100 : 84,
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppTheme.borderSoft,
+            ),
+            boxShadow: AppTheme.softShadow,
+          ),
+          padding: const EdgeInsets.all(14),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              AppConfig.club.fondo,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          _isConfirmed ? '¡Reserva confirmada!' : 'Confirmar reserva',
+          style: titleStyle,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 600,
+          ),
+          child: Text(
+            _isConfirmed
+                ? 'Tu reserva se ha realizado correctamente.'
+                : 'Revisa los detalles antes de confirmar tu reserva.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppTheme.textSecondary,
+                  height: 1.5,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReservationCard(
+    BuildContext context,
+    String dateFormat,
+    String endTime,
+    bool isWide,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.borderSoft,
+        ),
+        boxShadow: AppTheme.softShadow,
+      ),
+      padding: EdgeInsets.all(isWide ? 28 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppTheme.accentGreen, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.accentWhite,
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.successLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.sports_tennis,
+                  color: AppTheme.success,
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Detalles de la reserva',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
             ],
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              color: AppTheme.accentWhite,
+          const SizedBox(height: 24),
+          if (isWide)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDetailItem(
+                    icon: Icons.sports_tennis,
+                    label: 'Instalación',
+                    value: widget.instalacionName,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDetailItem(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Fecha',
+                    value: dateFormat,
+                  ),
+              ),
+            ],
+          )
+          else ...[
+            _buildDetailItem(
+              icon: Icons.sports_tennis,
+              label: 'Instalación',
+              value: widget.instalacionName,
+            ),
+            const SizedBox(height: 14),
+            _buildDetailItem(
+              icon: Icons.calendar_today_outlined,
+              label: 'Fecha',
+              value: dateFormat,
+            ),
+          ],
+          const SizedBox(height: 14),
+          if (isWide)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDetailItem(
+                    icon: Icons.access_time,
+                    label: 'Horario',
+                    value: '${widget.selectedTime} - $endTime',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDetailItem(
+                    icon: Icons.timer_outlined,
+                    label: 'Duración',
+                    value: '${widget.duration} minutos',
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            _buildDetailItem(
+              icon: Icons.access_time,
+              label: 'Horario',
+              value: '${widget.selectedTime} - $endTime',
+            ),
+            const SizedBox(height: 14),
+            _buildDetailItem(
+              icon: Icons.timer_outlined,
+              label: 'Duración',
+              value: '${widget.duration} minutos',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: 72,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppTheme.borderSoft,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.successLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: AppTheme.success,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildActionSection(BuildContext context, bool isWide) {
+    if (_isConfirmed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
+        decoration: BoxDecoration(
+          color: AppTheme.successLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.success.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: AppTheme.success,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                'Reserva confirmada',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppTheme.success,
+                      fontWeight: FontWeight.w700,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final confirmButton = SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _confirmReservation,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.success,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppTheme.success.withValues(alpha: 0.55),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: Colors.white,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 21,
+                  ),
+                  SizedBox(width: 9),
+                  Text(
+                    'Confirmar reserva',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+
+    final backButton = SizedBox(
+      height: 52,
+      child: OutlinedButton(
+        onPressed: _isLoading ? null : _returnWithRefresh,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.textPrimary,
+          disabledForegroundColor:
+              AppTheme.textSecondary.withValues(alpha: 0.5),
+          side: const BorderSide(
+            color: AppTheme.borderSoft,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: const Text(
+          'Volver',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+
+    return isWide
+        ? Row(
+            children: [
+              Expanded(child: confirmButton),
+              const SizedBox(width: 14),
+              SizedBox(
+                width: 180,
+                child: backButton,
+              ),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              confirmButton,
+              const SizedBox(height: 12),
+              backButton,
+            ],
+          );
+  }
 }
-
-
-
-
-
-

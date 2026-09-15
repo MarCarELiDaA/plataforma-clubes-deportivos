@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/app_config.dart';
 import '../services/auth_service.dart';
 import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
@@ -17,13 +18,16 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
+
+  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
+  bool _rememberEmail = true;
+  bool _obscurePassword = true;
   String? _errorMessage;
-  bool _rememberEmail = false;
 
   @override
   void initState() {
@@ -32,10 +36,20 @@ class _LoginScreenState extends State<LoginScreen> {
     _checkCurrentUser();
   }
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSavedEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('saved_email');
-    if (savedEmail != null && mounted) {
+
+    if (!mounted) return;
+
+    if (savedEmail != null && savedEmail.isNotEmpty) {
       setState(() {
         _emailController.text = savedEmail;
         _rememberEmail = true;
@@ -43,10 +57,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _saveEmail(String email) async {
+  Future<void> _saveEmail() async {
     final prefs = await SharedPreferences.getInstance();
+
     if (_rememberEmail) {
-      await prefs.setString('saved_email', email);
+      await prefs.setString(
+        'saved_email',
+        _emailController.text.trim(),
+      );
     } else {
       await prefs.remove('saved_email');
     }
@@ -54,66 +72,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkCurrentUser() async {
     final user = _authService.currentUser;
-    if (user != null && mounted) {
-      // Verificar si el email está verificado
-      final isVerified = await _authService.isEmailVerified();
-      final userEmail = user.email ?? '';
-      
-      // El administrador no necesita verificación de email
-      if (!AppConfig.esAdministrador(userEmail) && !isVerified) {
-        await _authService.signOut();
-        setState(() {
-          _errorMessage = 'Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.';
-        });
-        return;
-      }
 
-      // Verificar si el usuario existe en Firestore y su estado
-      final userStatus = await _authService.getUserStatus();
-      
-      // Si el usuario no existe en Firestore (se borró), cerrar sesión
-      if (userStatus == null) {
-        await _authService.signOut();
-        setState(() {
-          _errorMessage = 'Usuario no encontrado. Por favor, regístrate nuevamente.';
-        });
-        return;
-      }
-      
-      if (!AppConfig.esAdministrador(userEmail)) {
-        if (userStatus == 'pending') {
-          await _authService.signOut();
-          setState(() {
-            _errorMessage = 'Tu cuenta está pendiente de aprobación por el administrador.';
-          });
-          return;
-        }
-        
-        if (userStatus == 'denied') {
-          await _authService.signOut();
-          setState(() {
-            _errorMessage = 'Tu cuenta ha sido denegada por el administrador.';
-          });
-          return;
-        }
-      }
+    if (user == null) return;
 
-      // Si todas las validaciones pasan, navegar a Home
-      if (mounted) {
+    try {
+      await user.reload();
+
+      if (!mounted) return;
+
+      final refreshedUser = _authService.currentUser;
+
+      if (refreshedUser != null && refreshedUser.emailVerified) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
         );
       }
+    } catch (_) {
+      // Si no se puede comprobar el usuario actual,
+      // permanecemos en la pantalla de login.
     }
   }
 
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
 
-    if (!await NetworkUtils.isNetworkAvailable()) {
-      setState(() {
-        _errorMessage = NetworkUtils.errorNoInternet;
-      });
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
@@ -123,79 +108,78 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.signInWithEmailAndPassword(
+      final hasInternet = await NetworkUtils.isNetworkAvailable();
+
+      if (!hasInternet) {
+        if (!mounted) return;
+
+        setState(() {
+          _errorMessage = NetworkUtils.errorNoInternet;
+          _isLoading = false;
+        });
+
+        return;
+      }
+
+      await _saveEmail();
+
+      final userCredential =
+          await _authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
-        _passwordController.text.trim(),
+        _passwordController.text,
       );
 
-      // Verificar si el email está verificado
-      final isVerified = await _authService.isEmailVerified();
-      final userEmail = _authService.currentUser?.email ?? '';
-      
-      // El administrador no necesita verificación de email
-      if (!AppConfig.esAdministrador(userEmail) && !isVerified) {
-        await _authService.signOut();
-        setState(() {
-          _errorMessage = 'Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.';
-          _isLoading = false;
-        });
-        
-        // Mostrar opciones para reenviar o verificar
-        if (mounted) {
-          _showEmailVerificationDialog();
-        }
-        return;
-      }
+      final user = userCredential.user;
 
-      // Verificar si el usuario existe en Firestore y su estado
-      final userStatus = await _authService.getUserStatus();
-      
-      // Si el usuario no existe en Firestore (se borró), cerrar sesión
-      if (userStatus == null) {
-        await _authService.signOut();
-        setState(() {
-          _errorMessage = 'Usuario no encontrado. Por favor, regístrate nuevamente.';
-          _isLoading = false;
-        });
-        return;
-      }
-      
-      if (!AppConfig.esAdministrador(userEmail)) {
-        if (userStatus == 'pending') {
-          await _authService.signOut();
-          setState(() {
-            _errorMessage = 'Tu cuenta está pendiente de aprobación por el administrador.';
-            _isLoading = false;
-          });
-          return;
-        }
-        
-        if (userStatus == 'denied') {
-          await _authService.signOut();
-          setState(() {
-            _errorMessage = 'Tu cuenta ha sido denegada por el administrador.';
-            _isLoading = false;
-          });
-          return;
-        }
-      }
-
-      // Guardar email si el usuario lo quiere recordar
-      await _saveEmail(_emailController.text.trim());
-
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
         );
       }
+
+      await user.reload();
+
+      final refreshedUser = _authService.currentUser;
+
+      if (refreshedUser == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+        );
+      }
+
+      if (!refreshedUser.emailVerified) {
+        await _authService.signOut();
+
+        if (!mounted) return;
+
+        await _showEmailVerificationDialog();
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        return;
+      }
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _errorMessage = _getErrorMessage(e.code);
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
+
       setState(() {
-        _errorMessage = 'Error de login: ${e.toString()}';
+        _errorMessage = NetworkUtils.errorFirebase;
         _isLoading = false;
       });
     }
@@ -206,14 +190,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty) {
       setState(() {
-        _errorMessage = 'Introduce tu email para recuperar la contraseña';
+        _errorMessage = 'Introduce tu correo electrónico para continuar.';
       });
       return;
     }
 
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+    final emailRegex = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
       setState(() {
-        _errorMessage = 'Introduce un email válido';
+        _errorMessage = 'Introduce un correo electrónico válido.';
       });
       return;
     }
@@ -224,341 +212,571 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final hasInternet = await NetworkUtils.isNetworkAvailable();
+
+      if (!hasInternet) {
+        if (!mounted) return;
+
+        setState(() {
+          _errorMessage = NetworkUtils.errorNoInternet;
+          _isLoading = false;
+        });
+
+        return;
+      }
+
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: email,
       );
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Hemos enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.',
-            ),
-            backgroundColor: Colors.green,
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Si el correo existe, recibirás instrucciones para restablecer la contraseña.',
           ),
-        );
-      }
+          backgroundColor: AppTheme.accentGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = switch (e.code) {
-            'invalid-email' => 'El email no es válido',
-            'user-not-found' => 'No existe una cuenta con ese email',
-            'too-many-requests' =>
-              'Demasiadas solicitudes. Inténtalo de nuevo más tarde.',
-            _ => 'No se pudo enviar el correo de recuperación',
-          };
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'No se pudo enviar el correo de recuperación';
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = _getErrorMessage(e.code);
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = NetworkUtils.errorFirebase;
+        _isLoading = false;
+      });
     }
   }
+
   String _getErrorMessage(String code) {
-    const errorMessages = {
-      'user-not-found': 'No existe usuario con este email',
-      'wrong-password': 'Contraseña incorrecta',
-      'invalid-email': 'Email inválido',
-      'user-disabled': 'Usuario deshabilitado',
-    };
-    return errorMessages[code] ?? 'Error de autenticación: $code';
+    switch (code) {
+      case 'invalid-email':
+        return 'El correo electrónico no es válido.';
+
+      case 'user-disabled':
+        return 'Esta cuenta ha sido deshabilitada.';
+
+      case 'user-not-found':
+        return 'No existe ninguna cuenta con este correo electrónico.';
+
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'El correo o la contraseña no son correctos.';
+
+      case 'too-many-requests':
+        return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+
+      case 'network-request-failed':
+        return NetworkUtils.errorNoInternet;
+
+      case 'operation-not-allowed':
+        return 'El inicio de sesión con correo electrónico no está disponible.';
+
+      default:
+        return 'No se ha podido iniciar sesión. Inténtalo de nuevo.';
+    }
   }
 
-  void _showEmailVerificationDialog() {
-    showDialog(
+  Future<void> _showEmailVerificationDialog() async {
+    await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Email no verificado'),
-        content: const Text('Debes verificar tu email para acceder a la aplicación.'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final email = _emailController.text.trim();
-              final password = _passwordController.text.trim();
-              
-                            // Intentar reenviar email de verificación
-              try {
-                await _authService.signInWithEmailAndPassword(email, password);
-                await _authService.sendEmailVerification();
-                await _authService.signOut();
-
-                if (!context.mounted) return;
-
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Email de verificación reenviado. Revisa tu bandeja de entrada.'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error al reenviar email: '),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('Reenviar email'),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          TextButton(
-            onPressed: () async {
-              final email = _emailController.text.trim();
-              final password = _passwordController.text.trim();
-
-              // Intentar verificar email
-              try {
-                await _authService.signInWithEmailAndPassword(email, password);
-                final isVerified = await _authService.isEmailVerified();
-
-                if (isVerified) {
-                  await _authService.signOut();
-
-                  if (!context.mounted) return;
-
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email verificado. Tu cuenta está pendiente de aprobación por el administrador.'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } else {
-                  await _authService.signOut();
-
-                  if (!context.mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email aún no verificado. Por favor, revisa tu bandeja de entrada.'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (!context.mounted) return;
-
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error al verificar email: '),
-                    backgroundColor: Colors.red,
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentGreen.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.mark_email_unread_outlined,
+                  color: AppTheme.accentGreen,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Verifica tu correo',
+                  style: TextStyle(
+                    color: Color(0xFF1D2939),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
                   ),
-                );
-              }
-            },
-            child: const Text('Verificar de nuevo'),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancelar'),
+          content: const Text(
+            'Debes verificar tu correo electrónico antes de iniciar sesión. '
+            'Revisa tu bandeja de entrada y la carpeta de spam.',
+            style: TextStyle(
+              color: Color(0xFF667085),
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
-        ],
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.accentGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Entendido',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(
+        icon,
+        color: const Color(0xFF667085),
+      ),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      labelStyle: const TextStyle(
+        color: Color(0xFF667085),
+        fontWeight: FontWeight.w400,
+      ),
+      hintStyle: const TextStyle(
+        color: Color(0xFF98A2B3),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 17,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: Color(0xFFE4E7EC),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: AppTheme.accentGreen,
+          width: 1.5,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: Color(0xFFF04438),
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: Color(0xFFF04438),
+          width: 1.5,
+        ),
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    final club = AppConfig.club;
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlue,
-              AppTheme.backgroundDark,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.accentGreen.withValues(alpha: 0.4),
-                              blurRadius: 30,
-                              spreadRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.asset(
-                            AppConfig.club.fondo,
-                            height: 200,
-                            width: 250,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
+      backgroundColor: const Color(0xFFF7F8FA),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 32,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 440,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: const Color(0xFFE7E9EE),
                       ),
-                      const SizedBox(height: 32),
-                      Text(
-                        AppConfig.club.nombre,
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppTheme.accentGreen,
-                          fontWeight: FontWeight.bold,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.055),
+                          blurRadius: 30,
+                          offset: const Offset(0, 14),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Inicia sesión para reservar tu pista',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                         selectAllOnFocus: false,
-                        autofillHints: const [AutofillHints.email],
-                        enableSuggestions: true,
-                        autocorrect: false,
-                        enableIMEPersonalizedLearning: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'El email es requerido';
-                          }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                            return 'Email inválido';
-                          }
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock_outlined),
-                        ),
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        autofillHints: const [AutofillHints.password],
-                        enableSuggestions: true,
-                        autocorrect: false,
-                        enableIMEPersonalizedLearning: false,
-                        onFieldSubmitted: (_) => _login(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'La contraseña es requerida';
-                          }
-                          return null;
-                        },
-                        enabled: !_isLoading,
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _forgotPassword,
-                          child: const Text(
-                            '¿Has olvidado tu contraseña?',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberEmail,
-                            onChanged: _isLoading ? null : (value) {
-                              setState(() {
-                                _rememberEmail = value ?? false;
-                              });
-                            },
-                            activeColor: AppTheme.accentGreen,
-                          ),
-                          const Text(
-                            'Recordar email',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      if (_errorMessage != null)
+                      ],
+                    ),
+                    child: Column(
+                      children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 116,
+                          height: 116,
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorRed.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.errorRed),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: const Color(0xFFE7E9EE),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.accentGreen.withValues(
+                                  alpha: 0.08,
+                                ),
+                                blurRadius: 24,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: AppTheme.errorRed),
-                            textAlign: TextAlign.center,
+                          child: Image.asset(
+                            club.fondo,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.sports_tennis_rounded,
+                                size: 52,
+                                color: AppTheme.accentGreen,
+                              );
+                            },
                           ),
                         ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _login,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                        const SizedBox(height: 24),
+                        Text(
+                          club.nombre,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF101828),
+                            fontSize: 25,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          'Accede a tu cuenta',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF667085),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _emailController,
+                                enabled: !_isLoading,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                autocorrect: false,
+                                decoration: _inputDecoration(
+                                  label: 'Correo electrónico',
+                                  icon: Icons.email_outlined,
                                 ),
-                              )
-                            : const Text('Iniciar Sesión'),
-                      ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const RegisterScreen(),
+                                validator: (value) {
+                                  final email = value?.trim() ?? '';
+
+                                  if (email.isEmpty) {
+                                    return 'Introduce tu correo electrónico';
+                                  }
+
+                                  final emailRegex = RegExp(
+                                    r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                  );
+
+                                  if (!emailRegex.hasMatch(email)) {
+                                    return 'Introduce un correo válido';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                enabled: !_isLoading,
+                                obscureText: _obscurePassword,
+                                textInputAction: TextInputAction.done,
+                                onFieldSubmitted: (_) {
+                                  if (!_isLoading) {
+                                    _login();
+                                  }
+                                },
+                                decoration: _inputDecoration(
+                                  label: 'Contraseña',
+                                  icon: Icons.lock_outline_rounded,
+                                  suffixIcon: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscurePassword =
+                                            !_obscurePassword;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      color: const Color(0xFF667085),
+                                    ),
                                   ),
-                                );
-                              },
-                        child: const Text('¿No tienes cuenta? Regístrate'),
-                      ),
-                    ],
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Introduce tu contraseña';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed:
+                                      _isLoading ? null : _forgotPassword,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppTheme.accentGreen,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    '¿Has olvidado tu contraseña?',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Checkbox(
+                                      value: _rememberEmail,
+                                      activeColor: AppTheme.accentGreen,
+                                      onChanged: _isLoading
+                                          ? null
+                                          : (value) {
+                                              setState(() {
+                                                _rememberEmail =
+                                                    value ?? false;
+                                              });
+                                            },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'Recordar mi correo electrónico',
+                                      style: TextStyle(
+                                        color: Color(0xFF667085),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 18),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3F2),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFFFECACA),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline_rounded,
+                                        color: Color(0xFFD92D20),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: const TextStyle(
+                                            color: Color(0xFFB42318),
+                                            fontSize: 13,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 22),
+                              SizedBox(
+                                height: 54,
+                                child: FilledButton(
+                                  onPressed:
+                                      _isLoading ? null : _login,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        AppTheme.accentGreen,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        AppTheme.accentGreen.withValues(
+                                      alpha: 0.45,
+                                    ),
+                                    disabledForegroundColor:
+                                        Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child:
+                                              CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Iniciar sesión',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 22),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 17,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFFE7E9EE),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '¿No tienes una cuenta?',
+                          style: TextStyle(
+                            color: Color(0xFF667085),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const RegisterScreen(),
+                                    ),
+                                  );
+                                },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppTheme.accentGreen,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                          ),
+                          child: const Text(
+                            'Crear cuenta',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -566,14 +784,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 }
-
-
-

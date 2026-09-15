@@ -2,11 +2,21 @@
 import 'config/app_config.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
-import 'screens/splash_screen.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/login_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // La aplicación debe comenzar siempre con la sesión cerrada.
+  await FirebaseAuth.instance.signOut();
+
   runApp(const MyApp());
 }
 
@@ -18,7 +28,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: AppConfig.club.nombre,
       theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+      home: const LoginScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -26,12 +36,10 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('es', 'ES'), // Español
-        Locale('en', 'US'), // Inglés (opcional)
+        Locale('es', 'ES'),
+        Locale('en', 'US'),
       ],
-      locale: const Locale('es', 'ES'), // Establecer español como idioma por defecto
+      locale: const Locale('es', 'ES'),
     );
   }
 }
-
-
