@@ -24,6 +24,7 @@ class ClubConfigActual {
       'notifications': true,
       'matches': false,
       'ranking': false,
+        'padelLevel': true,
     },
 
     instalaciones: [
@@ -62,3 +63,9 @@ class ClubConfigActual {
     ],
   );
 }
+
+
+
+
+
+

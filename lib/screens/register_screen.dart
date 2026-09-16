@@ -584,7 +584,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               const SizedBox(height: 16),
 
-                              // NIVEL DE PÁDEL
+                              if (AppConfig.club.moduloActivo('padelLevel')) ...[
+                                // NIVEL DE PÁDEL
                               DropdownButtonFormField<String>(
                                 initialValue: _nivelPadel,
                                 decoration: _inputDecoration(
@@ -615,6 +616,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
 
                               const SizedBox(height: 24),
+
+                                ],
 
                               // ACEPTACIÓN LEGAL
                               const Text(
@@ -819,3 +822,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 }
+

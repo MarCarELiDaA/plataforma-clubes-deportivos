@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/club/instalacion.dart';
 
 class ReservaService {
@@ -99,7 +99,7 @@ class ReservaService {
             .get();
 
         if (usuarioReservasSnapshot.docs.length >= instalacion.maxReservasPorDia) {
-          throw Exception('Ya tienes dos reservas para este día');
+          throw Exception('Has alcanzado el máximo de ${instalacion.maxReservasPorDia} reservas permitidas para este día.');
         }
 
         for (var doc in usuarioReservasSnapshot.docs) {
@@ -113,7 +113,7 @@ class ReservaService {
           )) {
             throw Exception(
               'No puedes reservar horarios consecutivos. '
-              'Debe existir un bloque de 1 hora y 30 minutos '
+              'Debe existir un intervalo de ${_formatearDuracion(instalacion.duracionReservaMinutos)} '
               'entre tus reservas.',
             );
           }
@@ -372,6 +372,24 @@ class ReservaService {
         );
   }
 
+  String _formatearDuracion(int minutos) {
+    if (minutos < 60) {
+      return ' minutos';
+    }
+
+    final horas = minutos ~/ 60;
+    final minutosRestantes = minutos % 60;
+
+    if (minutosRestantes == 0) {
+      return horas == 1 ? '1 hora' : ' horas';
+    }
+
+    if (horas == 1) {
+      return '1 hora y  minutos';
+    }
+
+    return ' horas y  minutos';
+  }
   bool puedeCancelarReserva(
     String fecha,
     String hora,
@@ -412,6 +430,19 @@ class ReservaService {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

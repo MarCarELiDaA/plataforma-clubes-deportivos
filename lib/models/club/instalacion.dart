@@ -1,4 +1,4 @@
-class Instalacion {
+﻿class Instalacion {
   final String id;
   final String nombre;
   final String tipo;
@@ -12,6 +12,9 @@ class Instalacion {
   final int maxReservasPorDia;
   final int maxMinutosPorDia;
   final int maxDiasAntelacion;
+
+  /// Minutos mínimos de antelación necesarios para cancelar una reserva.
+  final int minutosAntelacionCancelacion;
 
   final List<String> normas;
 
@@ -31,9 +34,11 @@ class Instalacion {
     this.maxReservasPorDia = 2,
     this.maxMinutosPorDia = 180,
     this.maxDiasAntelacion = 10,
+    this.minutosAntelacionCancelacion = 60,
     this.normas = const [],
     this.reservasActivas = true,
     this.pagosActivos = false,
     this.accesoDigitalActivo = false,
   });
 }
+
