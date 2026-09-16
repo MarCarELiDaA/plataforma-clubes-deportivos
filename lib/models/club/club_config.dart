@@ -1,4 +1,4 @@
-import '../../models/club/instalacion.dart';
+﻿import '../../models/club/instalacion.dart';
 
 class ClubConfig {
   final String nombre;
@@ -13,6 +13,9 @@ class ClubConfig {
   final List<Instalacion> instalaciones;
   final List<String> administradores;
 
+  /// Módulos funcionales activos para este cliente.
+  final Map<String, bool> modulos;
+
   const ClubConfig({
     required this.nombre,
     required this.deporte,
@@ -24,5 +27,11 @@ class ClubConfig {
     required this.fondo,
     required this.instalaciones,
     required this.administradores,
+    this.modulos = const {},
   });
+
+  /// Indica si un módulo está activo.
+  bool moduloActivo(String modulo) {
+    return modulos[modulo] ?? false;
+  }
 }
