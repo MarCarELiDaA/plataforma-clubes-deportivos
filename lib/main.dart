@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'services/notification_service.dart';
 import 'screens/login_screen.dart';
 
 Future<void> main() async {
@@ -16,6 +17,10 @@ Future<void> main() async {
 
   // La aplicación debe comenzar siempre con la sesión cerrada.
   await FirebaseAuth.instance.signOut();
+
+  // Preparar las notificaciones locales.
+  // En Web no hace nada.
+  await NotificationService().initialize();
 
   runApp(const MyApp());
 }
