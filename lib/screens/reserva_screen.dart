@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -23,9 +23,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
   DateTime? _selectedDate;
   List<String> _availableTimes = [];
   List<String> _reservedTimes = [];
-  bool _isLoading = false;
+  List<Instalacion> _instalaciones = [];
+  Instalacion? _instalacionActual;
 
-  Instalacion get _instalacionActual => AppConfig.club.instalaciones.first;
+  bool _isLoading = false;
 
   StreamSubscription<List<String>>? _reservedTimesSubscription;
 
@@ -42,28 +43,49 @@ class _ReservaScreenState extends State<ReservaScreen> {
   }
 
   Future<void> _loadInstalacionConfig() async {
-    final instalaciones = AppConfig.club.instalaciones;
-
-    if (instalaciones.isEmpty) {
-      if (!mounted) return;
-
-      setState(() {
-        _availableTimes = [];
-      });
-
-      return;
-    }
-
-    final instalacion = _instalacionActual;
+    final instalaciones = AppConfig.club.instalaciones
+        .where((instalacion) => instalacion.activa)
+        .toList();
 
     if (!mounted) return;
 
     setState(() {
+      _instalaciones = instalaciones;
+
+      if (instalaciones.isEmpty) {
+        _instalacionActual = null;
+        _availableTimes = [];
+      } else {
+        _instalacionActual = instalaciones.first;
+        _availableTimes = instalaciones.first.horarios;
+      }
+
+      _reservedTimes = [];
+      _selectedDate = null;
+    });
+  }
+
+  Future<void> _selectInstalacion(Instalacion instalacion) async {
+    if (_instalacionActual?.id == instalacion.id) return;
+
+    _reservedTimesSubscription?.cancel();
+
+    if (!mounted) return;
+
+    setState(() {
+      _instalacionActual = instalacion;
       _availableTimes = instalacion.horarios;
+      _reservedTimes = [];
+      _selectedDate = null;
+      _isLoading = false;
     });
   }
 
   Future<void> _selectDate() async {
+    final instalacion = _instalacionActual;
+
+    if (instalacion == null) return;
+
     final now = DateTime.now();
 
     final DateTime? picked = await showDatePicker(
@@ -71,7 +93,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
       initialDate: now,
       firstDate: now,
       lastDate: now.add(
-        const Duration(days: 10),
+        Duration(days: instalacion.maxDiasAntelacion),
       ),
       builder: (context, child) {
         final baseTheme = Theme.of(context);
@@ -124,6 +146,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
   }
 
   void _loadReservedTimes(DateTime date) {
+    final instalacion = _instalacionActual;
+
+    if (instalacion == null) return;
+
     _reservedTimesSubscription?.cancel();
 
     final dateFormat =
@@ -135,7 +161,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
     _reservedTimesSubscription = _reservaService
         .getHorariosReservadosStream(
-          _instalacionActual.id,
+          instalacion.id,
           dateFormat,
         )
         .listen(
@@ -182,7 +208,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
   }
 
   Future<void> _selectTime(String time) async {
-    if (_selectedDate == null) return;
+    final instalacion = _instalacionActual;
+
+    if (_selectedDate == null || instalacion == null) return;
 
     final user = _authService.currentUser;
 
@@ -195,7 +223,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
             await _reservaService.cumpleLimiteReservasPorDia(
           user.uid,
           dateFormat,
-          _instalacionActual,
+          instalacion,
         );
 
         if (!puedeReservar) {
@@ -218,7 +246,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
           user.uid,
           dateFormat,
           time,
-          _instalacionActual,
+          instalacion,
         );
 
         if (!noEsConsecutiva) {
@@ -258,10 +286,149 @@ class _ReservaScreenState extends State<ReservaScreen> {
         builder: (context) => ConfirmationScreen(
           selectedDate: _selectedDate!,
           selectedTime: time,
-          instalacionId: _instalacionActual.id,
-          instalacionName: _instalacionActual.nombre,
-          duration: _instalacionActual.duracionReservaMinutos,
+          instalacionId: instalacion.id,
+          instalacionName: instalacion.nombre,
+          duration: instalacion.duracionReservaMinutos,
         ),
+      ),
+    );
+  }
+
+  Widget _buildInstalacionSelector(bool isWeb) {
+    if (_instalaciones.length <= 1) {
+      return Container(
+        padding: EdgeInsets.all(
+          isWeb ? 22 : 18,
+        ),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.borderSoft,
+          ),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: isWeb ? 52 : 48,
+              height: isWeb ? 52 : 48,
+              decoration: BoxDecoration(
+                color: AppTheme.successLight,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                Icons.sports_tennis_rounded,
+                color: AppTheme.success,
+                size: isWeb ? 27 : 25,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Instalación',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _instalacionActual?.nombre ?? 'Sin instalación',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isWeb ? 20 : 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(
+        isWeb ? 22 : 18,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.borderSoft,
+        ),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Instalación',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+           initialValue: _instalacionActual?.id,
+            isExpanded: true,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppTheme.surfaceMuted,
+              prefixIcon: const Icon(
+                Icons.sports_tennis_rounded,
+                color: AppTheme.success,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppTheme.borderSoft,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppTheme.borderSoft,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: AppTheme.success,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            items: _instalaciones.map((instalacion) {
+              return DropdownMenuItem<String>(
+                value: instalacion.id,
+                child: Text(
+                  instalacion.nombre,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (id) {
+              if (id == null) return;
+
+              final instalacion = _instalaciones.firstWhere(
+                (item) => item.id == id,
+              );
+
+              _selectInstalacion(instalacion);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -375,6 +542,8 @@ class _ReservaScreenState extends State<ReservaScreen> {
   }
 
   Widget _buildEmptyState(bool isWeb) {
+    final hasInstallations = _instalaciones.isNotEmpty;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -407,7 +576,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
           ),
           const SizedBox(height: 18),
           Text(
-            'Selecciona una fecha',
+            hasInstallations
+                ? 'Selecciona una fecha'
+                : 'No hay instalaciones disponibles',
             style: TextStyle(
               fontSize: isWeb ? 20 : 18,
               fontWeight: FontWeight.w600,
@@ -417,7 +588,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Elige un día para consultar los horarios disponibles.',
+            hasInstallations
+                ? 'Elige un día para consultar los horarios disponibles.'
+                : 'Actualmente no hay instalaciones activas para reservar.',
             style: TextStyle(
               fontSize: isWeb ? 15 : 14,
               height: 1.45,
@@ -477,64 +650,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(
-                          isWeb ? 22 : 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppTheme.borderSoft,
-                          ),
-                          boxShadow: AppTheme.softShadow,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: isWeb ? 52 : 48,
-                              height: isWeb ? 52 : 48,
-                              decoration: BoxDecoration(
-                                color: AppTheme.successLight,
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Icon(
-                                Icons.sports_tennis_rounded,
-                                color: AppTheme.success,
-                                size: isWeb ? 27 : 25,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Instalación',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppTheme.textTertiary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    _instalacionActual.nombre,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: isWeb ? 20 : 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildInstalacionSelector(isWeb),
                       const SizedBox(height: 14),
                       Container(
                         padding: EdgeInsets.all(
@@ -564,10 +680,17 @@ class _ReservaScreenState extends State<ReservaScreen> {
                             SizedBox(
                               height: isSmall ? 48 : 50,
                               child: ElevatedButton.icon(
-                                onPressed: _selectDate,
+                                onPressed:
+                                    _instalacionActual == null
+                                        ? null
+                                        : _selectDate,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.success,
                                   foregroundColor: Colors.white,
+                                  disabledBackgroundColor:
+                                      AppTheme.surfaceMuted,
+                                  disabledForegroundColor:
+                                      AppTheme.textTertiary,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius:
@@ -699,3 +822,6 @@ class _ReservaScreenState extends State<ReservaScreen> {
     );
   }
 }
+
+
+

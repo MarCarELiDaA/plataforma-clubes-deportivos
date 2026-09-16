@@ -86,6 +86,13 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       final dateFormat =
           '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
 
+      final instalacion = AppConfig.club.instalaciones.firstWhere(
+        (item) => item.id == widget.instalacionId,
+        orElse: () => throw Exception(
+          'La instalación seleccionada ya no está disponible',
+        ),
+      );
+
       final reservaData = {
         'usuarioId': user.uid,
         'nombreUsuario': userName,
@@ -99,7 +106,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
 
       final reservaId = await _reservaService.crearReservaConVerificacion(
         reservaData,
-        AppConfig.club.instalaciones.first,
+        instalacion,
       );
 
       // Mostrar notificación de confirmación
@@ -581,3 +588,6 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           );
   }
 }
+
+
+
