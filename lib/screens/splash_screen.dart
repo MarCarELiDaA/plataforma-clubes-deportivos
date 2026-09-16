@@ -1,7 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../firebase_options.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
 import 'login_screen.dart';
@@ -22,20 +19,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Inicialización de Firebase mientras se mantiene el splash.
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-
-      // La aplicación debe comenzar siempre con la sesión cerrada.
-      await FirebaseAuth.instance.signOut();
-
+      // Firebase ya se inicializa en main.dart.
+      // Aquí solo preparamos las notificaciones.
       // En Web no hace nada.
       // En Android/iOS prepara las notificaciones.
       await NotificationService().initialize();
     } catch (_) {
-      // Si alguna inicialización falla, continuamos igualmente
-      // hacia el login. No añadimos esperas artificiales.
+      // Si la preparación de notificaciones falla, continuamos
+      // igualmente hacia el login.
     }
 
     if (!mounted) return;
