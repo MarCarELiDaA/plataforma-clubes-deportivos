@@ -698,7 +698,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     _buildDetailRow(
                       Icons.sports_tennis_rounded,
                       'Instalación',
-                      reserva['instalacionId'],
+                      _getInstalacionNombre(reserva['instalacionId']),
                     ),
                     const SizedBox(height: 12),
                     _buildDetailRow(
@@ -744,6 +744,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     } catch (e) {
       return const SizedBox.shrink();
     }
+  }
+
+  String _getInstalacionNombre(String instalacionId) {
+    for (final instalacion in AppConfig.club.instalaciones) {
+      if (instalacion.id == instalacionId) {
+        return instalacion.nombre;
+      }
+    }
+
+    return instalacionId;
   }
 
   Widget _buildDetailRow(
