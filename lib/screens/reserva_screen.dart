@@ -404,6 +404,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
+                  color: AppTheme.primary,
                   width: 1.5,
                 ),
               ),
@@ -819,14 +820,3 @@ class _ReservaScreenState extends State<ReservaScreen> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
