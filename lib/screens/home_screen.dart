@@ -313,20 +313,18 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const SizedBox(height: 16),
                   if (_reservasActivas) ...[
-                    if (_reservasActivas) ...[
-                      _drawerSection('RESERVAS'),
-                      _drawerItem(
-                        icon: Icons.calendar_month_rounded,
-                        title: 'Reservar pista',
-                        highlighted: true,
-                        onTap: _openReserva,
-                      ),
-                      _drawerItem(
-                        icon: Icons.event_available_rounded,
-                        title: 'Mis reservas',
-                        onTap: _openMisReservas,
-                      ),
-                    ],
+                    _drawerSection('RESERVAS'),
+                    _drawerItem(
+                      icon: Icons.calendar_month_rounded,
+                      title: 'Reservar pista',
+                      highlighted: true,
+                      onTap: _openReserva,
+                    ),
+                    _drawerItem(
+                      icon: Icons.event_available_rounded,
+                      title: 'Mis reservas',
+                      onTap: _openMisReservas,
+                    ),
                   ],
                   const SizedBox(height: 16),
                   _drawerSection('CLUB'),
@@ -582,36 +580,34 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                     if (_reservasActivas) ...[
-                      if (_reservasActivas) ...[
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          height: 52,
-                          child: FilledButton.icon(
-                            onPressed: _openReserva,
-                            icon: const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 20,
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        height: 52,
+                        child: FilledButton.icon(
+                          onPressed: _openReserva,
+                          icon: const Icon(
+                            Icons.calendar_month_rounded,
+                            size: 20,
+                          ),
+                          label: const Text(
+                            'Reservar pista',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
                             ),
-                            label: const Text(
-                              'Reservar pista',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _accent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
                             ),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _accent,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(17),
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(17),
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ],
                   ],
                 ),
@@ -842,30 +838,28 @@ class _HomeScreenState extends State<HomeScreen>
                             runSpacing: 14,
                             children: [
                               if (_reservasActivas) ...[
-                                if (_reservasActivas) ...[
-                                  SizedBox(
-                                    width: cardWidth,
-                                    child: _buildQuickCard(
-                                      icon: Icons.calendar_month_rounded,
-                                      title: 'Reservar pista',
-                                      subtitle:
-                                          'Consulta horarios y disponibilidad.',
-                                      primary: true,
-                                      onTap: _openReserva,
-                                    ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _buildQuickCard(
+                                    icon: Icons.calendar_month_rounded,
+                                    title: 'Reservar pista',
+                                    subtitle:
+                                        'Consulta horarios y disponibilidad.',
+                                    primary: true,
+                                    onTap: _openReserva,
                                   ),
-                                  SizedBox(
-                                    width: cardWidth,
-                                    child: _buildQuickCard(
-                                      icon: Icons.event_available_rounded,
-                                      title: 'Mis reservas',
-                                      subtitle:
-                                          'Consulta y gestiona tus reservas.',
-                                      primary: false,
-                                      onTap: _openMisReservas,
-                                    ),
+                                ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _buildQuickCard(
+                                    icon: Icons.event_available_rounded,
+                                    title: 'Mis reservas',
+                                    subtitle:
+                                        'Consulta y gestiona tus reservas.',
+                                    primary: false,
+                                    onTap: _openMisReservas,
                                   ),
-                                ],
+                                ),
                               ],
                             ],
                           );
