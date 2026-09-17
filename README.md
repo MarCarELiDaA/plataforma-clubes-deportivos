@@ -65,11 +65,14 @@ lib/
 
 ### Configuración de Firebase
 
-La aplicación ya está configurada con las credenciales del proyecto Firebase original:
+La aplicación está configurada con el proyecto Firebase del club actual.
 
-- **API Key**: AIzaSyCgzQj-l2smjxWVy4fuhx8Ju6c5K8_2BYY
+Las credenciales se encuentran en:
+- `lib/firebase_options.dart` (configuración por plataforma)
+- `android/app/google-services.json` (Android)
+- `ios/Runner/GoogleService-Info.plist` (iOS, cuando se configure)
 
-El archivo `google-services.json` ya está configurado en `android/app/`.
+**IMPORTANTE:** Para desplegar esta plataforma para otro club, se deben reemplazar estos archivos con las credenciales del Firebase correspondiente.
 
 ### Dependencias
 
