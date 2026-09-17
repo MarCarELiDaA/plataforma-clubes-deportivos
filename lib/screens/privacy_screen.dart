@@ -69,7 +69,7 @@ class PrivacyScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               height: 1.5,
-                              color: Colors.grey.shade700,
+                              color: AppTheme.textSecondary,
                             ),
                           ),
                         ],
