@@ -264,14 +264,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E7EC),
+        borderSide: BorderSide(
+          color: AppTheme.border,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E7EC),
+        borderSide: BorderSide(
+          color: AppTheme.border,
         ),
       ),
       focusedBorder: OutlineInputBorder(
@@ -822,6 +822,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 }
-
-
-
