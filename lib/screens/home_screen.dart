@@ -74,14 +74,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _checkUserRole() async {
-    final user = _authService.currentUser;
+    final role = await _authService.getUserRole();
 
-    if (user != null && mounted) {
-      setState(() {
-        _userRole =
-            AppConfig.esAdministrador(user.email) ? 'admin' : 'user';
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _userRole = role ?? 'user';
+    });
   }
 
   bool get _reservasActivas =>
