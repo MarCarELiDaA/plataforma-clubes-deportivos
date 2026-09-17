@@ -44,7 +44,8 @@ class AuthService {
     String? versionCondiciones,
     String? versionPrivacidad,
   }) async {
-    // Si es el administrador, aprobar automáticamente
+    // La configuración del club determina los datos iniciales
+    // del administrador durante el registro.
     String finalRole = role;
     String finalStatus = 'pending';
 
@@ -68,15 +69,15 @@ class AuthService {
       versionPrivacidad: versionPrivacidad,
     );
 
-    // Crear mapa de datos con timestamp del servidor
+    // Crear mapa de datos con timestamp del servidor.
     final Map<String, dynamic> userData = usuario.toMap();
 
-    // Guardar fecha de aceptaciones mediante timestamp del servidor
+    // Guardar fecha de aceptaciones mediante timestamp del servidor.
     if (aceptaCondiciones == true || aceptaPrivacidad == true) {
       userData['fechaAceptaciones'] = FieldValue.serverTimestamp();
     }
 
-    // Usar set con merge para asegurar que el documento se guarde correctamente
+    // Usar set con merge para asegurar que el documento se guarde correctamente.
     await _firestore
         .collection('usuarios')
         .doc(userId)
@@ -155,30 +156,7 @@ class AuthService {
           .get();
 
       if (doc.exists) {
-        final data = doc.data();
-        final status = data?['status'];
-
-        // Si el usuario no tiene el campo status, añadirlo automáticamente
-        if (status == null) {
-          final userEmail = user.email;
-          String newStatus = 'pending';
-
-          // Si es el administrador, aprobar automáticamente
-          if (AppConfig.esAdministrador(userEmail)) {
-            newStatus = 'approved';
-          }
-
-          await _firestore
-              .collection('usuarios')
-              .doc(user.uid)
-              .update({
-            'status': newStatus,
-          });
-
-          return newStatus;
-        }
-
-        return status;
+        return doc.data()?['status'];
       }
     }
 
@@ -195,30 +173,7 @@ class AuthService {
           .get();
 
       if (doc.exists) {
-        final data = doc.data();
-        final role = data?['role'];
-
-        // Si el usuario no tiene el campo role, añadirlo automáticamente
-        if (role == null) {
-          final userEmail = user.email;
-          String newRole = 'user';
-
-          // Si es el administrador, asignar rol admin
-          if (AppConfig.esAdministrador(userEmail)) {
-            newRole = 'admin';
-          }
-
-          await _firestore
-              .collection('usuarios')
-              .doc(user.uid)
-              .update({
-            'role': newRole,
-          });
-
-          return newRole;
-        }
-
-        return role;
+        return doc.data()?['role'];
       }
     }
 
@@ -237,37 +192,9 @@ class AuthService {
       if (doc.exists) {
         final data = doc.data();
 
-        final status = data?['status'];
-        final role = data?['role'];
-
-        final userEmail = user.email;
-
-        String newStatus = status ?? 'pending';
-        String newRole = role ?? 'user';
-
-        bool needsUpdate = false;
-
-        // Si es el administrador, aprobar automáticamente y asignar rol admin
-        if (AppConfig.esAdministrador(userEmail)) {
-          newStatus = 'approved';
-          newRole = 'admin';
-          needsUpdate = true;
-        }
-
-        // Si faltan campos, actualizar
-        if (status == null || role == null || needsUpdate) {
-          await _firestore
-              .collection('usuarios')
-              .doc(user.uid)
-              .update({
-            'status': newStatus,
-            'role': newRole,
-          });
-        }
-
         return {
-          'status': newStatus,
-          'role': newRole,
+          'status': data?['status'],
+          'role': data?['role'],
         };
       }
     }
@@ -284,7 +211,6 @@ class AuthService {
     final GoogleSignInAccount googleUser =
         await _googleSignIn.authenticate();
 
-
     final GoogleSignInAuthentication googleAuth =
         googleUser.authentication;
 
@@ -295,14 +221,14 @@ class AuthService {
     final userCredential =
         await _auth.signInWithCredential(credential);
 
-    // Verificar si el usuario ya existe en Firestore
+    // Verificar si el usuario ya existe en Firestore.
     final userDoc = await _firestore
         .collection('usuarios')
         .doc(userCredential.user!.uid)
         .get();
 
     if (!userDoc.exists) {
-      // Crear el usuario en Firestore si no existe
+      // Crear el usuario en Firestore si no existe.
       await saveUserData(
         userCredential.user!.uid,
         userCredential.user!.displayName ?? 'Usuario',
@@ -311,7 +237,7 @@ class AuthService {
         null,
       );
 
-      // Cerrar sesión después del registro
+      // Cerrar sesión después del registro.
       await _auth.signOut();
     }
 
