@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,11 +83,23 @@ class _LoginScreenState extends State<LoginScreen> {
       final refreshedUser = _authService.currentUser;
 
       if (refreshedUser != null && refreshedUser.emailVerified) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
+        final status = await _authService.getUserStatus();
+
+        if (!mounted) return;
+
+        if (status == 'approved') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+          );
+        } else {
+          await _authService.signOut();
+
+          if (!mounted) return;
+
+          await _showAccountStatusDialog(status);
+        }
       }
     } catch (_) {
       // Si no se puede comprobar el usuario actual,
@@ -161,7 +173,25 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      final status = await _authService.getUserStatus();
+
       if (!mounted) return;
+
+      if (status != 'approved') {
+        await _authService.signOut();
+
+        if (!mounted) return;
+
+        await _showAccountStatusDialog(status);
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        return;
+      }
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -291,6 +321,112 @@ class _LoginScreenState extends State<LoginScreen> {
       default:
         return 'No se ha podido iniciar sesión. Inténtalo de nuevo.';
     }
+  }
+
+  Future<void> _showAccountStatusDialog(String? status) async {
+    String title;
+    String message;
+    IconData icon;
+
+    switch (status) {
+      case 'pending':
+        title = 'Cuenta pendiente';
+        message =
+            'Tu cuenta ha sido registrada correctamente, pero todavía está pendiente de aprobación por parte del administrador del club.';
+        icon = Icons.hourglass_empty_rounded;
+        break;
+
+      case 'rejected':
+        title = 'Cuenta no aprobada';
+        message =
+            'Tu solicitud de acceso no ha sido aprobada por el administrador del club.';
+        icon = Icons.block_rounded;
+        break;
+
+      default:
+        title = 'Cuenta no disponible';
+        message =
+            'No se ha podido comprobar el estado de tu cuenta. Contacta con el administrador del club.';
+        icon = Icons.info_outline_rounded;
+        break;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 15,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Entendido',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showEmailVerificationDialog() async {
@@ -789,4 +925,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
