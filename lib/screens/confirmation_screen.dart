@@ -62,7 +62,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(NetworkUtils.errorNoInternet),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.error,
           ),
         );
       }
@@ -145,7 +145,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al confirmar reserva: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.error,
           ),
         );
       }
@@ -242,7 +242,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Image.asset(
-              AppConfig.club.fondo,
+              AppConfig.club.logo,
               fit: BoxFit.contain,
             ),
           ),
@@ -588,8 +588,3 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           );
   }
 }
-
-
-
-
-
