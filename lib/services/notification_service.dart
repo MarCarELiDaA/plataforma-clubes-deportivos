@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
+import '../config/app_config.dart';
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
 
@@ -18,6 +20,10 @@ class NotificationService {
   Future<void> initialize() async {
     // Las notificaciones locales no se utilizan en la versión web.
     if (kIsWeb) return;
+
+    // Si el módulo de notificaciones está desactivado para este club,
+    // no inicializamos el servicio.
+    if (!AppConfig.club.moduloActivo('notifications')) return;
 
     if (_initialized) return;
 
@@ -58,6 +64,9 @@ class NotificationService {
   Future<void> showReservationConfirmation() async {
     if (kIsWeb) return;
 
+    // Si el módulo está desactivado para este club, no mostramos notificación.
+    if (!AppConfig.club.moduloActivo('notifications')) return;
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'reservas_channel',
@@ -87,6 +96,10 @@ class NotificationService {
     String hora,
   ) async {
     if (kIsWeb) return;
+
+    // Si el módulo está desactivado para este club, no programamos
+    // recordatorios.
+    if (!AppConfig.club.moduloActivo('notifications')) return;
 
     // Parsear fecha y hora.
     final parts = fecha.split('/');
@@ -153,6 +166,9 @@ class NotificationService {
   Future<void> showCancellationNotification() async {
     if (kIsWeb) return;
 
+    // Si el módulo está desactivado para este club, no mostramos notificación.
+    if (!AppConfig.club.moduloActivo('notifications')) return;
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'reservas_channel',
@@ -178,6 +194,10 @@ class NotificationService {
 
   Future<void> cancelReminder(String reservaId) async {
     if (kIsWeb) return;
+
+    // Si el módulo está desactivado para este club, no cancelamos
+    // recordatorios porque el servicio no debe operar.
+    if (!AppConfig.club.moduloActivo('notifications')) return;
 
     await _notificationsPlugin.cancel(
       id: reservaId.hashCode,
