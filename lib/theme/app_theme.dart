@@ -50,14 +50,14 @@ class AppTheme {
   // COLORES FUNCIONALES
   // ============================================================
 
-  static const Color success = Color(0xFF22C55E);
-  static const Color successLight = Color(0xFFEAF9EF);
+  static const Color success = Color(0xFF50C878);
+  static const Color successLight = Color(0x1A50C878);
 
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color warningLight = Color(0xFFFFF6DF);
+  static const Color warning = Color(0xFFFFD700);
+  static const Color warningLight = Color(0x1AFFD700);
 
-  static const Color error = Color(0xFFEF4444);
-  static const Color errorLight = Color(0xFFFFEEEE);
+  static const Color error = Color(0xFFE53935);
+  static const Color errorLight = Color(0x1AE53935);
 
   // Alias de compatibilidad
   static const Color accentGreen = success;
@@ -69,26 +69,26 @@ class AppTheme {
   // FONDOS Y SUPERFICIES
   // ============================================================
 
-  static const Color background = Color(0xFFF8F9FB);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSoft = Color(0xFFFCFCFD);
-  static const Color surfaceMuted = Color(0xFFF3F4F6);
+  static const Color background = Color(0xFF071A42);
+  static const Color surface = Color(0xFF071A42);
+  static const Color surfaceSoft = Color(0xFF0D2554);
+  static const Color surfaceMuted = Color(0xFF16315F);
 
   // ============================================================
   // TEXTOS
   // ============================================================
 
-  static const Color textPrimary = Color(0xFF202124);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
+  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFFB8C2D1);
+  static const Color textTertiary = Color(0xFF6B7B8C);
   static const Color textOnColor = Color(0xFFFFFFFF);
 
   // ============================================================
   // BORDES
   // ============================================================
 
-  static const Color border = Color(0xFFE7E8EC);
-  static const Color borderSoft = Color(0xFFF0F1F3);
+  static const Color border = Color(0xFF6B7B8C);
+  static const Color borderSoft = Color(0x336B7B8C);
 
   // ============================================================
   // ALIASES DE COMPATIBILIDAD CON CÓDIGO EXISTENTE
@@ -126,7 +126,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     final ColorScheme colorScheme = ColorScheme.fromSeed(
       seedColor: primary,
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
       primary: primary,
       secondary: secondary,
       error: error,
@@ -135,7 +135,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
 
@@ -154,7 +154,7 @@ class AppTheme {
       // ========================================================
 
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: primary,
         foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -259,7 +259,7 @@ class AppTheme {
       // ========================================================
 
       cardTheme: CardThemeData(
-        color: surface,
+        color: surfaceSoft,
         elevation: 0,
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
@@ -317,8 +317,8 @@ class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          backgroundColor: Colors.white,
+          foregroundColor: secondary,
+          backgroundColor: Colors.transparent,
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(
             horizontal: 20,
@@ -358,7 +358,7 @@ class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: surfaceSoft,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
@@ -518,7 +518,7 @@ class AppTheme {
       // ========================================================
 
       dialogTheme: DialogThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -541,7 +541,7 @@ class AppTheme {
       // ========================================================
 
       datePickerTheme: DatePickerThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         headerBackgroundColor: primary,
         headerForegroundColor: Colors.white,
@@ -559,9 +559,9 @@ class AppTheme {
       // ========================================================
 
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: Colors.white,
+        modalBackgroundColor: surface,
         modalBarrierColor: Color(0x33000000),
         elevation: 8,
         showDragHandle: true,
@@ -637,7 +637,7 @@ class AppTheme {
       dropdownMenuTheme: DropdownMenuThemeData(
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: surfaceSoft,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(
@@ -652,7 +652,7 @@ class AppTheme {
           ),
         ),
         menuStyle: MenuStyle(
-          backgroundColor: WidgetStateProperty.all(Colors.white),
+          backgroundColor: WidgetStateProperty.all(surface),
           surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
           elevation: WidgetStateProperty.all(8),
           shape: WidgetStateProperty.all(

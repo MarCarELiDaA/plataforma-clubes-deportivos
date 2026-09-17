@@ -12,6 +12,10 @@ class ClubConfigActual {
     horario: 'Lunes a Domingo\n06:30 – 23:00',
     fondo: 'assets/images/fondo.png',
 
+    colorPrimario: '#071A42',
+    colorSecundario: '#50C878',
+    colorAcento: '#FFD700',
+
     administradores: [
       'martin.bautista.sanchez@gmail.com',
     ],
