@@ -8,29 +8,46 @@ service cloud.firestore {
     // ============================================================
     match /usuarios/{userId} {
 
-      // El administrador puede leer todos los usuarios
+      // El administrador puede leer todos los usuarios.
+      // La autoridad para seguridad es el campo 'role'.
       allow read: if request.auth != null &&
-                    get(
-                      /databases//documents/usuarios/
-                    ).data.email == 'martin.bautista.sanchez@gmail.com';
+                    get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
 
-      // Un usuario normal solo puede leer su propio documento
+      // Un usuario normal solo puede leer su propio documento.
       allow read: if request.auth != null &&
                     request.auth.uid == userId;
 
-      // El administrador puede gestionar cualquier usuario
+      // El administrador puede gestionar cualquier usuario.
       allow write: if request.auth != null &&
-                     get(
-                       /databases//documents/usuarios/
-                     ).data.email == 'martin.bautista.sanchez@gmail.com';
+                     get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
 
-      // Un usuario normal solo puede crear su propio documento
+      // Un usuario puede crear su propio documento.
+      //
+      // Bootstrap:
+      // El primer administrador se identifica mediante el email
+      // configurado para el club. Solo se permite si el documento
+      // todavía no existe y se crea directamente como administrador.
+      //
+      // Usuarios normales:
+      // Deben crearse como user/pending y aceptar las condiciones
+      // legales.
       allow create: if request.auth != null &&
                      request.auth.uid == userId &&
-                     request.resource.data.role == 'user' &&
-                     request.resource.data.status == 'pending' &&
-                     request.resource.data.aceptaCondiciones == true &&
-                     request.resource.data.aceptaPrivacidad == true;
+                     (
+                       (
+                         !exists(/databases/$(database)/documents/usuarios/$(userId)) &&
+                         ['BOOTSTRAP_ADMIN_EMAIL@CLUB.ES'].contains(request.auth.token.email) &&
+                         request.resource.data.role == 'admin' &&
+                         request.resource.data.status == 'approved'
+                       )
+                       ||
+                       (
+                         request.resource.data.role == 'user' &&
+                         request.resource.data.status == 'pending' &&
+                         request.resource.data.aceptaCondiciones == true &&
+                         request.resource.data.aceptaPrivacidad == true
+                       )
+                     );
 
       // Un usuario normal puede modificar únicamente sus datos
       // personales permitidos.
@@ -57,10 +74,10 @@ service cloud.firestore {
     // ============================================================
     match /pistas/{pistaId} {
 
-      // Cualquier usuario autenticado puede consultar las pistas
+      // Cualquier usuario autenticado puede consultar las pistas.
       allow read: if request.auth != null;
 
-      // Las pistas no pueden modificarse desde la aplicación
+      // Las pistas no pueden modificarse desde la aplicación.
       allow write: if false;
     }
 
@@ -70,18 +87,18 @@ service cloud.firestore {
     // ============================================================
     match /reservas/{reservaId} {
 
-      // Usuarios autenticados pueden consultar reservas
+      // Usuarios autenticados pueden consultar reservas.
       allow read: if request.auth != null;
 
-      // Un usuario solo puede crear una reserva para sí mismo
+      // Un usuario solo puede crear una reserva para sí mismo.
       allow create: if request.auth != null &&
                       request.resource.data.usuarioId == request.auth.uid;
 
-      // Un usuario solo puede modificar sus propias reservas
+      // Un usuario solo puede modificar sus propias reservas.
       allow update: if request.auth != null &&
                       resource.data.usuarioId == request.auth.uid;
 
-      // Las reservas no pueden eliminarse
+      // Las reservas no pueden eliminarse.
       allow delete: if false;
     }
   }
