@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -250,10 +250,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       hintText: hintText,
       prefixIcon: Icon(
         icon,
-        color: AppTheme.accentGreen,
+        color: AppTheme.primary,
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppTheme.surface,
       labelStyle: const TextStyle(
         color: Color(0xFF667085),
         fontSize: 14,
@@ -277,20 +277,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: AppTheme.accentGreen,
+          color: AppTheme.primary,
           width: 1.5,
         ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: Colors.redAccent,
+          color: AppTheme.error,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: Colors.redAccent,
+          color: AppTheme.error,
           width: 1.5,
         ),
       ),
@@ -310,10 +310,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE4E7EC),
+          color: AppTheme.border,
         ),
         boxShadow: [
           BoxShadow(
@@ -343,7 +343,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextButton(
                 onPressed: _isLoading ? null : onTap,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.accentGreen,
+                  foregroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
                     vertical: 4,
@@ -364,7 +364,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           horizontal: 10,
           vertical: 7,
         ),
-        activeColor: AppTheme.accentGreen,
+        activeColor: AppTheme.primary,
         checkColor: Colors.white,
       ),
     );
@@ -375,7 +375,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -413,10 +413,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: const Color(0xFFE4E7EC),
+                              color: AppTheme.border,
                             ),
                             boxShadow: [
                               BoxShadow(
@@ -681,11 +681,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF1F0),
+                                    color: AppTheme.error.withValues(alpha: 0.06),
                                     borderRadius:
                                         BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: const Color(0xFFFECACA),
+                                      color: AppTheme.error.withValues(alpha: 0.20),
                                     ),
                                   ),
                                   child: Row(
@@ -694,7 +694,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     children: [
                                       const Icon(
                                         Icons.error_outline,
-                                        color: Colors.redAccent,
+                                        color: AppTheme.error,
                                         size: 20,
                                       ),
                                       const SizedBox(width: 10),
@@ -722,10 +722,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       _isLoading ? null : _register,
                                   style: FilledButton.styleFrom(
                                     backgroundColor:
-                                        AppTheme.accentGreen,
+                                        AppTheme.primary,
                                     foregroundColor: Colors.white,
                                     disabledBackgroundColor:
-                                        AppTheme.accentGreen
+                                        AppTheme.primary
                                             .withValues(alpha: 0.5),
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
@@ -739,7 +739,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           child:
                                               CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            color: Colors.white,
+                                            color: AppTheme.surface,
                                           ),
                                         )
                                       : const Text(
@@ -781,7 +781,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: Text(
                                 'Inicia sesión',
                                 style: TextStyle(
-                                  color: AppTheme.accentGreen,
+                                  color: AppTheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -822,4 +822,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 }
+
+
 

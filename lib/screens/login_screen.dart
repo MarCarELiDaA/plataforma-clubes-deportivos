@@ -240,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
           content: const Text(
             'Si el correo existe, recibirás instrucciones para restablecer la contraseña.',
           ),
-          backgroundColor: AppTheme.accentGreen,
+          backgroundColor: AppTheme.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -310,20 +310,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.accentGreen.withValues(alpha: 0.10),
+                  color: AppTheme.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.mark_email_unread_outlined,
-                  color: AppTheme.accentGreen,
+                  color: AppTheme.primary,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Verifica tu correo',
                   style: TextStyle(
-                    color: Color(0xFF1D2939),
+                    color: AppTheme.textPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
                   ),
@@ -331,11 +331,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'Debes verificar tu correo electrónico antes de iniciar sesión. '
             'Revisa tu bandeja de entrada y la carpeta de spam.',
             style: TextStyle(
-              color: Color(0xFF667085),
+              color: AppTheme.textSecondary,
               fontSize: 15,
               height: 1.5,
             ),
@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.of(dialogContext).pop();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.accentGreen,
+                  backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
@@ -382,17 +382,17 @@ class _LoginScreenState extends State<LoginScreen> {
       labelText: label,
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFF667085),
+        color: AppTheme.textSecondary,
       ),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
-      labelStyle: const TextStyle(
-        color: Color(0xFF667085),
+      fillColor: AppTheme.surface,
+      labelStyle: TextStyle(
+        color: AppTheme.textSecondary,
         fontWeight: FontWeight.w400,
       ),
-      hintStyle: const TextStyle(
-        color: Color(0xFF98A2B3),
+      hintStyle: TextStyle(
+        color: AppTheme.textSecondary,
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 18,
@@ -400,27 +400,27 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E7EC),
+        borderSide: BorderSide(
+          color: AppTheme.border,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(
-          color: AppTheme.accentGreen,
+          color: AppTheme.primary,
           width: 1.5,
         ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Color(0xFFF04438),
+        borderSide: BorderSide(
+          color: AppTheme.error,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Color(0xFFF04438),
+        borderSide: BorderSide(
+          color: AppTheme.error,
           width: 1.5,
         ),
       ),
@@ -432,7 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final club = AppConfig.club;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -450,10 +450,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: const Color(0xFFE7E9EE),
+                        color: AppTheme.border,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -470,14 +470,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 116,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: const Color(0xFFE7E9EE),
+                              color: AppTheme.border,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.accentGreen.withValues(
+                                color: AppTheme.primary.withValues(
                                   alpha: 0.08,
                                 ),
                                 blurRadius: 24,
@@ -492,7 +492,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               return Icon(
                                 Icons.sports_tennis_rounded,
                                 size: 52,
-                                color: AppTheme.accentGreen,
+                                color: AppTheme.primary,
                               );
                             },
                           ),
@@ -501,8 +501,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           club.nombre,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF101828),
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
                             fontSize: 25,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.5,
@@ -512,8 +512,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'Accede a tu cuenta',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF667085),
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
                           ),
@@ -577,7 +577,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _obscurePassword
                                           ? Icons.visibility_outlined
                                           : Icons.visibility_off_outlined,
-                                      color: const Color(0xFF667085),
+                                      color: AppTheme.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -596,7 +596,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed:
                                       _isLoading ? null : _forgotPassword,
                                   style: TextButton.styleFrom(
-                                    foregroundColor: AppTheme.accentGreen,
+                                    foregroundColor: AppTheme.primary,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 4,
                                       vertical: 6,
@@ -619,7 +619,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 24,
                                     child: Checkbox(
                                       value: _rememberEmail,
-                                      activeColor: AppTheme.accentGreen,
+                                      activeColor: AppTheme.primary,
                                       onChanged: _isLoading
                                           ? null
                                           : (value) {
@@ -631,11 +631,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       'Recordar mi correo electrónico',
                                       style: TextStyle(
-                                        color: Color(0xFF667085),
+                                        color: AppTheme.textSecondary,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -647,27 +647,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFEF3F2),
+                                    color: AppTheme.error.withValues(
+                                      alpha: 0.08,
+                                    ),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: const Color(0xFFFECACA),
+                                      color: AppTheme.error.withValues(
+                                        alpha: 0.22,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.error_outline_rounded,
-                                        color: Color(0xFFD92D20),
+                                        color: AppTheme.error,
                                         size: 20,
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
                                           _errorMessage!,
-                                          style: const TextStyle(
-                                            color: Color(0xFFB42318),
+                                          style: TextStyle(
+                                            color: AppTheme.error,
                                             fontSize: 13,
                                             height: 1.4,
                                           ),
@@ -685,10 +689,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _isLoading ? null : _login,
                                   style: FilledButton.styleFrom(
                                     backgroundColor:
-                                        AppTheme.accentGreen,
+                                        AppTheme.primary,
                                     foregroundColor: Colors.white,
                                     disabledBackgroundColor:
-                                        AppTheme.accentGreen.withValues(
+                                        AppTheme.primary.withValues(
                                       alpha: 0.45,
                                     ),
                                     disabledForegroundColor:
@@ -731,19 +735,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       vertical: 17,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.72),
+                      color: AppTheme.surface.withValues(alpha: 0.72),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: const Color(0xFFE7E9EE),
+                        color: AppTheme.border,
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           '¿No tienes una cuenta?',
                           style: TextStyle(
-                            color: Color(0xFF667085),
+                            color: AppTheme.textSecondary,
                             fontSize: 14,
                           ),
                         ),
@@ -760,7 +764,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   );
                                 },
                           style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.accentGreen,
+                            foregroundColor: AppTheme.primary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
                               vertical: 4,
@@ -785,3 +789,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

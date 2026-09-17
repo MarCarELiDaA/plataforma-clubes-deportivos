@@ -48,7 +48,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.success,
+              backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -69,7 +69,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Usuario aprobado correctamente'),
-              backgroundColor: AppTheme.success,
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -149,7 +149,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Usuario rechazado correctamente'),
-              backgroundColor: AppTheme.success,
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -200,9 +200,9 @@ class _AdminScreenState extends State<AdminScreen> {
             stream: _adminService.getPendingUsersStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
-                    color: AppTheme.success,
+                    color: AppTheme.primary,
                   ),
                 );
               }
@@ -218,7 +218,7 @@ class _AdminScreenState extends State<AdminScreen> {
               }
 
               return RefreshIndicator(
-                color: AppTheme.success,
+                color: AppTheme.primary,
                 onRefresh: () async {
                   setState(() {});
                   await Future<void>.delayed(
@@ -283,12 +283,12 @@ class _AdminScreenState extends State<AdminScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.admin_panel_settings_outlined,
-              color: AppTheme.success,
+              color: AppTheme.primary,
               size: 26,
             ),
           ),
@@ -363,12 +363,12 @@ class _AdminScreenState extends State<AdminScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppTheme.successLight,
+                  color: AppTheme.primaryLight,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_outline_rounded,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                   size: 25,
                 ),
               ),
@@ -465,7 +465,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         ),
                         label: const Text('Aprobar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.success,
+                          backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           minimumSize: const Size.fromHeight(48),
@@ -518,7 +518,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                       label: const Text('Aprobar'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.success,
+                        backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         minimumSize: const Size.fromHeight(48),
@@ -590,12 +590,12 @@ class _AdminScreenState extends State<AdminScreen> {
                   width: 76,
                   height: 76,
                   decoration: BoxDecoration(
-                    color: AppTheme.successLight,
+                    color: AppTheme.primaryLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle_outline_rounded,
-                    color: AppTheme.success,
+                    color: AppTheme.primary,
                     size: 42,
                   ),
                 ),
@@ -686,3 +686,5 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 }
+
+

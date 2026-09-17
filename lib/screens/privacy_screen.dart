@@ -46,12 +46,12 @@ class PrivacyScreen extends StatelessWidget {
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              color: AppTheme.success.withValues(alpha: 0.10),
+                              color: AppTheme.primary.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(
                               Icons.lock_outline_rounded,
-                              color: AppTheme.success,
+                              color: AppTheme.primary,
                               size: 28,
                             ),
                           ),
@@ -258,10 +258,10 @@ class PrivacyScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppTheme.success.withValues(alpha: 0.06),
+                        color: AppTheme.primary.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppTheme.success.withValues(alpha: 0.18),
+                          color: AppTheme.primary.withValues(alpha: 0.18),
                         ),
                       ),
                       child: Row(
@@ -269,7 +269,7 @@ class PrivacyScreen extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
-                            color: AppTheme.success,
+                            color: AppTheme.primary,
                             size: 22,
                           ),
                           const SizedBox(width: 12),
@@ -298,7 +298,7 @@ class PrivacyScreen extends StatelessWidget {
                           Navigator.of(context).pop(true);
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.success,
+                          backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 28,
@@ -370,12 +370,12 @@ class _SectionCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.success.withValues(alpha: 0.10),
+                  color: AppTheme.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                   size: 22,
                 ),
               ),

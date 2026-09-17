@@ -101,9 +101,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
         return Theme(
           data: baseTheme.copyWith(
             colorScheme: baseTheme.colorScheme.copyWith(
-              primary: AppTheme.success,
+              primary: AppTheme.primary,
               onPrimary: Colors.white,
-              secondary: AppTheme.success,
+              secondary: AppTheme.primary,
               onSecondary: Colors.white,
               surface: AppTheme.surface,
               onSurface: AppTheme.textPrimary,
@@ -111,20 +111,20 @@ class _ReservaScreenState extends State<ReservaScreen> {
             datePickerTheme: DatePickerThemeData(
               backgroundColor: AppTheme.surface,
               surfaceTintColor: Colors.transparent,
-              headerBackgroundColor: AppTheme.success,
+              headerBackgroundColor: AppTheme.primary,
               headerForegroundColor: Colors.white,
               todayForegroundColor:
-                  WidgetStatePropertyAll(AppTheme.success),
+                  WidgetStatePropertyAll(AppTheme.primary),
               todayBackgroundColor:
-                  WidgetStatePropertyAll(AppTheme.successLight),
+                  WidgetStatePropertyAll(AppTheme.primaryLight),
               dayForegroundColor:
                   WidgetStatePropertyAll(AppTheme.textPrimary),
               dayOverlayColor:
-                  WidgetStatePropertyAll(AppTheme.successLight),
+                  WidgetStatePropertyAll(AppTheme.primaryLight),
               yearForegroundColor:
                   WidgetStatePropertyAll(AppTheme.textPrimary),
               yearOverlayColor:
-                  WidgetStatePropertyAll(AppTheme.successLight),
+                  WidgetStatePropertyAll(AppTheme.primaryLight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -314,12 +314,12 @@ class _ReservaScreenState extends State<ReservaScreen> {
               width: isWeb ? 52 : 48,
               height: isWeb ? 52 : 48,
               decoration: BoxDecoration(
-                color: AppTheme.successLight,
+                color: AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
                 Icons.sports_tennis_rounded,
-                color: AppTheme.success,
+                color: AppTheme.primary,
                 size: isWeb ? 27 : 25,
               ),
             ),
@@ -385,9 +385,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
             decoration: InputDecoration(
               filled: true,
               fillColor: AppTheme.surfaceMuted,
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 Icons.sports_tennis_rounded,
-                color: AppTheme.success,
+                color: AppTheme.primary,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -403,8 +403,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(
-                  color: AppTheme.success,
+                borderSide: BorderSide(
                   width: 1.5,
                 ),
               ),
@@ -508,7 +507,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                               ? Icons.history_rounded
                               : Icons.access_time_rounded,
                       color: isAvailable
-                          ? AppTheme.success
+                          ? AppTheme.primary
                           : foregroundColor,
                       size: isWeb ? 19 : 20,
                     ),
@@ -565,13 +564,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
             width: isWeb ? 76 : 68,
             height: isWeb ? 76 : 68,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.sports_tennis_rounded,
               size: isWeb ? 38 : 34,
-              color: AppTheme.success,
+              color: AppTheme.primary,
             ),
           ),
           const SizedBox(height: 18),
@@ -685,7 +684,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                         ? null
                                         : _selectDate,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.success,
+                                  backgroundColor: AppTheme.primary,
                                   foregroundColor: Colors.white,
                                   disabledBackgroundColor:
                                       AppTheme.surfaceMuted,
@@ -716,7 +715,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                   vertical: 11,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.successLight,
+                                  color: AppTheme.primaryLight,
                                   borderRadius:
                                       BorderRadius.circular(12),
                                 ),
@@ -724,10 +723,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
-                                      Icons.event_available_rounded,
+                                    Icon(Icons.event_available_rounded,
                                       size: 18,
-                                      color: AppTheme.success,
+                                      color: AppTheme.primary,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -769,17 +767,16 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.successLight,
+                                color: AppTheme.primaryLight,
                                 borderRadius:
                                     BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
-                                    Icons.circle,
+                                  Icon(Icons.circle,
                                     size: 7,
-                                    color: AppTheme.success,
+                                    color: AppTheme.primary,
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
@@ -787,7 +784,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppTheme.success,
+                                      color: AppTheme.primary,
                                     ),
                                   ),
                                 ],
@@ -797,13 +794,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
                         ),
                         const SizedBox(height: 12),
                         if (_isLoading)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
                               vertical: 50,
                             ),
                             child: Center(
                               child: CircularProgressIndicator(
-                                color: AppTheme.success,
+                                color: AppTheme.primary,
                               ),
                             ),
                           )
@@ -822,6 +819,14 @@ class _ReservaScreenState extends State<ReservaScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
 
 
 

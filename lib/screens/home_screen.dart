@@ -1,7 +1,8 @@
-﻿
 import 'package:flutter/material.dart';
+
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 import 'admin_screen.dart';
 import 'info_screen.dart';
 import 'login_screen.dart';
@@ -22,11 +23,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   String _userRole = 'user';
 
-  Color get _accent => const Color(0xFF16A36A);
-  Color get _accentSoft => const Color(0xFFE8F7F0);
-  Color get _background => const Color(0xFFF7F8FA);
-  Color get _textPrimary => const Color(0xFF18221D);
-  Color get _textSecondary => const Color(0xFF69746E);
+  Color get _accent => AppTheme.primary;
+  Color get _accentSoft => AppTheme.primaryLight;
+  Color get _background => AppTheme.background;
+  Color get _textPrimary => AppTheme.textPrimary;
+  Color get _textSecondary => AppTheme.textSecondary;
 
   @override
   void initState() {
@@ -173,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.of(context).pop(true);
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFD94B4B),
+                backgroundColor: AppTheme.error,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
@@ -222,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen>
               margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7FBF9),
+                color: AppTheme.surfaceSoft,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _accent.withValues(alpha: 0.12),
@@ -360,14 +361,14 @@ class _HomeScreenState extends State<HomeScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                leading: const Icon(
+                leading: Icon(
                   Icons.logout_rounded,
-                  color: Color(0xFFD94B4B),
+                  color: AppTheme.error,
                 ),
-                title: const Text(
+                title: Text(
                   'Cerrar sesión',
                   style: TextStyle(
-                    color: Color(0xFFD94B4B),
+                    color: AppTheme.error,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -473,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
             )
           else
             Container(
-              color: const Color(0xFFF1F5F3),
+              color: AppTheme.surfaceMuted,
             ),
           if (hasImage)
             DecoratedBox(
@@ -662,7 +663,7 @@ class _HomeScreenState extends State<HomeScreen>
                 decoration: BoxDecoration(
                   color: primary
                       ? _accentSoft
-                      : const Color(0xFFF4F6F5),
+                      : AppTheme.surfaceMuted,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -890,7 +891,3 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
-
-
-
-

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import 'package:intl/intl.dart';
@@ -163,10 +163,10 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
+                  child: Text(
                     'OK',
                     style: TextStyle(
-                      color: AppTheme.success,
+                      color: AppTheme.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -240,9 +240,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Reserva cancelada exitosamente'),
-                backgroundColor: AppTheme.success,
+              SnackBar(
+                content: const Text('Reserva cancelada exitosamente'),
+                backgroundColor: AppTheme.primary,
               ),
             );
             await _loadReservas();
@@ -384,7 +384,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 ),
                 child: RefreshIndicator(
                   onRefresh: _loadReservas,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                   backgroundColor: AppTheme.surface,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -395,9 +395,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     child: _isLoading
                         ? SizedBox(
                             height: constraints.maxHeight - 120,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
-                                color: AppTheme.success,
+                                color: AppTheme.primary,
                               ),
                             ),
                           )
@@ -444,12 +444,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             width: isWeb ? 54 : 50,
             height: isWeb ? 54 : 50,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_available_rounded,
-              color: AppTheme.success,
+              color: AppTheme.primary,
               size: 27,
             ),
           ),
@@ -485,16 +485,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.check_circle_outline_rounded,
                   size: 15,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -502,7 +502,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   style: TextStyle(
                     fontSize: isWeb ? 12 : 11,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.success,
+                    color: AppTheme.primary,
                   ),
                 ),
               ],
@@ -538,13 +538,13 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 width: isWeb ? 84 : 76,
                 height: isWeb ? 84 : 76,
                 decoration: BoxDecoration(
-                  color: AppTheme.successLight,
+                  color: AppTheme.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.event_busy_rounded,
                   size: isWeb ? 42 : 38,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -604,12 +604,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppTheme.successLight,
+                      color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.calendar_month_rounded,
-                      color: AppTheme.success,
+                      color: AppTheme.primary,
                       size: 24,
                     ),
                   ),
@@ -645,7 +645,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: estado
-                          ? AppTheme.successLight
+                          ? AppTheme.primaryLight
                           : AppTheme.surfaceMuted,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -657,7 +657,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                               ? Icons.check_circle_rounded
                               : Icons.cancel_rounded,
                           color: estado
-                              ? AppTheme.success
+                              ? AppTheme.primary
                               : AppTheme.textTertiary,
                           size: 15,
                         ),
@@ -666,7 +666,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           estado ? 'CONFIRMADA' : 'CANCELADA',
                           style: TextStyle(
                             color: estado
-                                ? AppTheme.success
+                                ? AppTheme.primary
                                 : AppTheme.textTertiary,
                             fontWeight: FontWeight.w600,
                             fontSize: 10,
@@ -756,7 +756,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       children: [
         Icon(
           icon,
-          color: AppTheme.success,
+          color: AppTheme.primary,
           size: 19,
         ),
         const SizedBox(width: 11),
@@ -801,3 +801,5 @@ extension ListExtension<T> on List<T> {
     return (first, second);
   }
 }
+
+

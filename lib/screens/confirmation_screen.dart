@@ -127,9 +127,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Reserva confirmada exitosamente!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('¡Reserva confirmada exitosamente!'),
+            backgroundColor: AppTheme.primary,
           ),
         );
 
@@ -298,12 +298,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.successLight,
+                  color: AppTheme.primaryLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.sports_tennis,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                   size: 23,
                 ),
               ),
@@ -419,12 +419,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
-              color: AppTheme.success,
+              color: AppTheme.primary,
               size: 20,
             ),
           ),
@@ -469,10 +469,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           vertical: 18,
         ),
         decoration: BoxDecoration(
-          color: AppTheme.successLight,
+          color: AppTheme.primaryLight,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.success.withValues(alpha: 0.25),
+            color: AppTheme.primary.withValues(alpha: 0.25),
           ),
         ),
         child: Row(
@@ -480,7 +480,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           children: [
             Icon(
               Icons.check_circle,
-              color: AppTheme.success,
+              color: AppTheme.primary,
               size: 24,
             ),
             const SizedBox(width: 10),
@@ -488,7 +488,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
               child: Text(
                 'Reserva confirmada',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.success,
+                      color: AppTheme.primary,
                       fontWeight: FontWeight.w700,
                     ),
                 textAlign: TextAlign.center,
@@ -504,9 +504,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _confirmReservation,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.success,
+          backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppTheme.success.withValues(alpha: 0.55),
+          disabledBackgroundColor: AppTheme.primary.withValues(alpha: 0.55),
           disabledForegroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -588,6 +588,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           );
   }
 }
+
+
 
 
 

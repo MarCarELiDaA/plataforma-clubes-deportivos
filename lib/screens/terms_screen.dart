@@ -138,7 +138,7 @@ class TermsScreen extends StatelessWidget {
                   Navigator.of(context).pop(true);
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.success,
+                  backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,

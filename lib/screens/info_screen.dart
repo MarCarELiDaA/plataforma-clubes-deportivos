@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 
@@ -116,7 +116,7 @@ class InfoScreen extends StatelessWidget {
                 return Icon(
                   Icons.sports_tennis,
                   size: isWide ? 72 : 60,
-                  color: AppTheme.success,
+                  color: AppTheme.primary,
                 );
               },
             ),
@@ -168,12 +168,12 @@ class InfoScreen extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(
               icon,
-              color: AppTheme.success,
+              color: AppTheme.primary,
               size: 23,
             ),
           ),

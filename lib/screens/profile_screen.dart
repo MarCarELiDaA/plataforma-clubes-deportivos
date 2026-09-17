@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: const Text(
               'Datos actualizados correctamente',
             ),
-            backgroundColor: AppTheme.success,
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -211,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: const Text(
               'Contraseña cambiada exitosamente',
             ),
-            backgroundColor: AppTheme.success,
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -287,8 +287,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.success,
+                      borderSide: BorderSide(
+                        color: AppTheme.primary,
                         width: 1.5,
                       ),
                     ),
@@ -317,8 +317,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.success,
+                      borderSide: BorderSide(
+                        color: AppTheme.primary,
                         width: 1.5,
                       ),
                     ),
@@ -347,8 +347,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.success,
+                      borderSide: BorderSide(
+                        color: AppTheme.primary,
                         width: 1.5,
                       ),
                     ),
@@ -396,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             FilledButton(
               onPressed: _changePassword,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.success,
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Cambiar'),
@@ -450,9 +450,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
-            color: AppTheme.success,
+            color: AppTheme.primary,
           ),
         ),
       );
@@ -539,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Guardar cambios',
                           ),
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppTheme.success,
+                            backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 22,
@@ -584,16 +584,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: AppTheme.successLight,
+              color: AppTheme.primaryLight,
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppTheme.success.withValues(alpha: 0.25),
+                color: AppTheme.primary.withValues(alpha: 0.25),
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_outline_rounded,
               size: 40,
-              color: AppTheme.success,
+              color: AppTheme.primary,
             ),
           ),
           const SizedBox(height: 14),
@@ -732,8 +732,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppTheme.success,
+                borderSide: BorderSide(
+                  color: AppTheme.primary,
                   width: 1.5,
                 ),
               ),
@@ -811,8 +811,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppTheme.success,
+                borderSide: BorderSide(
+                  color: AppTheme.primary,
                   width: 1.5,
                 ),
               ),
@@ -919,14 +919,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: AppTheme.successLight,
+        color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(11),
       ),
       child: Icon(
         icon,
-        color: AppTheme.success,
+        color: AppTheme.primary,
         size: 21,
       ),
     );
   }
 }
+
