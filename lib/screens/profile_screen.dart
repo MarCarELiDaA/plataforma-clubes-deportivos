@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../config/app_config.dart';
 import '../services/auth_service.dart';
 import '../models/usuario.dart';
 import '../theme/app_theme.dart';
@@ -510,8 +511,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           LengthLimitingTextInputFormatter(9),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildLevelCard(),
+                      if (AppConfig.club.moduloActivo('padelLevel')) ...[
+                        const SizedBox(height: 12),
+                        _buildLevelCard(),
+                      ],
                       const SizedBox(height: 12),
                       _buildInfoCard(
                         icon: Icons.calendar_today_outlined,
