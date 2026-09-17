@@ -79,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'Clubes Deportivos',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF1D2939),
+                    color: AppTheme.textPrimary,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'Preparando la aplicación',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
