@@ -29,6 +29,16 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   String? _errorMessage;
 
+  Color get _primary => AppTheme.primary;
+  Color get _primarySoft => AppTheme.primaryLight;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _surfaceSoft => AppTheme.clubSurfaceSoft;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _border => AppTheme.clubBorder;
+  Color get _textOnPrimary => AppTheme.textOnPrimary;
+
   @override
   void initState() {
     super.initState();
@@ -61,10 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     if (_rememberEmail) {
-      await prefs.setString(
-        'saved_email',
-        _emailController.text.trim(),
-      );
+      await prefs.setString('saved_email', _emailController.text.trim());
     } else {
       await prefs.remove('saved_email');
     }
@@ -89,9 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (status == 'approved') {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         } else {
           await _authService.signOut();
@@ -135,8 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await _saveEmail();
 
-      final userCredential =
-          await _authService.signInWithEmailAndPassword(
+      final userCredential = await _authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text,
       );
@@ -144,9 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = userCredential.user;
 
       if (user == null) {
-        throw FirebaseAuthException(
-          code: 'user-not-found',
-        );
+        throw FirebaseAuthException(code: 'user-not-found');
       }
 
       await user.reload();
@@ -154,9 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final refreshedUser = _authService.currentUser;
 
       if (refreshedUser == null) {
-        throw FirebaseAuthException(
-          code: 'user-not-found',
-        );
+        throw FirebaseAuthException(code: 'user-not-found');
       }
 
       if (!refreshedUser.emailVerified) {
@@ -194,9 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -225,9 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final emailRegex = RegExp(
-      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-    );
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailRegex.hasMatch(email)) {
       setState(() {
@@ -255,9 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: email,
-      );
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
 
       if (!mounted) return;
 
@@ -356,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppTheme.surface,
+          backgroundColor: _surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -367,20 +361,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: _primarySoft,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  color: AppTheme.primary,
-                ),
+                child: Icon(icon, color: _primary),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
                   ),
@@ -390,11 +381,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           content: Text(
             message,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 15,
-              height: 1.5,
-            ),
+            style: TextStyle(color: _textSecondary, fontSize: 15, height: 1.5),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
@@ -405,19 +392,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.of(dialogContext).pop();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: _primary,
+                  foregroundColor: _textOnPrimary,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Entendido',
                   style: TextStyle(
+                    color: _textOnPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -435,7 +421,7 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppTheme.surface,
+          backgroundColor: _surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -446,20 +432,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: _primarySoft,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.mark_email_unread_outlined,
-                  color: AppTheme.primary,
-                ),
+                child: Icon(Icons.mark_email_unread_outlined, color: _primary),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Verifica tu correo',
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
                   ),
@@ -470,11 +453,7 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(
             'Debes verificar tu correo electrónico antes de iniciar sesión. '
             'Revisa tu bandeja de entrada y la carpeta de spam.',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 15,
-              height: 1.5,
-            ),
+            style: TextStyle(color: _textSecondary, fontSize: 15, height: 1.5),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
@@ -485,19 +464,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.of(dialogContext).pop();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: _primary,
+                  foregroundColor: _textOnPrimary,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Entendido',
                   style: TextStyle(
+                    color: _textOnPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -516,49 +494,28 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(
-        icon,
-        color: AppTheme.textSecondary,
-      ),
+      prefixIcon: Icon(icon, color: _textSecondary),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: AppTheme.surface,
-      labelStyle: TextStyle(
-        color: AppTheme.textSecondary,
-        fontWeight: FontWeight.w400,
-      ),
-      hintStyle: TextStyle(
-        color: AppTheme.textSecondary,
-      ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 17,
-      ),
+      fillColor: _surface,
+      labelStyle: TextStyle(color: _textSecondary, fontWeight: FontWeight.w400),
+      hintStyle: TextStyle(color: _textSecondary),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: AppTheme.border,
-        ),
+        borderSide: BorderSide(color: _border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: AppTheme.primary,
-          width: 1.5,
-        ),
+        borderSide: BorderSide(color: _primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: AppTheme.error,
-        ),
+        borderSide: BorderSide(color: AppTheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: AppTheme.error,
-          width: 1.5,
-        ),
+        borderSide: BorderSide(color: AppTheme.error, width: 1.5),
       ),
     );
   }
@@ -568,29 +525,22 @@ class _LoginScreenState extends State<LoginScreen> {
     final club = AppConfig.club;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: _background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 32,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 440,
-              ),
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: _surface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: AppTheme.border,
-                      ),
+                      border: Border.all(color: _border),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.055),
@@ -606,39 +556,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 116,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppTheme.surface,
+                            color: _surfaceSoft,
                             borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: AppTheme.border,
-                            ),
+                            border: Border.all(color: _border),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withValues(
-                                  alpha: 0.08,
-                                ),
+                                color: _primary.withValues(alpha: 0.08),
                                 blurRadius: 24,
                                 offset: const Offset(0, 10),
                               ),
                             ],
                           ),
-                          child: Image.asset(
-                            club.logo,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.sports_tennis_rounded,
-                                size: 52,
-                                color: AppTheme.primary,
-                              );
-                            },
-                          ),
+                          child: club.logo.isNotEmpty
+                              ? Image.asset(
+                                  club.logo,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.sports_tennis_rounded,
+                                      size: 52,
+                                      color: _primary,
+                                    );
+                                  },
+                                )
+                              : Icon(
+                                  Icons.sports_tennis_rounded,
+                                  size: 52,
+                                  color: _primary,
+                                ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           club.nombre,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppTheme.textPrimary,
+                            color: _textPrimary,
                             fontSize: 25,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.5,
@@ -649,7 +601,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Accede a tu cuenta',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppTheme.textSecondary,
+                            color: _textSecondary,
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
                           ),
@@ -705,15 +657,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   suffixIcon: IconButton(
                                     onPressed: () {
                                       setState(() {
-                                        _obscurePassword =
-                                            !_obscurePassword;
+                                        _obscurePassword = !_obscurePassword;
                                       });
                                     },
                                     icon: Icon(
                                       _obscurePassword
                                           ? Icons.visibility_outlined
                                           : Icons.visibility_off_outlined,
-                                      color: AppTheme.textSecondary,
+                                      color: _textSecondary,
                                     ),
                                   ),
                                 ),
@@ -729,18 +680,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed:
-                                      _isLoading ? null : _forgotPassword,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : _forgotPassword,
                                   style: TextButton.styleFrom(
-                                    foregroundColor: AppTheme.primary,
+                                    foregroundColor: _primary,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 4,
                                       vertical: 6,
                                     ),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     '¿Has olvidado tu contraseña?',
                                     style: TextStyle(
+                                      color: _primary,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
@@ -755,13 +708,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 24,
                                     child: Checkbox(
                                       value: _rememberEmail,
-                                      activeColor: AppTheme.primary,
+                                      activeColor: _primary,
+                                      checkColor: _textOnPrimary,
                                       onChanged: _isLoading
                                           ? null
                                           : (value) {
                                               setState(() {
-                                                _rememberEmail =
-                                                    value ?? false;
+                                                _rememberEmail = value ?? false;
                                               });
                                             },
                                     ),
@@ -771,7 +724,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: Text(
                                       'Recordar mi correo electrónico',
                                       style: TextStyle(
-                                        color: AppTheme.textSecondary,
+                                        color: _textSecondary,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -821,37 +774,32 @@ class _LoginScreenState extends State<LoginScreen> {
                               SizedBox(
                                 height: 54,
                                 child: FilledButton(
-                                  onPressed:
-                                      _isLoading ? null : _login,
+                                  onPressed: _isLoading ? null : _login,
                                   style: FilledButton.styleFrom(
-                                    backgroundColor:
-                                        AppTheme.primary,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        AppTheme.primary.withValues(
-                                      alpha: 0.45,
-                                    ),
-                                    disabledForegroundColor:
-                                        Colors.white,
+                                    backgroundColor: _primary,
+                                    foregroundColor: _textOnPrimary,
+                                    disabledBackgroundColor: _primary
+                                        .withValues(alpha: 0.45),
+                                    disabledForegroundColor: _textOnPrimary
+                                        .withValues(alpha: 0.7),
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
                                   child: _isLoading
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 22,
                                           height: 22,
-                                          child:
-                                              CircularProgressIndicator(
+                                          child: CircularProgressIndicator(
                                             strokeWidth: 2.2,
-                                            color: Colors.white,
+                                            color: _textOnPrimary,
                                           ),
                                         )
-                                      : const Text(
+                                      : Text(
                                           'Iniciar sesión',
                                           style: TextStyle(
+                                            color: _textOnPrimary,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -871,21 +819,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       vertical: 17,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface.withValues(alpha: 0.72),
+                      color: _surface.withValues(alpha: 0.72),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: AppTheme.border,
-                      ),
+                      border: Border.all(color: _border),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           '¿No tienes una cuenta?',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: _textSecondary, fontSize: 14),
                         ),
                         const SizedBox(width: 4),
                         TextButton(
@@ -900,15 +843,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   );
                                 },
                           style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.primary,
+                            foregroundColor: _primary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
                               vertical: 4,
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Crear cuenta',
                             style: TextStyle(
+                              color: _primary,
                               fontWeight: FontWeight.w700,
                             ),
                           ),

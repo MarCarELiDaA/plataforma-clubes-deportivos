@@ -14,42 +14,39 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   final _adminService = AdminService();
 
+  Color get _primary => AppTheme.primary;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _surfaceSoft => AppTheme.clubSurfaceSoft;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _borderSoft => AppTheme.clubBorderSoft;
+  Color get _textOnPrimary => AppTheme.textOnPrimary;
+
   Future<void> _approveUser(String userId, String userName) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text(
+        backgroundColor: _surface,
+        title: Text(
           'Aprobar usuario',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w700),
         ),
         content: Text(
           '¿Deseas aprobar a $userName?',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(color: _textSecondary),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-              ),
-            ),
+            child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: _primary,
+              foregroundColor: _textOnPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -69,7 +66,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Usuario aprobado correctamente'),
-              backgroundColor: AppTheme.primary,
+              backgroundColor: _primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -98,32 +95,20 @@ class _AdminScreenState extends State<AdminScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text(
+        backgroundColor: _surface,
+        title: Text(
           'Rechazar usuario',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w700),
         ),
         content: Text(
           '¿Deseas rechazar a $userName?',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(color: _textSecondary),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-              ),
-            ),
+            child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -149,7 +134,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Usuario rechazado correctamente'),
-              backgroundColor: AppTheme.primary,
+              backgroundColor: _primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -177,12 +162,12 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: _background,
       appBar: AppBar(
         title: const Text('Administración'),
         centerTitle: true,
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: _surface,
+        foregroundColor: _textPrimary,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -201,9 +186,7 @@ class _AdminScreenState extends State<AdminScreen> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primary,
-                  ),
+                  child: CircularProgressIndicator(color: _primary),
                 );
               }
 
@@ -218,21 +201,17 @@ class _AdminScreenState extends State<AdminScreen> {
               }
 
               return RefreshIndicator(
-                color: AppTheme.primary,
+                color: _primary,
                 onRefresh: () async {
                   setState(() {});
-                  await Future<void>.delayed(
-                    const Duration(milliseconds: 300),
-                  );
+                  await Future<void>.delayed(const Duration(milliseconds: 300));
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: maxWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: maxWidth),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -245,10 +224,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
-                              child: _buildUserCard(
-                                userId,
-                                user,
-                              ),
+                              child: _buildUserCard(userId, user),
                             );
                           }),
                           const SizedBox(height: 8),
@@ -270,11 +246,9 @@ class _AdminScreenState extends State<AdminScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: _borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
@@ -283,12 +257,12 @@ class _AdminScreenState extends State<AdminScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: _surfaceSoft,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.admin_panel_settings_outlined,
-              color: AppTheme.primary,
+              color: _primary,
               size: 26,
             ),
           ),
@@ -297,10 +271,10 @@ class _AdminScreenState extends State<AdminScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Usuarios pendientes',
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -310,10 +284,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   pendingCount == 1
                       ? 'Hay 1 usuario pendiente de aprobación'
                       : 'Hay $pendingCount usuarios pendientes de aprobación',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: _textSecondary, fontSize: 14),
                 ),
               ],
             ),
@@ -323,10 +294,7 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Widget _buildUserCard(
-    String userId,
-    Map<String, dynamic> user,
-  ) {
+  Widget _buildUserCard(String userId, Map<String, dynamic> user) {
     final userName = user['nombre'] ?? 'Usuario';
     final email = user['email'] ?? '';
 
@@ -334,9 +302,9 @@ class _AdminScreenState extends State<AdminScreen> {
 
     if (user['fechaRegistro'] != null) {
       try {
-        registrationDate = DateFormat('dd/MM/yyyy HH:mm').format(
-          user['fechaRegistro'].toDate(),
-        );
+        registrationDate = DateFormat(
+          'dd/MM/yyyy HH:mm',
+        ).format(user['fechaRegistro'].toDate());
       } catch (_) {
         registrationDate = null;
       }
@@ -346,11 +314,9 @@ class _AdminScreenState extends State<AdminScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: _borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -363,12 +329,12 @@ class _AdminScreenState extends State<AdminScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: _surfaceSoft,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.person_outline_rounded,
-                  color: AppTheme.primary,
+                  color: _primary,
                   size: 25,
                 ),
               ),
@@ -379,8 +345,8 @@ class _AdminScreenState extends State<AdminScreen> {
                   children: [
                     Text(
                       userName,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                      style: TextStyle(
+                        color: _textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
@@ -389,10 +355,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       const SizedBox(height: 5),
                       Text(
                         email,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: _textSecondary, fontSize: 14),
                       ),
                     ],
                   ],
@@ -404,29 +367,24 @@ class _AdminScreenState extends State<AdminScreen> {
             const SizedBox(height: 18),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                color: _background,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.borderSoft,
-                ),
+                border: Border.all(color: _borderSoft),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_outlined,
-                    color: AppTheme.textSecondary,
+                    color: _textSecondary,
                     size: 18,
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     'Registrado:',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: _textSecondary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -435,8 +393,8 @@ class _AdminScreenState extends State<AdminScreen> {
                   Expanded(
                     child: Text(
                       registrationDate,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                      style: TextStyle(
+                        color: _textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -455,18 +413,13 @@ class _AdminScreenState extends State<AdminScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () => _approveUser(
-                          userId,
-                          userName.toString(),
-                        ),
-                        icon: const Icon(
-                          Icons.check_circle_outline,
-                          size: 20,
-                        ),
+                        onPressed: () =>
+                            _approveUser(userId, userName.toString()),
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
                         label: const Text('Aprobar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
+                          backgroundColor: _primary,
+                          foregroundColor: _textOnPrimary,
                           elevation: 0,
                           minimumSize: const Size.fromHeight(48),
                           shape: RoundedRectangleBorder(
@@ -479,14 +432,8 @@ class _AdminScreenState extends State<AdminScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => _denyUser(
-                          userId,
-                          userName.toString(),
-                        ),
-                        icon: const Icon(
-                          Icons.cancel_outlined,
-                          size: 20,
-                        ),
+                        onPressed: () => _denyUser(userId, userName.toString()),
+                        icon: const Icon(Icons.cancel_outlined, size: 20),
                         label: const Text('Rechazar'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.destructiveRed,
@@ -508,18 +455,13 @@ class _AdminScreenState extends State<AdminScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _approveUser(
-                        userId,
-                        userName.toString(),
-                      ),
-                      icon: const Icon(
-                        Icons.check_circle_outline,
-                        size: 20,
-                      ),
+                      onPressed: () =>
+                          _approveUser(userId, userName.toString()),
+                      icon: const Icon(Icons.check_circle_outline, size: 20),
                       label: const Text('Aprobar'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: _primary,
+                        foregroundColor: _textOnPrimary,
                         elevation: 0,
                         minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
@@ -531,20 +473,12 @@ class _AdminScreenState extends State<AdminScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _denyUser(
-                        userId,
-                        userName.toString(),
-                      ),
-                      icon: const Icon(
-                        Icons.cancel_outlined,
-                        size: 20,
-                      ),
+                      onPressed: () => _denyUser(userId, userName.toString()),
+                      icon: const Icon(Icons.cancel_outlined, size: 20),
                       label: const Text('Rechazar'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.destructiveRed,
-                        side: const BorderSide(
-                          color: AppTheme.destructiveRed,
-                        ),
+                        side: const BorderSide(color: AppTheme.destructiveRed),
                         minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -566,21 +500,14 @@ class _AdminScreenState extends State<AdminScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: maxWidth,
-          ),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 28,
-              vertical: 36,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: _surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.borderSoft,
-              ),
+              border: Border.all(color: _borderSoft),
               boxShadow: AppTheme.softShadow,
             ),
             child: Column(
@@ -590,31 +517,31 @@ class _AdminScreenState extends State<AdminScreen> {
                   width: 76,
                   height: 76,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
+                    color: _surfaceSoft,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.check_circle_outline_rounded,
-                    color: AppTheme.primary,
+                    color: _primary,
                     size: 42,
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Todo está al día',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'No hay usuarios pendientes de aprobación.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: _textSecondary,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -632,16 +559,12 @@ class _AdminScreenState extends State<AdminScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Container(
-          constraints: const BoxConstraints(
-            maxWidth: 600,
-          ),
+          constraints: const BoxConstraints(maxWidth: 600),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: _surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppTheme.borderSoft,
-            ),
+            border: Border.all(color: _borderSoft),
             boxShadow: AppTheme.softShadow,
           ),
           child: Column(
@@ -661,11 +584,11 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'No se han podido cargar los usuarios',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: _textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -674,10 +597,7 @@ class _AdminScreenState extends State<AdminScreen> {
               Text(
                 error,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: _textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -686,5 +606,3 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 }
-
-

@@ -12,12 +12,23 @@ class InfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppTheme.primary;
+    final background = AppTheme.clubBackground;
+    final surface = AppTheme.clubSurface;
+    final surfaceSoft = AppTheme.clubSurfaceSoft;
+    final textPrimary = AppTheme.clubTextPrimary;
+    final textSecondary = AppTheme.clubTextSecondary;
+    final borderSoft = AppTheme.clubBorderSoft;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: background,
       appBar: AppBar(
-        title: const Text('Información del Club'),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textPrimary,
+        title: Text(
+          'Información del Club',
+          style: TextStyle(color: textPrimary),
+        ),
+        backgroundColor: surface,
+        foregroundColor: textPrimary,
         centerTitle: true,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -41,7 +52,16 @@ class InfoScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeader(context, isWide),
+                    _buildHeader(
+                      context,
+                      isWide,
+                      primary,
+                      background,
+                      surface,
+                      textPrimary,
+                      textSecondary,
+                      borderSoft,
+                    ),
                     const SizedBox(height: 24),
                     _buildInformationCard(
                       context,
@@ -49,6 +69,12 @@ class InfoScreen extends StatelessWidget {
                       icon: Icons.location_on_outlined,
                       title: 'Dirección',
                       content: direccion,
+                      primary: primary,
+                      surface: surface,
+                      surfaceSoft: surfaceSoft,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      borderSoft: borderSoft,
                     ),
                     const SizedBox(height: 14),
                     _buildInformationCard(
@@ -57,6 +83,12 @@ class InfoScreen extends StatelessWidget {
                       icon: Icons.access_time_outlined,
                       title: 'Horario',
                       content: horario,
+                      primary: primary,
+                      surface: surface,
+                      surfaceSoft: surfaceSoft,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      borderSoft: borderSoft,
                     ),
                     const SizedBox(height: 14),
                     _buildInformationCard(
@@ -65,6 +97,12 @@ class InfoScreen extends StatelessWidget {
                       icon: Icons.phone_outlined,
                       title: 'Teléfono',
                       content: telefono,
+                      primary: primary,
+                      surface: surface,
+                      surfaceSoft: surfaceSoft,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      borderSoft: borderSoft,
                     ),
                     const SizedBox(height: 14),
                     _buildInformationCard(
@@ -73,6 +111,12 @@ class InfoScreen extends StatelessWidget {
                       icon: Icons.email_outlined,
                       title: 'Correo electrónico',
                       content: email,
+                      primary: primary,
+                      surface: surface,
+                      surfaceSoft: surfaceSoft,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      borderSoft: borderSoft,
                     ),
                   ],
                 ),
@@ -84,16 +128,23 @@ class InfoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isWide) {
+  Widget _buildHeader(
+    BuildContext context,
+    bool isWide,
+    Color primary,
+    Color background,
+    Color surface,
+    Color textPrimary,
+    Color textSecondary,
+    Color borderSoft,
+  ) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isWide ? 32 : 24),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -103,11 +154,9 @@ class InfoScreen extends StatelessWidget {
             height: isWide ? 180 : 150,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.background,
+              color: background,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: AppTheme.borderSoft,
-              ),
+              border: Border.all(color: borderSoft),
             ),
             child: Image.asset(
               AppConfig.club.logo,
@@ -116,7 +165,7 @@ class InfoScreen extends StatelessWidget {
                 return Icon(
                   Icons.sports_tennis,
                   size: isWide ? 72 : 60,
-                  color: AppTheme.primary,
+                  color: primary,
                 );
               },
             ),
@@ -126,17 +175,17 @@ class InfoScreen extends StatelessWidget {
             AppConfig.club.nombre,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Información y datos de contacto',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: textSecondary),
           ),
         ],
       ),
@@ -149,16 +198,20 @@ class InfoScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String content,
+    required Color primary,
+    required Color surface,
+    required Color surfaceSoft,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color borderSoft,
   }) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isWide ? 22 : 18),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
@@ -168,14 +221,10 @@ class InfoScreen extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: surfaceSoft,
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(
-              icon,
-              color: AppTheme.primary,
-              size: 23,
-            ),
+            child: Icon(icon, color: primary, size: 23),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -185,18 +234,18 @@ class InfoScreen extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   content,
                   softWrap: true,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
-                        height: 1.4,
-                      ),
+                    color: textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),

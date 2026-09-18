@@ -23,6 +23,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   List<Map<String, dynamic>> _reservas = [];
   bool _isLoading = false;
 
+  Color get _primary => AppTheme.primary;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _surfaceSoft => AppTheme.clubSurfaceSoft;
+  Color get _surfaceMuted => AppTheme.clubSurfaceMuted;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _textTertiary => AppTheme.clubTextTertiary;
+  Color get _borderSoft => AppTheme.clubBorderSoft;
+
   @override
   void initState() {
     super.initState();
@@ -37,11 +47,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     try {
       final user = _authService.currentUser;
       if (user != null) {
-        final reservas =
-            await _reservaService.getReservasUsuarioConId(user.uid).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () => [],
-        );
+        final reservas = await _reservaService
+            .getReservasUsuarioConId(user.uid)
+            .timeout(const Duration(seconds: 5), onTimeout: () => []);
 
         if (mounted) {
           setState(() {
@@ -72,10 +80,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     final dateFormat = DateFormat('yyyy-MM-dd');
     final timeFormat = DateFormat('HH:mm');
 
-    // Filtrar solo reservas confirmadas y que no estén en el pasado
     final filtered = reservas.where((reserva) {
       try {
-        // Solo mostrar reservas confirmadas
         if (reserva['estadoReserva'] != 'CONFIRMADA') {
           return false;
         }
@@ -90,14 +96,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           hora.minute,
         );
 
-        // No mostrar reservas que ya pasaron
         return fechaHora.isAfter(now);
       } catch (e) {
         return false;
       }
     }).toList();
 
-    // Ordenar por fecha más cercana
     filtered.sort((a, b) {
       try {
         final fechaA = dateFormat.parse(a['fecha']);
@@ -131,7 +135,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
   Future<void> _cancelReservation(Map<String, dynamic> reserva) async {
     try {
-      // Validar política de cancelación (mínimo 1 hora de antelación)
       final puedeCancelar = _reservaService.puedeCancelarReserva(
         reserva['fecha'],
         reserva['horaInicio'],
@@ -142,20 +145,17 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              backgroundColor: AppTheme.surface,
-              title: const Text(
+              backgroundColor: _surface,
+              title: Text(
                 'No se puede cancelar',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: _textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              content: const Text(
+              content: Text(
                 'No puedes cancelar esta reserva porque falta menos de 1 hora para su inicio.',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  height: 1.45,
-                ),
+                style: TextStyle(color: _textSecondary, height: 1.45),
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -166,7 +166,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   child: Text(
                     'OK',
                     style: TextStyle(
-                      color: AppTheme.primary,
+                      color: _primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -181,19 +181,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          title: const Text(
+          backgroundColor: _surface,
+          title: Text(
             'Cancelar reserva',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
           ),
-          content: const Text(
+          content: Text(
             '¿Deseas cancelar esta reserva?',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-            ),
+            style: TextStyle(color: _textSecondary),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -201,23 +196,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                'No',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                ),
-              ),
+              child: Text('No', style: TextStyle(color: _textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.error,
-              ),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.error),
               child: const Text(
                 'Sí, cancelar',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -232,17 +218,15 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         try {
           await _reservaService.cancelarReserva(reserva['id']);
 
-          // Cancelar el recordatorio asociado
           await _notificationService.cancelReminder(reserva['id']);
 
-          // Mostrar notificación de cancelación
           await _notificationService.showCancellationNotification();
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Reserva cancelada exitosamente'),
-                backgroundColor: AppTheme.primary,
+                backgroundColor: _primary,
               ),
             );
             await _loadReservas();
@@ -280,43 +264,27 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text(
+        backgroundColor: _surface,
+        title: Text(
           'Cerrar sesión',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
         ),
-        content: const Text(
+        content: Text(
           '¿Estás seguro de que quieres cerrar sesión?',
-          style: TextStyle(
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(color: _textSecondary),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-              ),
-            ),
+            child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.error,
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
             child: const Text(
               'Cerrar sesión',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -335,9 +303,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al cerrar sesión: ${e.toString()}'),
-            ),
+            SnackBar(content: Text('Error al cerrar sesión: ${e.toString()}')),
           );
         }
       }
@@ -354,23 +320,20 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         final verticalPadding = isWeb ? 20.0 : 16.0;
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: _background,
           appBar: AppBar(
             title: Text(
               AppConfig.club.nombre,
               style: TextStyle(
                 fontSize: isWeb ? 20 : 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: _textPrimary,
               ),
             ),
             actions: [
               IconButton(
                 tooltip: 'Cerrar sesión',
-                icon: const Icon(
-                  Icons.logout_outlined,
-                  color: AppTheme.textSecondary,
-                ),
+                icon: Icon(Icons.logout_outlined, color: _textSecondary),
                 onPressed: _logout,
               ),
               SizedBox(width: isWeb ? 12 : 4),
@@ -379,13 +342,11 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: maxContentWidth,
-                ),
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: RefreshIndicator(
                   onRefresh: _loadReservas,
-                  color: AppTheme.primary,
-                  backgroundColor: AppTheme.surface,
+                  color: _primary,
+                  backgroundColor: _surface,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.symmetric(
@@ -396,25 +357,22 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                         ? SizedBox(
                             height: constraints.maxHeight - 120,
                             child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primary,
-                              ),
+                              child: CircularProgressIndicator(color: _primary),
                             ),
                           )
                         : _reservas.isEmpty
-                            ? _buildEmptyState(isWeb)
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _buildHeaderCard(isWeb),
-                                  const SizedBox(height: 18),
-                                  ..._reservas.map(
-                                    (reserva) =>
-                                        _buildReservationCard(reserva),
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
+                        ? _buildEmptyState(isWeb)
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildHeaderCard(isWeb),
+                              const SizedBox(height: 18),
+                              ..._reservas.map(
+                                (reserva) => _buildReservationCard(reserva),
                               ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                   ),
                 ),
               ),
@@ -427,15 +385,11 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
   Widget _buildHeaderCard(bool isWeb) {
     return Container(
-      padding: EdgeInsets.all(
-        isWeb ? 22 : 18,
-      ),
+      padding: EdgeInsets.all(isWeb ? 22 : 18),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: _borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
@@ -444,12 +398,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             width: isWeb ? 54 : 50,
             height: isWeb ? 54 : 50,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: _surfaceSoft,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               Icons.event_available_rounded,
-              color: AppTheme.primary,
+              color: _primary,
               size: 27,
             ),
           ),
@@ -463,7 +417,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   style: TextStyle(
                     fontSize: isWeb ? 21 : 19,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -473,19 +427,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       : 'Tienes ${_reservas.length} reservas confirmadas',
                   style: TextStyle(
                     fontSize: isWeb ? 14 : 13,
-                    color: AppTheme.textSecondary,
+                    color: _textSecondary,
                   ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: _surfaceSoft,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -494,7 +445,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 Icon(
                   Icons.check_circle_outline_rounded,
                   size: 15,
-                  color: AppTheme.primary,
+                  color: _primary,
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -502,7 +453,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   style: TextStyle(
                     fontSize: isWeb ? 12 : 11,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
+                    color: _primary,
                   ),
                 ),
               ],
@@ -524,11 +475,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             vertical: isWeb ? 42 : 34,
           ),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: _surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppTheme.borderSoft,
-            ),
+            border: Border.all(color: _borderSoft),
             boxShadow: AppTheme.softShadow,
           ),
           child: Column(
@@ -538,13 +487,13 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 width: isWeb ? 84 : 76,
                 height: isWeb ? 84 : 76,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: _surfaceSoft,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.event_busy_rounded,
                   size: isWeb ? 42 : 38,
-                  color: AppTheme.primary,
+                  color: _primary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -553,7 +502,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 style: TextStyle(
                   fontSize: isWeb ? 21 : 19,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: _textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -563,7 +512,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 style: TextStyle(
                   fontSize: isWeb ? 15 : 14,
                   height: 1.45,
-                  color: AppTheme.textSecondary,
+                  color: _textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -585,11 +534,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       return Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: _surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppTheme.borderSoft,
-          ),
+          border: Border.all(color: _borderSoft),
           boxShadow: AppTheme.softShadow,
         ),
         child: Padding(
@@ -604,12 +551,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
+                      color: _surfaceSoft,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.calendar_month_rounded,
-                      color: AppTheme.primary,
+                      color: _primary,
                       size: 24,
                     ),
                   ),
@@ -623,16 +570,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: AppTheme.textTertiary,
+                            color: _textTertiary,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           fechaFormateada,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: _textPrimary,
                           ),
                         ),
                       ],
@@ -644,9 +591,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: estado
-                          ? AppTheme.primaryLight
-                          : AppTheme.surfaceMuted,
+                      color: estado ? _surfaceSoft : _surfaceMuted,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -656,18 +601,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           estado
                               ? Icons.check_circle_rounded
                               : Icons.cancel_rounded,
-                          color: estado
-                              ? AppTheme.primary
-                              : AppTheme.textTertiary,
+                          color: estado ? _primary : _textTertiary,
                           size: 15,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           estado ? 'CONFIRMADA' : 'CANCELADA',
                           style: TextStyle(
-                            color: estado
-                                ? AppTheme.primary
-                                : AppTheme.textTertiary,
+                            color: estado ? _primary : _textTertiary,
                             fontWeight: FontWeight.w600,
                             fontSize: 10,
                           ),
@@ -681,11 +622,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.background,
+                  color: _background,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: AppTheme.borderSoft,
-                  ),
+                  border: Border.all(color: _borderSoft),
                 ),
                 child: Column(
                   children: [
@@ -715,21 +654,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () => _cancelReservation(reserva),
-                    icon: const Icon(
-                      Icons.cancel_outlined,
-                      size: 19,
-                    ),
-                    label: const Text(
-                      'Cancelar reserva',
-                    ),
+                    icon: const Icon(Icons.cancel_outlined, size: 19),
+                    label: const Text('Cancelar reserva'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.error,
                       side: BorderSide(
                         color: AppTheme.error.withValues(alpha: 0.45),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 13,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(13),
                       ),
@@ -756,36 +688,28 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     return instalacionId;
   }
 
-  Widget _buildDetailRow(
-    IconData icon,
-    String label,
-    String value,
-  ) {
+  Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(
-          icon,
-          color: AppTheme.primary,
-          size: 19,
-        ),
+        Icon(icon, color: _primary, size: 19),
         const SizedBox(width: 11),
         Text(
           '$label:',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textSecondary,
+            color: _textSecondary,
           ),
         ),
         const SizedBox(width: 7),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppTheme.textPrimary,
+              color: _textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -811,5 +735,3 @@ extension ListExtension<T> on List<T> {
     return (first, second);
   }
 }
-
-

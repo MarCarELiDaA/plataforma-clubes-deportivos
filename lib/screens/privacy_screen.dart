@@ -9,22 +9,33 @@ class PrivacyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final legal = AppConfig.legal;
 
+    final primary = AppTheme.primary;
+    final background = AppTheme.clubBackground;
+    final surface = AppTheme.clubSurface;
+    final surfaceSoft = AppTheme.clubSurfaceSoft;
+    final textPrimary = AppTheme.clubTextPrimary;
+    final textSecondary = AppTheme.clubTextSecondary;
+    final borderSoft = AppTheme.clubBorderSoft;
+    final textOnPrimary = AppTheme.textOnPrimary;
+
     return Scaffold(
+      backgroundColor: background,
       appBar: AppBar(
         title: const Text('Política de privacidad'),
+        backgroundColor: surface,
+        foregroundColor: textPrimary,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth =
-              constraints.maxWidth > 1050 ? 1050.0 : constraints.maxWidth;
+          final maxWidth = constraints.maxWidth > 1050
+              ? 1050.0
+              : constraints.maxWidth;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: maxWidth,
-                ),
+                constraints: BoxConstraints(maxWidth: maxWidth),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -32,11 +43,9 @@ class PrivacyScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: surface,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppTheme.borderSoft,
-                        ),
+                        border: Border.all(color: borderSoft),
                         boxShadow: AppTheme.softShadow,
                       ),
                       child: Column(
@@ -46,21 +55,22 @@ class PrivacyScreen extends StatelessWidget {
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.10),
+                              color: primary.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(
                               Icons.lock_outline_rounded,
-                              color: AppTheme.primary,
+                              color: primary,
                               size: 28,
                             ),
                           ),
                           const SizedBox(height: 18),
-                          const Text(
+                          Text(
                             'Política de privacidad',
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w700,
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -69,7 +79,7 @@ class PrivacyScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               height: 1.5,
-                              color: AppTheme.textSecondary,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -85,9 +95,7 @@ class PrivacyScreen extends StatelessWidget {
                         children: [
                           Text(legal.responsable),
                           const SizedBox(height: 4),
-                          Text(
-                            'NIF/CIF: ${legal.identificacionFiscal}',
-                          ),
+                          Text('NIF/CIF: ${legal.identificacionFiscal}'),
                           const SizedBox(height: 4),
                           Text(legal.direccion),
                           const SizedBox(height: 4),
@@ -258,10 +266,10 @@ class PrivacyScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.06),
+                        color: surfaceSoft,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.18),
+                          color: primary.withValues(alpha: 0.18),
                         ),
                       ),
                       child: Row(
@@ -269,7 +277,7 @@ class PrivacyScreen extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
-                            color: AppTheme.primary,
+                            color: primary,
                             size: 22,
                           ),
                           const SizedBox(width: 12),
@@ -281,7 +289,7 @@ class PrivacyScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 height: 1.45,
-                                color: Colors.grey.shade800,
+                                color: textSecondary,
                               ),
                             ),
                           ),
@@ -298,8 +306,8 @@ class PrivacyScreen extends StatelessWidget {
                           Navigator.of(context).pop(true);
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
+                          backgroundColor: primary,
+                          foregroundColor: textOnPrimary,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 28,
                             vertical: 13,
@@ -309,10 +317,7 @@ class PrivacyScreen extends StatelessWidget {
                           ),
                           elevation: 0,
                         ),
-                        icon: const Icon(
-                          Icons.check_rounded,
-                          size: 20,
-                        ),
+                        icon: const Icon(Icons.check_rounded, size: 20),
                         label: const Text(
                           'Acepto',
                           style: TextStyle(
@@ -348,16 +353,20 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppTheme.clubSurface;
+    final primary = AppTheme.primary;
+    final textPrimary = AppTheme.clubTextPrimary;
+    final textSecondary = AppTheme.clubTextSecondary;
+    final borderSoft = AppTheme.clubBorderSoft;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -370,22 +379,19 @@ class _SectionCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.10),
+                  color: primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppTheme.primary,
-                  size: 22,
-                ),
+                child: Icon(icon, color: primary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -393,11 +399,7 @@ class _SectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           DefaultTextStyle(
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.55,
-              color: Colors.grey.shade800,
-            ),
+            style: TextStyle(fontSize: 15, height: 1.55, color: textSecondary),
             child: child,
           ),
         ],

@@ -48,14 +48,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Competición',
   ];
 
+  Color get _primary => AppTheme.primary;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _textTertiary => AppTheme.clubTextTertiary;
+  Color get _border => AppTheme.clubBorder;
+  Color get _textOnPrimary => AppTheme.textOnPrimary;
+
   Future<void> _openTerms() async {
     if (_isLoading) return;
 
-    final accepted = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => const TermsScreen(),
-      ),
-    );
+    final accepted = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (context) => const TermsScreen()));
 
     if (!mounted) return;
 
@@ -72,9 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_isLoading) return;
 
     final accepted = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => const PrivacyScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const PrivacyScreen()),
     );
 
     if (!mounted) return;
@@ -144,8 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final credential =
-          await _authService.createUserWithEmailAndPassword(
+      final credential = await _authService.createUserWithEmailAndPassword(
         email,
         _passwordController.text,
       );
@@ -163,9 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _phoneController.text.trim().isEmpty
             ? null
             : _phoneController.text.trim(),
-        _nivelPadel == null
-            ? null
-            : double.tryParse(_nivelPadel!),
+        _nivelPadel == null ? null : double.tryParse(_nivelPadel!),
         aceptaCondiciones: _aceptaCondiciones,
         aceptaPrivacidad: _aceptaPrivacidad,
         versionCondiciones: LegalConfig.versionCondiciones,
@@ -179,9 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -248,56 +248,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return InputDecoration(
       labelText: label,
       hintText: hintText,
-      prefixIcon: Icon(
-        icon,
-        color: AppTheme.primary,
-      ),
+      prefixIcon: Icon(icon, color: _primary),
       filled: true,
-      fillColor: AppTheme.surface,
-      labelStyle: const TextStyle(
-        color: Color(0xFF667085),
-        fontSize: 14,
-      ),
-      hintStyle: const TextStyle(
-        color: Color(0xFF98A2B3),
-        fontSize: 14,
-      ),
+      fillColor: _surface,
+      labelStyle: TextStyle(color: _textSecondary, fontSize: 14),
+      hintStyle: TextStyle(color: _textTertiary, fontSize: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: AppTheme.border,
-        ),
+        borderSide: BorderSide(color: _border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: AppTheme.border,
-        ),
+        borderSide: BorderSide(color: _border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: AppTheme.primary,
-          width: 1.5,
-        ),
+        borderSide: BorderSide(color: _primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppTheme.error,
-        ),
+        borderSide: const BorderSide(color: AppTheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppTheme.error,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
@@ -310,11 +286,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.border,
-        ),
+        border: Border.all(color: _border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),
@@ -331,8 +305,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF344054),
+                style: TextStyle(
+                  color: _textPrimary,
                   fontSize: 13,
                   height: 1.35,
                   fontWeight: FontWeight.w500,
@@ -343,15 +317,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextButton(
                 onPressed: _isLoading ? null : onTap,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
+                  foregroundColor: _primary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
                     vertical: 4,
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Leer',
                   style: TextStyle(
+                    color: _primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -360,12 +335,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
         controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 7,
-        ),
-        activeColor: AppTheme.primary,
-        checkColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        activeColor: _primary,
+        checkColor: _textOnPrimary,
       ),
     );
   }
@@ -373,15 +345,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: _background,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: _surface,
         elevation: 0,
         centerTitle: true,
         title: Text(
           'Crear cuenta',
           style: TextStyle(
-            color: AppTheme.textPrimary,
+            color: _textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -390,8 +362,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontalPadding =
-                constraints.maxWidth >= 700 ? 32.0 : 20.0;
+            final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
@@ -402,9 +373,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 650,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 650),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -413,38 +382,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppTheme.surface,
+                            color: _surface,
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: AppTheme.border,
-                            ),
+                            border: Border.all(color: _border),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: 0.035,
-                                ),
+                                color: Colors.black.withValues(alpha: 0.035),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
                             ],
                           ),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
                                 'Crea tu cuenta',
                                 style: TextStyle(
-                                  color: AppTheme.textPrimary,
+                                  color: _textPrimary,
                                   fontSize: 26,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 'Completa tus datos para comenzar.',
                                 style: TextStyle(
-                                  color: Color(0xFF667085),
+                                  color: _textSecondary,
                                   fontSize: 14,
                                   height: 1.4,
                                 ),
@@ -455,15 +419,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextFormField(
                                 controller: _nameController,
                                 enabled: !_isLoading,
-                                textCapitalization:
-                                    TextCapitalization.words,
+                                textCapitalization: TextCapitalization.words,
                                 decoration: _inputDecoration(
                                   label: 'Nombre y apellidos',
                                   icon: Icons.person_outline,
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'Introduce tu nombre y apellidos';
                                   }
                                   return null;
@@ -476,15 +438,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextFormField(
                                 controller: _emailController,
                                 enabled: !_isLoading,
-                                keyboardType:
-                                    TextInputType.emailAddress,
+                                keyboardType: TextInputType.emailAddress,
                                 decoration: _inputDecoration(
                                   label: 'Correo electrónico',
                                   icon: Icons.email_outlined,
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'Introduce tu correo electrónico';
                                   }
 
@@ -492,9 +452,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                                   );
 
-                                  if (!emailRegex.hasMatch(
-                                    value.trim(),
-                                  )) {
+                                  if (!emailRegex.hasMatch(value.trim())) {
                                     return 'Introduce un correo válido';
                                   }
 
@@ -514,8 +472,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   icon: Icons.lock_outline,
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.isEmpty) {
+                                  if (value == null || value.isEmpty) {
                                     return 'Introduce una contraseña';
                                   }
 
@@ -531,8 +488,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // CONFIRMAR CONTRASEÑA
                               TextFormField(
-                                controller:
-                                    _confirmPasswordController,
+                                controller: _confirmPasswordController,
                                 enabled: !_isLoading,
                                 obscureText: true,
                                 decoration: _inputDecoration(
@@ -540,13 +496,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   icon: Icons.lock_outline,
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.isEmpty) {
+                                  if (value == null || value.isEmpty) {
                                     return 'Confirma tu contraseña';
                                   }
 
-                                  if (value !=
-                                      _passwordController.text) {
+                                  if (value != _passwordController.text) {
                                     return 'Las contraseñas no coinciden';
                                   }
 
@@ -566,15 +520,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   icon: Icons.phone_outlined,
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
+                                  if (value == null || value.trim().isEmpty) {
                                     return null;
                                   }
 
                                   final phone = value.trim();
 
-                                  if (!RegExp(r'^\d{9}$')
-                                      .hasMatch(phone)) {
+                                  if (!RegExp(r'^\d{9}$').hasMatch(phone)) {
                                     return 'El teléfono debe tener 9 dígitos';
                                   }
 
@@ -584,46 +536,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               const SizedBox(height: 16),
 
-                              if (AppConfig.club.moduloActivo('padelLevel')) ...[
+                              if (AppConfig.club.moduloActivo(
+                                'padelLevel',
+                              )) ...[
                                 // NIVEL DE PÁDEL
-                              DropdownButtonFormField<String>(
-                                initialValue: _nivelPadel,
-                                decoration: _inputDecoration(
-                                  label: 'Nivel de pádel',
-                                  icon: Icons.sports_tennis,
+                                DropdownButtonFormField<String>(
+                                  initialValue: _nivelPadel,
+                                  decoration: _inputDecoration(
+                                    label: 'Nivel de pádel',
+                                    icon: Icons.sports_tennis,
+                                  ),
+                                  items: _nivelesPadel.map((nivel) {
+                                    return DropdownMenuItem<String>(
+                                      value: nivel,
+                                      child: Text(
+                                        nivel,
+                                        style: TextStyle(color: _textPrimary),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: _isLoading
+                                      ? null
+                                      : (value) {
+                                          setState(() {
+                                            _nivelPadel = value;
+                                            _errorMessage = null;
+                                          });
+                                        },
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Selecciona tu nivel de pádel';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                items: _nivelesPadel.map((nivel) {
-                                  return DropdownMenuItem<String>(
-                                    value: nivel,
-                                    child: Text(nivel),
-                                  );
-                                }).toList(),
-                                onChanged: _isLoading
-                                    ? null
-                                    : (value) {
-                                        setState(() {
-                                          _nivelPadel = value;
-                                          _errorMessage = null;
-                                        });
-                                      },
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.isEmpty) {
-                                    return 'Selecciona tu nivel de pádel';
-                                  }
-                                  return null;
-                                },
-                              ),
 
-                              const SizedBox(height: 24),
-
-                                ],
+                                const SizedBox(height: 24),
+                              ],
 
                               // ACEPTACIÓN LEGAL
-                              const Text(
+                              Text(
                                 'Información legal',
                                 style: TextStyle(
-                                  color: Color(0xFF344054),
+                                  color: _textPrimary,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -637,8 +592,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 _haAceptadoCondiciones
                                     ? (value) {
                                         setState(() {
-                                          _aceptaCondiciones =
-                                              value ?? false;
+                                          _aceptaCondiciones = value ?? false;
                                           _errorMessage = null;
                                         });
                                       }
@@ -655,8 +609,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 _haAceptadoPrivacidad
                                     ? (value) {
                                         setState(() {
-                                          _aceptaPrivacidad =
-                                              value ?? false;
+                                          _aceptaPrivacidad = value ?? false;
                                           _errorMessage = null;
                                         });
                                       }
@@ -667,10 +620,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               const SizedBox(height: 10),
 
-                              const Text(
+                              Text(
                                 'Para continuar, abre cada documento, léelo y pulsa «Acepto» al final.',
                                 style: TextStyle(
-                                  color: Color(0xFF667085),
+                                  color: _textSecondary,
                                   fontSize: 12,
                                   height: 1.4,
                                 ),
@@ -681,11 +634,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.error.withValues(alpha: 0.06),
-                                    borderRadius:
-                                        BorderRadius.circular(12),
+                                    color: AppTheme.error.withValues(
+                                      alpha: 0.06,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppTheme.error.withValues(alpha: 0.20),
+                                      color: AppTheme.error.withValues(
+                                        alpha: 0.20,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -718,33 +674,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               SizedBox(
                                 height: 54,
                                 child: FilledButton(
-                                  onPressed:
-                                      _isLoading ? null : _register,
+                                  onPressed: _isLoading ? null : _register,
                                   style: FilledButton.styleFrom(
-                                    backgroundColor:
-                                        AppTheme.primary,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        AppTheme.primary
-                                            .withValues(alpha: 0.5),
+                                    backgroundColor: _primary,
+                                    foregroundColor: _textOnPrimary,
+                                    disabledBackgroundColor: _primary
+                                        .withValues(alpha: 0.5),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
                                   child: _isLoading
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 22,
                                           height: 22,
-                                          child:
-                                              CircularProgressIndicator(
+                                          child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            color: AppTheme.surface,
+                                            color: _textOnPrimary,
                                           ),
                                         )
-                                      : const Text(
+                                      : Text(
                                           'Crear cuenta',
                                           style: TextStyle(
+                                            color: _textOnPrimary,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -760,10 +712,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               '¿Ya tienes cuenta?',
                               style: TextStyle(
-                                color: Color(0xFF667085),
+                                color: _textSecondary,
                                 fontSize: 14,
                               ),
                             ),
@@ -781,7 +733,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: Text(
                                 'Inicia sesión',
                                 style: TextStyle(
-                                  color: AppTheme.primary,
+                                  color: _primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -794,8 +746,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Center(
                           child: Text(
                             AppConfig.club.nombre,
-                            style: const TextStyle(
-                              color: Color(0xFF98A2B3),
+                            style: TextStyle(
+                              color: _textTertiary,
                               fontSize: 12,
                             ),
                           ),

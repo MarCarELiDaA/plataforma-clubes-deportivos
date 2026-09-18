@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
 import 'login_screen.dart';
@@ -11,6 +11,13 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _borderSoft => AppTheme.clubBorderSoft;
+  Color get _accent => AppTheme.accent;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: _background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -59,17 +66,15 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 104,
                   height: 104,
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
+                    color: _surface,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: AppTheme.borderSoft,
-                    ),
+                    border: Border.all(color: _borderSoft),
                     boxShadow: AppTheme.softShadow,
                   ),
                   child: Icon(
                     Icons.sports_tennis_rounded,
                     size: 52,
-                    color: AppTheme.success,
+                    color: _accent,
                   ),
                 ),
 
@@ -79,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'Clubes Deportivos',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppTheme.textPrimary,
+                    color: _textPrimary,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
@@ -91,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'Preparando la aplicación',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: _textSecondary,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -102,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
-                    color: AppTheme.success,
+                    color: _accent,
                     strokeWidth: 2.4,
                   ),
                 ),

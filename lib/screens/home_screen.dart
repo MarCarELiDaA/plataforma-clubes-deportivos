@@ -17,17 +17,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _authService = AuthService();
 
   String _userRole = 'user';
 
   Color get _accent => AppTheme.primary;
   Color get _accentSoft => AppTheme.primaryLight;
-  Color get _background => AppTheme.background;
-  Color get _textPrimary => AppTheme.textPrimary;
-  Color get _textSecondary => AppTheme.textSecondary;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _surfaceSoft => AppTheme.clubSurfaceSoft;
+  Color get _surfaceMuted => AppTheme.clubSurfaceMuted;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _border => AppTheme.clubBorder;
+  Color get _textOnAccent => AppTheme.textOnPrimary;
 
   @override
   void initState() {
@@ -61,9 +65,7 @@ class _HomeScreenState extends State<HomeScreen>
 
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const LoginScreen(),
-              ),
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
             );
           }
         }
@@ -83,49 +85,40 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  bool get _reservasActivas =>
-      AppConfig.club.moduloActivo('reservations');
+  bool get _reservasActivas => AppConfig.club.moduloActivo('reservations');
 
   void _openReserva() {
     if (!_reservasActivas) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ReservaScreen(),
-      ),
-    );
+
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ReservaScreen()));
   }
 
   void _openMisReservas() {
     if (!_reservasActivas) return;
+
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const MyReservationsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const MyReservationsScreen()),
     );
   }
 
   void _openProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ProfileScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
   }
 
   void _openInfo() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => InfoScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => InfoScreen()));
   }
 
   void _openAdmin() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AdminScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const AdminScreen()));
   }
 
   Future<void> _logout() async {
@@ -133,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: _surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -148,11 +141,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           content: Text(
             '¿Estás seguro de que quieres cerrar sesión?',
-            style: TextStyle(
-              color: _textSecondary,
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: TextStyle(color: _textSecondary, fontSize: 14, height: 1.4),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
@@ -196,9 +185,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       }
     }
@@ -207,13 +194,12 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildDrawer(BuildContext context) {
     final user = _authService.currentUser;
 
-    final userName =
-        user?.displayName?.trim().isNotEmpty == true
-            ? user!.displayName!
-            : user?.email ?? 'Usuario';
+    final userName = user?.displayName?.trim().isNotEmpty == true
+        ? user!.displayName!
+        : user?.email ?? 'Usuario';
 
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: _surface,
       child: SafeArea(
         child: Column(
           children: [
@@ -222,11 +208,9 @@ class _HomeScreenState extends State<HomeScreen>
               margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceSoft,
+                color: _surfaceSoft,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _accent.withValues(alpha: 0.12),
-                ),
+                border: Border.all(color: _accent.withValues(alpha: 0.12)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -245,10 +229,10 @@ class _HomeScreenState extends State<HomeScreen>
                         height: 54,
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: _border.withValues(alpha: 0.75),
                           ),
                         ),
                         child: AppConfig.club.logo.isNotEmpty
@@ -292,10 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(height: 4),
                   Text(
                     AppConfig.club.deporte,
-                    style: TextStyle(
-                      color: _textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: _textSecondary, fontSize: 12),
                   ),
                 ],
               ),
@@ -349,19 +330,14 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.only(top: 8),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: Colors.black.withValues(alpha: 0.06),
-                  ),
+                  top: BorderSide(color: _border.withValues(alpha: 0.7)),
                 ),
               ),
               child: ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                leading: Icon(
-                  Icons.logout_rounded,
-                  color: AppTheme.error,
-                ),
+                leading: Icon(Icons.logout_rounded, color: AppTheme.error),
                 title: Text(
                   'Cerrar sesión',
                   style: TextStyle(
@@ -400,18 +376,10 @@ class _HomeScreenState extends State<HomeScreen>
     bool highlighted = false,
   }) {
     return ListTile(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       tileColor: highlighted ? _accentSoft : Colors.transparent,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 2,
-      ),
-      leading: Icon(
-        icon,
-        color: highlighted ? _accent : _textSecondary,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      leading: Icon(icon, color: highlighted ? _accent : _textSecondary),
       title: Text(
         title,
         style: TextStyle(
@@ -421,11 +389,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       trailing: highlighted
-          ? Icon(
-              Icons.chevron_right_rounded,
-              color: _accent,
-              size: 20,
-            )
+          ? Icon(Icons.chevron_right_rounded, color: _accent, size: 20)
           : null,
       onTap: () {
         Navigator.of(context).pop();
@@ -446,13 +410,9 @@ class _HomeScreenState extends State<HomeScreen>
       height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(
-          compact ? 26 : 30,
-        ),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.06),
-        ),
+        color: _surface,
+        borderRadius: BorderRadius.circular(compact ? 26 : 30),
+        border: Border.all(color: _border.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -465,14 +425,9 @@ class _HomeScreenState extends State<HomeScreen>
         fit: StackFit.expand,
         children: [
           if (hasImage)
-            Image.asset(
-              AppConfig.club.fondo,
-              fit: BoxFit.cover,
-            )
+            Image.asset(AppConfig.club.fondo, fit: BoxFit.cover)
           else
-            Container(
-              color: AppTheme.surfaceMuted,
-            ),
+            Container(color: _surfaceMuted),
           if (hasImage)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -480,9 +435,9 @@ class _HomeScreenState extends State<HomeScreen>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.96),
-                    Colors.white.withValues(alpha: 0.84),
-                    Colors.white.withValues(alpha: 0.18),
+                    _surface.withValues(alpha: 0.96),
+                    _surface.withValues(alpha: 0.84),
+                    _surface.withValues(alpha: 0.18),
                   ],
                 ),
               ),
@@ -494,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen>
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.white.withValues(alpha: 0.40),
+                    _surface.withValues(alpha: 0.40),
                     Colors.transparent,
                   ],
                 ),
@@ -505,9 +460,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 620,
-                ),
+                constraints: const BoxConstraints(maxWidth: 620),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,23 +537,23 @@ class _HomeScreenState extends State<HomeScreen>
                         height: 52,
                         child: FilledButton.icon(
                           onPressed: _openReserva,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.calendar_month_rounded,
                             size: 20,
+                            color: _textOnAccent,
                           ),
-                          label: const Text(
+                          label: Text(
                             'Reservar pista',
                             style: TextStyle(
+                              color: _textOnAccent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: _accent,
-                            foregroundColor: Colors.white,
+                            foregroundColor: _textOnAccent,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 22,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 22),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(17),
                             ),
@@ -633,12 +586,12 @@ class _HomeScreenState extends State<HomeScreen>
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _surface,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: primary
                   ? _accent.withValues(alpha: 0.14)
-                  : Colors.black.withValues(alpha: 0.06),
+                  : _border.withValues(alpha: 0.8),
             ),
             boxShadow: [
               BoxShadow(
@@ -656,16 +609,10 @@ class _HomeScreenState extends State<HomeScreen>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: primary
-                      ? _accentSoft
-                      : AppTheme.surfaceMuted,
+                  color: primary ? _accentSoft : _surfaceMuted,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  color: _accent,
-                  size: 23,
-                ),
+                child: Icon(icon, color: _accent, size: 23),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -711,7 +658,7 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: _background,
       drawer: _buildDrawer(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _surface,
         foregroundColor: _textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -721,11 +668,7 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (context) {
             return IconButton(
               tooltip: 'Menú',
-              icon: Icon(
-                Icons.menu_rounded,
-                size: 27,
-                color: _textPrimary,
-              ),
+              icon: Icon(Icons.menu_rounded, size: 27, color: _textPrimary),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -741,19 +684,13 @@ class _HomeScreenState extends State<HomeScreen>
                 height: 36,
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.06),
-                  ),
+                  border: Border.all(color: _border.withValues(alpha: 0.75)),
                 ),
-                child: Image.asset(
-                  AppConfig.club.logo,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset(AppConfig.club.logo, fit: BoxFit.contain),
               ),
-            if (AppConfig.club.logo.isNotEmpty)
-              const SizedBox(width: 10),
+            if (AppConfig.club.logo.isNotEmpty) const SizedBox(width: 10),
             Expanded(
               child: Text(
                 AppConfig.club.nombre,
@@ -771,10 +708,7 @@ class _HomeScreenState extends State<HomeScreen>
         actions: [
           IconButton(
             tooltip: 'Cerrar sesión',
-            icon: Icon(
-              Icons.logout_rounded,
-              color: _textPrimary,
-            ),
+            icon: Icon(Icons.logout_rounded, color: _textPrimary),
             onPressed: _logout,
           ),
           const SizedBox(width: 6),
@@ -785,8 +719,9 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= 900;
 
-            final contentWidth =
-                constraints.maxWidth > 1280 ? 1280.0 : constraints.maxWidth;
+            final contentWidth = constraints.maxWidth > 1280
+                ? 1280.0
+                : constraints.maxWidth;
 
             final horizontalPadding = isDesktop ? 24.0 : 16.0;
 
@@ -825,8 +760,7 @@ class _HomeScreenState extends State<HomeScreen>
                       const SizedBox(height: 13),
                       LayoutBuilder(
                         builder: (context, quickConstraints) {
-                          final twoColumns =
-                              quickConstraints.maxWidth >= 700;
+                          final twoColumns = quickConstraints.maxWidth >= 700;
 
                           final cardWidth = twoColumns
                               ? (quickConstraints.maxWidth - 14) / 2

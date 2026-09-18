@@ -30,6 +30,17 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
   StreamSubscription<List<String>>? _reservedTimesSubscription;
 
+  Color get _primary => AppTheme.primary;
+  Color get _background => AppTheme.clubBackground;
+  Color get _surface => AppTheme.clubSurface;
+  Color get _surfaceMuted => AppTheme.clubSurfaceMuted;
+  Color get _textPrimary => AppTheme.clubTextPrimary;
+  Color get _textSecondary => AppTheme.clubTextSecondary;
+  Color get _textTertiary => AppTheme.clubTextTertiary;
+  Color get _border => AppTheme.clubBorder;
+  Color get _borderSoft => AppTheme.clubBorderSoft;
+  Color get _textOnPrimary => AppTheme.textOnPrimary;
+
   @override
   void initState() {
     super.initState();
@@ -92,39 +103,37 @@ class _ReservaScreenState extends State<ReservaScreen> {
       context: context,
       initialDate: now,
       firstDate: now,
-      lastDate: now.add(
-        Duration(days: instalacion.maxDiasAntelacion),
-      ),
+      lastDate: now.add(Duration(days: instalacion.maxDiasAntelacion)),
       builder: (context, child) {
         final baseTheme = Theme.of(context);
 
         return Theme(
           data: baseTheme.copyWith(
             colorScheme: baseTheme.colorScheme.copyWith(
-              primary: AppTheme.primary,
-              onPrimary: Colors.white,
-              secondary: AppTheme.primary,
-              onSecondary: Colors.white,
-              surface: AppTheme.surface,
-              onSurface: AppTheme.textPrimary,
+              primary: _primary,
+              onPrimary: _textOnPrimary,
+              secondary: _primary,
+              onSecondary: _textOnPrimary,
+              surface: _surface,
+              onSurface: _textPrimary,
             ),
             datePickerTheme: DatePickerThemeData(
-              backgroundColor: AppTheme.surface,
+              backgroundColor: _surface,
               surfaceTintColor: Colors.transparent,
-              headerBackgroundColor: AppTheme.primary,
-              headerForegroundColor: Colors.white,
-              todayForegroundColor:
-                  WidgetStatePropertyAll(AppTheme.primary),
-              todayBackgroundColor:
-                  WidgetStatePropertyAll(AppTheme.primaryLight),
-              dayForegroundColor:
-                  WidgetStatePropertyAll(AppTheme.textPrimary),
-              dayOverlayColor:
-                  WidgetStatePropertyAll(AppTheme.primaryLight),
-              yearForegroundColor:
-                  WidgetStatePropertyAll(AppTheme.textPrimary),
-              yearOverlayColor:
-                  WidgetStatePropertyAll(AppTheme.primaryLight),
+              headerBackgroundColor: _primary,
+              headerForegroundColor: _textOnPrimary,
+              todayForegroundColor: WidgetStatePropertyAll(_primary),
+              todayBackgroundColor: WidgetStatePropertyAll(
+                _primary.withValues(alpha: 0.12),
+              ),
+              dayForegroundColor: WidgetStatePropertyAll(_textPrimary),
+              dayOverlayColor: WidgetStatePropertyAll(
+                _primary.withValues(alpha: 0.08),
+              ),
+              yearForegroundColor: WidgetStatePropertyAll(_textPrimary),
+              yearOverlayColor: WidgetStatePropertyAll(
+                _primary.withValues(alpha: 0.08),
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -160,27 +169,24 @@ class _ReservaScreenState extends State<ReservaScreen> {
     });
 
     _reservedTimesSubscription = _reservaService
-        .getHorariosReservadosStream(
-          instalacion.id,
-          dateFormat,
-        )
+        .getHorariosReservadosStream(instalacion.id, dateFormat)
         .listen(
-      (reservedTimes) {
-        if (!mounted) return;
+          (reservedTimes) {
+            if (!mounted) return;
 
-        setState(() {
-          _reservedTimes = reservedTimes;
-          _isLoading = false;
-        });
-      },
-      onError: (_) {
-        if (!mounted) return;
+            setState(() {
+              _reservedTimes = reservedTimes;
+              _isLoading = false;
+            });
+          },
+          onError: (_) {
+            if (!mounted) return;
 
-        setState(() {
-          _isLoading = false;
-        });
-      },
-    );
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   bool _isTimePast(String time) {
@@ -219,8 +225,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
           '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
 
       try {
-        final puedeReservar =
-            await _reservaService.cumpleLimiteReservasPorDia(
+        final puedeReservar = await _reservaService.cumpleLimiteReservasPorDia(
           user.uid,
           dateFormat,
           instalacion,
@@ -230,9 +235,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Ya tienes dos reservas para este día',
-                ),
+                content: Text('Ya tienes dos reservas para este día'),
                 backgroundColor: AppTheme.error,
               ),
             );
@@ -241,13 +244,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
           return;
         }
 
-        final noEsConsecutiva =
-            await _reservaService.noEsConsecutivaConReservasExistentes(
-          user.uid,
-          dateFormat,
-          time,
-          instalacion,
-        );
+        final noEsConsecutiva = await _reservaService
+            .noEsConsecutivaConReservasExistentes(
+              user.uid,
+              dateFormat,
+              time,
+              instalacion,
+            );
 
         if (!noEsConsecutiva) {
           if (mounted) {
@@ -297,15 +300,11 @@ class _ReservaScreenState extends State<ReservaScreen> {
   Widget _buildInstalacionSelector(bool isWeb) {
     if (_instalaciones.length <= 1) {
       return Container(
-        padding: EdgeInsets.all(
-          isWeb ? 22 : 18,
-        ),
+        padding: EdgeInsets.all(isWeb ? 22 : 18),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: _surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppTheme.borderSoft,
-          ),
+          border: Border.all(color: _borderSoft),
           boxShadow: AppTheme.softShadow,
         ),
         child: Row(
@@ -314,12 +313,12 @@ class _ReservaScreenState extends State<ReservaScreen> {
               width: isWeb ? 52 : 48,
               height: isWeb ? 52 : 48,
               decoration: BoxDecoration(
-                color: AppTheme.primaryLight,
+                color: _primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
                 Icons.sports_tennis_rounded,
-                color: AppTheme.primary,
+                color: _primary,
                 size: isWeb ? 27 : 25,
               ),
             ),
@@ -333,7 +332,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.textTertiary,
+                      color: _textTertiary,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -344,7 +343,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                     style: TextStyle(
                       fontSize: isWeb ? 20 : 18,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                      color: _textPrimary,
                     ),
                   ),
                 ],
@@ -356,15 +355,11 @@ class _ReservaScreenState extends State<ReservaScreen> {
     }
 
     return Container(
-      padding: EdgeInsets.all(
-        isWeb ? 22 : 18,
-      ),
+      padding: EdgeInsets.all(isWeb ? 22 : 18),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: _borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -375,38 +370,28 @@ class _ReservaScreenState extends State<ReservaScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary,
+              color: _textSecondary,
             ),
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-           initialValue: _instalacionActual?.id,
+            initialValue: _instalacionActual?.id,
             isExpanded: true,
             decoration: InputDecoration(
               filled: true,
-              fillColor: AppTheme.surfaceMuted,
-              prefixIcon: Icon(
-                Icons.sports_tennis_rounded,
-                color: AppTheme.primary,
-              ),
+              fillColor: _surfaceMuted,
+              prefixIcon: Icon(Icons.sports_tennis_rounded, color: _primary),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppTheme.borderSoft,
-                ),
+                borderSide: BorderSide(color: _borderSoft),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppTheme.borderSoft,
-                ),
+                borderSide: BorderSide(color: _borderSoft),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppTheme.primary,
-                  width: 1.5,
-                ),
+                borderSide: BorderSide(color: _primary, width: 1.5),
               ),
             ),
             items: _instalaciones.map((instalacion) {
@@ -415,6 +400,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                 child: Text(
                   instalacion.nombre,
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: _textPrimary),
                 ),
               );
             }).toList(),
@@ -454,16 +440,16 @@ class _ReservaScreenState extends State<ReservaScreen> {
         final isAvailable = !isReserved && !isPast;
 
         final backgroundColor = isAvailable
-            ? AppTheme.surface
+            ? _surface
             : isReserved
-                ? AppTheme.warning.withValues(alpha: 0.08)
-                : AppTheme.surfaceMuted;
+            ? AppTheme.warning.withValues(alpha: 0.08)
+            : _surfaceMuted;
 
         final foregroundColor = isAvailable
-            ? AppTheme.textPrimary
+            ? _textPrimary
             : isReserved
-                ? AppTheme.textPrimary
-                : AppTheme.textTertiary;
+            ? _textPrimary
+            : _textTertiary;
 
         return Container(
           decoration: BoxDecoration(
@@ -471,10 +457,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isAvailable
-                  ? AppTheme.borderSoft
+                  ? _borderSoft
                   : isReserved
-                      ? AppTheme.warning.withValues(alpha: 0.35)
-                      : AppTheme.border,
+                  ? AppTheme.warning.withValues(alpha: 0.35)
+                  : _border,
             ),
             boxShadow: isAvailable
                 ? AppTheme.softShadow
@@ -489,15 +475,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: isAvailable
-                  ? () => _selectTime(time)
-                  : null,
+              onTap: isAvailable ? () => _selectTime(time) : null,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -505,11 +486,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
                       isReserved
                           ? Icons.block_rounded
                           : isPast
-                              ? Icons.history_rounded
-                              : Icons.access_time_rounded,
-                      color: isAvailable
-                          ? AppTheme.primary
-                          : foregroundColor,
+                          ? Icons.history_rounded
+                          : Icons.access_time_rounded,
+                      color: isAvailable ? _primary : foregroundColor,
                       size: isWeb ? 19 : 20,
                     ),
                     const SizedBox(width: 7),
@@ -518,8 +497,8 @@ class _ReservaScreenState extends State<ReservaScreen> {
                         isReserved
                             ? 'RESERVADO'
                             : isPast
-                                ? 'PASADA'
-                                : time,
+                            ? 'PASADA'
+                            : time,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -551,11 +530,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
         vertical: isWeb ? 42 : 34,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: _surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppTheme.borderSoft,
-        ),
+        border: Border.all(color: _borderSoft),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -565,13 +542,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
             width: isWeb ? 76 : 68,
             height: isWeb ? 76 : 68,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: _primary.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.sports_tennis_rounded,
               size: isWeb ? 38 : 34,
-              color: AppTheme.primary,
+              color: _primary,
             ),
           ),
           const SizedBox(height: 18),
@@ -582,7 +559,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
             style: TextStyle(
               fontSize: isWeb ? 20 : 18,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: _textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -594,7 +571,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
             style: TextStyle(
               fontSize: isWeb ? 15 : 14,
               height: 1.45,
-              color: AppTheme.textSecondary,
+              color: _textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -617,29 +594,29 @@ class _ReservaScreenState extends State<ReservaScreen> {
         final horizontalPadding = isWeb
             ? 24.0
             : isSmall
-                ? 12.0
-                : 16.0;
+            ? 12.0
+            : 16.0;
 
         final verticalPadding = isWeb ? 20.0 : 16.0;
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: _background,
           appBar: AppBar(
             title: Text(
               'Reservar pista',
               style: TextStyle(
                 fontSize: isWeb ? 20 : 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: _textPrimary,
               ),
             ),
+            backgroundColor: _surface,
+            foregroundColor: _textPrimary,
           ),
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: maxContentWidth,
-                ),
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
@@ -653,53 +630,45 @@ class _ReservaScreenState extends State<ReservaScreen> {
                       _buildInstalacionSelector(isWeb),
                       const SizedBox(height: 14),
                       Container(
-                        padding: EdgeInsets.all(
-                          isWeb ? 18 : 16,
-                        ),
+                        padding: EdgeInsets.all(isWeb ? 18 : 16),
                         decoration: BoxDecoration(
-                          color: AppTheme.surface,
+                          color: _surface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppTheme.borderSoft,
-                          ),
+                          border: Border.all(color: _borderSoft),
                           boxShadow: AppTheme.softShadow,
                         ),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
                               'Fecha',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary,
+                                color: _textSecondary,
                               ),
                             ),
                             const SizedBox(height: 10),
                             SizedBox(
                               height: isSmall ? 48 : 50,
                               child: ElevatedButton.icon(
-                                onPressed:
-                                    _instalacionActual == null
-                                        ? null
-                                        : _selectDate,
+                                onPressed: _instalacionActual == null
+                                    ? null
+                                    : _selectDate,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primary,
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor:
-                                      AppTheme.surfaceMuted,
-                                  disabledForegroundColor:
-                                      AppTheme.textTertiary,
+                                  backgroundColor: _primary,
+                                  foregroundColor: _textOnPrimary,
+                                  disabledBackgroundColor: _surfaceMuted,
+                                  disabledForegroundColor: _textTertiary,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.calendar_today_outlined,
                                   size: 19,
+                                  color: _textOnPrimary,
                                 ),
                                 label: Text(
                                   _selectedDate == null
@@ -716,27 +685,26 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                   vertical: 11,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryLight,
-                                  borderRadius:
-                                      BorderRadius.circular(12),
+                                  color: _primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.event_available_rounded,
+                                    Icon(
+                                      Icons.event_available_rounded,
                                       size: 18,
-                                      color: AppTheme.primary,
+                                      color: _primary,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       '${_selectedDate!.day}/'
                                       '${_selectedDate!.month}/'
                                       '${_selectedDate!.year}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: AppTheme.textPrimary,
+                                        color: _textPrimary,
                                       ),
                                     ),
                                   ],
@@ -757,7 +725,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 style: TextStyle(
                                   fontSize: isWeb ? 18 : 17,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
+                                  color: _textPrimary,
                                 ),
                               ),
                             ),
@@ -768,24 +736,20 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryLight,
-                                borderRadius:
-                                    BorderRadius.circular(20),
+                                color: _primary.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.circle,
-                                    size: 7,
-                                    color: AppTheme.primary,
-                                  ),
+                                  Icon(Icons.circle, size: 7, color: _primary),
                                   const SizedBox(width: 5),
                                   Text(
                                     'Disponible',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppTheme.primary,
+                                      color: _primary,
                                     ),
                                   ),
                                 ],
@@ -796,13 +760,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
                         const SizedBox(height: 12),
                         if (_isLoading)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 50,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 50),
                             child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primary,
-                              ),
+                              child: CircularProgressIndicator(color: _primary),
                             ),
                           )
                         else
