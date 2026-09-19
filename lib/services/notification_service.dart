@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -35,9 +35,9 @@ class NotificationService {
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _notificationsPlugin.initialize(
       settings: initializationSettings,
@@ -47,7 +47,8 @@ class NotificationService {
     // Solicitar permisos en Android 13+.
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
 
     // Inicializar timezone.
@@ -69,16 +70,15 @@ class NotificationService {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'reservas_channel',
-      'Reservas',
-      channelDescription: 'Notificaciones de reservas del club',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
+          'reservas_channel',
+          'Reservas',
+          channelDescription: 'Notificaciones de reservas del club',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 
@@ -121,17 +121,10 @@ class NotificationService {
 
     // Crear DateTime de la reserva.
     final now = DateTime.now();
-    final reservationTime = DateTime(
-      year,
-      month,
-      day,
-      hour,
-      minute,
-    );
+    final reservationTime = DateTime(year, month, day, hour, minute);
 
     // Calcular hora del recordatorio (1 hora antes).
-    final reminderTime =
-        reservationTime.subtract(const Duration(hours: 1));
+    final reminderTime = reservationTime.subtract(const Duration(hours: 1));
 
     // Verificar si el recordatorio es en el futuro.
     if (reminderTime.isBefore(now)) {
@@ -140,16 +133,15 @@ class NotificationService {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'reservas_channel',
-      'Reservas',
-      channelDescription: 'Notificaciones de reservas del club',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
+          'reservas_channel',
+          'Reservas',
+          channelDescription: 'Notificaciones de reservas del club',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 
@@ -171,16 +163,15 @@ class NotificationService {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'reservas_channel',
-      'Reservas',
-      channelDescription: 'Notificaciones de reservas del club',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
+          'reservas_channel',
+          'Reservas',
+          channelDescription: 'Notificaciones de reservas del club',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 
@@ -199,8 +190,6 @@ class NotificationService {
     // recordatorios porque el servicio no debe operar.
     if (!AppConfig.club.moduloActivo('notifications')) return;
 
-    await _notificationsPlugin.cancel(
-      id: reservaId.hashCode,
-    );
+    await _notificationsPlugin.cancel(id: reservaId.hashCode);
   }
 }

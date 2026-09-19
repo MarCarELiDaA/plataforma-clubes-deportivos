@@ -8,6 +8,7 @@ class AppConfig {
     if (email == null) return false;
     return club.administradores.contains(email.toLowerCase());
   }
+
   static final ClubConfig club = ClubConfigActual.config;
   static final LegalConfig legal = LegalConfigActual.config;
 }

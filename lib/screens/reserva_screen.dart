@@ -30,16 +30,18 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
   StreamSubscription<List<String>>? _reservedTimesSubscription;
 
-  Color get _primary => AppTheme.primary;
-  Color get _background => AppTheme.clubBackground;
-  Color get _surface => AppTheme.clubSurface;
-  Color get _surfaceMuted => AppTheme.clubSurfaceMuted;
-  Color get _textPrimary => AppTheme.clubTextPrimary;
-  Color get _textSecondary => AppTheme.clubTextSecondary;
-  Color get _textTertiary => AppTheme.clubTextTertiary;
-  Color get _border => AppTheme.clubBorder;
-  Color get _borderSoft => AppTheme.clubBorderSoft;
-  Color get _textOnPrimary => AppTheme.textOnPrimary;
+  Color get _identity => AppTheme.identity;
+  Color get _identityLight => AppTheme.identityLight;
+  Color get _background => AppTheme.pageBackground;
+  Color get _surface => AppTheme.surfaceColor;
+  Color get _surfaceSoft => AppTheme.surfaceSoftColor;
+  Color get _textPrimary => AppTheme.textPrimaryColor;
+  Color get _textSecondary => AppTheme.textSecondaryColor;
+  Color get _textTertiary => AppTheme.textTertiaryColor;
+  Color get _border => AppTheme.borderColor;
+  Color get _borderSoft => AppTheme.borderSoftColor;
+  Color get _textOnIdentity => AppTheme.textOnIdentity;
+  Color get _action => AppTheme.action;
 
   @override
   void initState() {
@@ -110,29 +112,33 @@ class _ReservaScreenState extends State<ReservaScreen> {
         return Theme(
           data: baseTheme.copyWith(
             colorScheme: baseTheme.colorScheme.copyWith(
-              primary: _primary,
-              onPrimary: _textOnPrimary,
-              secondary: _primary,
-              onSecondary: _textOnPrimary,
+              primary: _identity,
+              onPrimary: _textOnIdentity,
+              secondary: _identity,
+              onSecondary: _textOnIdentity,
               surface: _surface,
               onSurface: _textPrimary,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: _identity,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
             datePickerTheme: DatePickerThemeData(
               backgroundColor: _surface,
               surfaceTintColor: Colors.transparent,
-              headerBackgroundColor: _primary,
-              headerForegroundColor: _textOnPrimary,
-              todayForegroundColor: WidgetStatePropertyAll(_primary),
-              todayBackgroundColor: WidgetStatePropertyAll(
-                _primary.withValues(alpha: 0.12),
-              ),
+              headerBackgroundColor: _identity,
+              headerForegroundColor: _textOnIdentity,
+              todayForegroundColor: WidgetStatePropertyAll(_identity),
+              todayBackgroundColor: WidgetStatePropertyAll(_identityLight),
               dayForegroundColor: WidgetStatePropertyAll(_textPrimary),
               dayOverlayColor: WidgetStatePropertyAll(
-                _primary.withValues(alpha: 0.08),
+                _identity.withValues(alpha: 0.08),
               ),
               yearForegroundColor: WidgetStatePropertyAll(_textPrimary),
               yearOverlayColor: WidgetStatePropertyAll(
-                _primary.withValues(alpha: 0.08),
+                _identity.withValues(alpha: 0.08),
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -313,12 +319,12 @@ class _ReservaScreenState extends State<ReservaScreen> {
               width: isWeb ? 52 : 48,
               height: isWeb ? 52 : 48,
               decoration: BoxDecoration(
-                color: _primary.withValues(alpha: 0.10),
+                color: _surfaceSoft,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
                 Icons.sports_tennis_rounded,
-                color: _primary,
+                color: _textSecondary,
                 size: isWeb ? 27 : 25,
               ),
             ),
@@ -379,8 +385,11 @@ class _ReservaScreenState extends State<ReservaScreen> {
             isExpanded: true,
             decoration: InputDecoration(
               filled: true,
-              fillColor: _surfaceMuted,
-              prefixIcon: Icon(Icons.sports_tennis_rounded, color: _primary),
+              fillColor: _surfaceSoft,
+              prefixIcon: Icon(
+                Icons.sports_tennis_rounded,
+                color: _textSecondary,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(color: _borderSoft),
@@ -391,7 +400,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _primary, width: 1.5),
+                borderSide: BorderSide(color: _border, width: 1.5),
               ),
             ),
             items: _instalaciones.map((instalacion) {
@@ -443,7 +452,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
             ? _surface
             : isReserved
             ? AppTheme.warning.withValues(alpha: 0.08)
-            : _surfaceMuted;
+            : _surfaceSoft;
 
         final foregroundColor = isAvailable
             ? _textPrimary
@@ -462,15 +471,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                   ? AppTheme.warning.withValues(alpha: 0.35)
                   : _border,
             ),
-            boxShadow: isAvailable
-                ? AppTheme.softShadow
-                : [
-                    const BoxShadow(
-                      color: Color(0x0A000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+            boxShadow: isAvailable ? AppTheme.softShadow : const [],
           ),
           child: Material(
             color: Colors.transparent,
@@ -488,7 +489,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                           : isPast
                           ? Icons.history_rounded
                           : Icons.access_time_rounded,
-                      color: isAvailable ? _primary : foregroundColor,
+                      color: isAvailable ? _action : foregroundColor,
                       size: isWeb ? 19 : 20,
                     ),
                     const SizedBox(width: 7),
@@ -542,13 +543,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
             width: isWeb ? 76 : 68,
             height: isWeb ? 76 : 68,
             decoration: BoxDecoration(
-              color: _primary.withValues(alpha: 0.10),
+              color: _surfaceSoft,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.sports_tennis_rounded,
               size: isWeb ? 38 : 34,
-              color: _primary,
+              color: _textSecondary,
             ),
           ),
           const SizedBox(height: 18),
@@ -656,9 +657,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                     ? null
                                     : _selectDate,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primary,
-                                  foregroundColor: _textOnPrimary,
-                                  disabledBackgroundColor: _surfaceMuted,
+                                  backgroundColor: _surfaceSoft,
+                                  foregroundColor: _textPrimary,
+                                  disabledBackgroundColor: _surfaceSoft,
                                   disabledForegroundColor: _textTertiary,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
@@ -668,7 +669,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 icon: Icon(
                                   Icons.calendar_today_outlined,
                                   size: 19,
-                                  color: _textOnPrimary,
+                                  color: _textPrimary,
                                 ),
                                 label: Text(
                                   _selectedDate == null
@@ -685,7 +686,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                   vertical: 11,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _primary.withValues(alpha: 0.08),
+                                  color: _surfaceSoft,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -694,7 +695,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                     Icon(
                                       Icons.event_available_rounded,
                                       size: 18,
-                                      color: _primary,
+                                      color: _textSecondary,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -736,20 +737,20 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: _primary.withValues(alpha: 0.08),
+                                color: _action.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.circle, size: 7, color: _primary),
+                                  Icon(Icons.circle, size: 7, color: _action),
                                   const SizedBox(width: 5),
                                   Text(
                                     'Disponible',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: _primary,
+                                      color: _action,
                                     ),
                                   ),
                                 ],
@@ -762,7 +763,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 50),
                             child: Center(
-                              child: CircularProgressIndicator(color: _primary),
+                              child: CircularProgressIndicator(color: _action),
                             ),
                           )
                         else

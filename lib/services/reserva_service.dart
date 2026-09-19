@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/club/instalacion.dart';
 
 class ReservaService {
@@ -44,9 +44,7 @@ class ReservaService {
 
   Future<String> crearReserva(Map<String, dynamic> reservaData) async {
     try {
-      final docRef = await _firestore
-          .collection('reservas')
-          .add(reservaData);
+      final docRef = await _firestore.collection('reservas').add(reservaData);
 
       return docRef.id;
     } catch (e) {
@@ -98,13 +96,15 @@ class ReservaService {
             .where('estadoReserva', isEqualTo: 'CONFIRMADA')
             .get();
 
-        if (usuarioReservasSnapshot.docs.length >= instalacion.maxReservasPorDia) {
-          throw Exception('Has alcanzado el máximo de ${instalacion.maxReservasPorDia} reservas permitidas para este día.');
+        if (usuarioReservasSnapshot.docs.length >=
+            instalacion.maxReservasPorDia) {
+          throw Exception(
+            'Has alcanzado el máximo de ${instalacion.maxReservasPorDia} reservas permitidas para este día.',
+          );
         }
 
         for (var doc in usuarioReservasSnapshot.docs) {
-          final horaInicioExistente =
-              doc.data()['horaInicio'] as String;
+          final horaInicioExistente = doc.data()['horaInicio'] as String;
 
           if (sonReservasConsecutivas(
             horaInicioExistente,
@@ -173,10 +173,7 @@ class ReservaService {
 
   Future<void> cancelarReserva(String reservaId) async {
     try {
-      await _firestore
-          .collection('reservas')
-          .doc(reservaId)
-          .update({
+      await _firestore.collection('reservas').doc(reservaId).update({
         'estadoReserva': 'CANCELADA_POR_USUARIO',
       });
     } catch (e) {
@@ -199,8 +196,7 @@ class ReservaService {
       int totalHoras = 0;
 
       for (var doc in querySnapshot.docs) {
-        final duracion =
-            doc.data()['duracionMinutos'] as int? ?? 90;
+        final duracion = doc.data()['duracionMinutos'] as int? ?? 90;
 
         totalHoras += duracion;
       }
@@ -211,10 +207,7 @@ class ReservaService {
     }
   }
 
-  Future<int> contarReservasEnDia(
-    String usuarioId,
-    String fecha,
-  ) async {
+  Future<int> contarReservasEnDia(String usuarioId, String fecha) async {
     try {
       final querySnapshot = await _firestore
           .collection('reservas')
@@ -262,31 +255,15 @@ class ReservaService {
       final hour2 = int.parse(time2[0]);
       final minute2 = int.parse(time2[1]);
 
-      final inicio1 = DateTime(
-        2024,
-        1,
-        1,
-        hour1,
-        minute1,
-      );
+      final inicio1 = DateTime(2024, 1, 1, hour1, minute1);
 
-      final fin1 = inicio1.add(
-        Duration(minutes: duracionReservaMinutos),
-      );
+      final fin1 = inicio1.add(Duration(minutes: duracionReservaMinutos));
 
-      final inicio2 = DateTime(
-        2024,
-        1,
-        1,
-        hour2,
-        minute2,
-      );
+      final inicio2 = DateTime(2024, 1, 1, hour2, minute2);
 
       return fin1.isAtSameMomentAs(inicio2) ||
           inicio1.isAtSameMomentAs(
-            inicio2.add(
-              Duration(minutes: duracionReservaMinutos),
-            ),
+            inicio2.add(Duration(minutes: duracionReservaMinutos)),
           );
     } catch (e) {
       return false;
@@ -299,8 +276,10 @@ class ReservaService {
     int duracionNueva,
     Instalacion instalacion,
   ) async {
-    final horasReservadas =
-        await calcularHorasReservadasEnDia(usuarioId, fecha);
+    final horasReservadas = await calcularHorasReservadasEnDia(
+      usuarioId,
+      fecha,
+    );
 
     final horasTotales = horasReservadas + duracionNueva;
 
@@ -312,8 +291,7 @@ class ReservaService {
     String fecha,
     Instalacion instalacion,
   ) async {
-    final reservas =
-        await contarReservasEnDia(usuarioId, fecha);
+    final reservas = await contarReservasEnDia(usuarioId, fecha);
 
     return reservas < instalacion.maxReservasPorDia;
   }
@@ -325,12 +303,10 @@ class ReservaService {
     Instalacion instalacion,
   ) async {
     try {
-      final reservas =
-          await getReservasUsuarioEnDia(usuarioId, fecha);
+      final reservas = await getReservasUsuarioEnDia(usuarioId, fecha);
 
       for (var reserva in reservas) {
-        final horaInicioExistente =
-            reserva['horaInicio'] as String;
+        final horaInicioExistente = reserva['horaInicio'] as String;
 
         if (sonReservasConsecutivas(
           horaInicioExistente,
@@ -350,9 +326,7 @@ class ReservaService {
   bool validarAntelacion(DateTime fechaReserva, int maxDiasAntelacion) {
     final hoy = DateTime.now();
 
-    final fechaLimite = hoy.add(
-      Duration(days: maxDiasAntelacion),
-    );
+    final fechaLimite = hoy.add(Duration(days: maxDiasAntelacion));
 
     final fechaReservaSinHora = DateTime(
       fechaReserva.year,
@@ -367,9 +341,7 @@ class ReservaService {
     );
 
     return fechaReservaSinHora.isBefore(fechaLimiteSinHora) ||
-        fechaReservaSinHora.isAtSameMomentAs(
-          fechaLimiteSinHora,
-        );
+        fechaReservaSinHora.isAtSameMomentAs(fechaLimiteSinHora);
   }
 
   String _formatearDuracion(int minutos) {
@@ -390,10 +362,8 @@ class ReservaService {
 
     return ' horas y  minutos';
   }
-  bool puedeCancelarReserva(
-    String fecha,
-    String hora,
-  ) {
+
+  bool puedeCancelarReserva(String fecha, String hora) {
     try {
       final parts = fecha.split('-');
 
@@ -412,17 +382,9 @@ class ReservaService {
 
       final now = DateTime.now();
 
-      final reservationTime = DateTime(
-        year,
-        month,
-        day,
-        hour,
-        minute,
-      );
+      final reservationTime = DateTime(year, month, day, hour, minute);
 
-      final horaAntes = reservationTime.subtract(
-        const Duration(hours: 1),
-      );
+      final horaAntes = reservationTime.subtract(const Duration(hours: 1));
 
       return now.isBefore(horaAntes);
     } catch (e) {
@@ -430,22 +392,3 @@ class ReservaService {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

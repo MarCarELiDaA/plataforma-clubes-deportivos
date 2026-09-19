@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
@@ -32,6 +32,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Color get _textSecondary => AppTheme.clubTextSecondary;
   Color get _border => AppTheme.clubBorder;
   Color get _textOnAccent => AppTheme.textOnPrimary;
+
+  IconData get _menuIcon {
+    switch (AppConfig.club.menuIcon) {
+      case 'menu':
+        return Icons.menu;
+      case 'menuOpen':
+        return Icons.menu_open;
+      case 'menuBook':
+        return Icons.menu_book_outlined;
+      case 'menuRounded':
+      default:
+        return Icons.menu_rounded;
+    }
+  }
 
   @override
   void initState() {
@@ -85,7 +99,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  bool get _reservasActivas => AppConfig.club.moduloActivo('reservations');
+  bool get _reservasActivas =>
+      AppConfig.club.moduloActivo('reservations');
 
   void _openReserva() {
     if (!_reservasActivas) return;
@@ -141,7 +156,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           content: Text(
             '¿Estás seguro de que quieres cerrar sesión?',
-            style: TextStyle(color: _textSecondary, fontSize: 14, height: 1.4),
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
@@ -210,7 +229,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               decoration: BoxDecoration(
                 color: _surfaceSoft,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _accent.withValues(alpha: 0.12)),
+                border: Border.all(
+                  color: _accent.withValues(alpha: 0.12),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -276,7 +297,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 4),
                   Text(
                     AppConfig.club.deporte,
-                    style: TextStyle(color: _textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -330,14 +354,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.only(top: 8),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: _border.withValues(alpha: 0.7)),
+                  top: BorderSide(
+                    color: _border.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
               child: ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                leading: Icon(Icons.logout_rounded, color: AppTheme.error),
+                leading: Icon(
+                  Icons.logout_rounded,
+                  color: AppTheme.error,
+                ),
                 title: Text(
                   'Cerrar sesión',
                   style: TextStyle(
@@ -376,20 +405,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     bool highlighted = false,
   }) {
     return ListTile(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: highlighted ? _accentSoft : Colors.transparent,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      leading: Icon(icon, color: highlighted ? _accent : _textSecondary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      tileColor: highlighted ? _surfaceMuted : Colors.transparent,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 2,
+      ),
+      leading: Icon(
+        icon,
+        color: highlighted ? _textPrimary : _textSecondary,
+      ),
       title: Text(
         title,
         style: TextStyle(
           color: highlighted ? _textPrimary : _textSecondary,
           fontSize: 14,
-          fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+          fontWeight: highlighted
+              ? FontWeight.w600
+              : FontWeight.w500,
         ),
       ),
       trailing: highlighted
-          ? Icon(Icons.chevron_right_rounded, color: _accent, size: 20)
+          ? Icon(
+              Icons.chevron_right_rounded,
+              color: _accent,
+              size: 20,
+            )
           : null,
       onTap: () {
         Navigator.of(context).pop();
@@ -403,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     required double padding,
     required bool compact,
   }) {
-    final hasImage = AppConfig.club.fondo.trim().isNotEmpty;
+    final hasImage = AppConfig.club.hero.trim().isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -412,7 +455,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(compact ? 26 : 30),
-        border: Border.all(color: _border.withValues(alpha: 0.8)),
+        border: Border.all(
+          color: _border.withValues(alpha: 0.8),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -425,9 +470,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         fit: StackFit.expand,
         children: [
           if (hasImage)
-            Image.asset(AppConfig.club.fondo, fit: BoxFit.cover)
+            Image.asset(
+              AppConfig.club.hero,
+              width: double.infinity,
+              height: 190,
+              fit: BoxFit.cover,
+            )
           else
             Container(color: _surfaceMuted),
+
           if (hasImage)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -435,13 +486,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    _surface.withValues(alpha: 0.96),
-                    _surface.withValues(alpha: 0.84),
-                    _surface.withValues(alpha: 0.18),
+                    _surface.withValues(alpha: 0.35),
+                    _surface.withValues(alpha: 0.04),
+                    _surface.withValues(alpha: 0.04),
                   ],
                 ),
               ),
             ),
+
           if (hasImage)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -449,12 +501,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    _surface.withValues(alpha: 0.40),
+                    _surface.withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
+
           Padding(
             padding: EdgeInsets.all(padding),
             child: Align(
@@ -483,16 +536,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           Container(
                             width: 7,
                             height: 7,
-                            decoration: BoxDecoration(
-                              color: _accent,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             AppConfig.club.deporte,
-                            style: TextStyle(
-                              color: _accent,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -501,66 +554,96 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    Text(
-                      'Bienvenido a',
-                      style: TextStyle(
-                        color: _textSecondary,
-                        fontSize: compact ? 16 : 18,
-                        fontWeight: FontWeight.w400,
+
+                    // Sombreado grisáceo para mejorar la lectura del texto.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppConfig.club.nombre,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _textPrimary,
-                        fontSize: compact ? 29 : 42,
-                        height: 1.08,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Reserva tu pista de forma rápida y disfruta de tu club.',
-                      style: TextStyle(
-                        color: _textSecondary,
-                        fontSize: compact ? 13 : 15,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (_reservasActivas) ...[
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton.icon(
-                          onPressed: _openReserva,
-                          icon: Icon(
-                            Icons.calendar_month_rounded,
-                            size: 20,
-                            color: _textOnAccent,
-                          ),
-                          label: Text(
-                            'Reservar pista',
-                            style: TextStyle(
-                              color: _textOnAccent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _accent,
-                            foregroundColor: _textOnAccent,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 22),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(17),
-                            ),
-                          ),
+                      decoration: BoxDecoration(
+                        color: _surfaceMuted.withValues(alpha: 0.78),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _border.withValues(alpha: 0.55),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bienvenido a',
+                            style: TextStyle(
+                              color: _textPrimary,
+                              fontSize: compact ? 16 : 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            AppConfig.club.nombre,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _textPrimary,
+                              fontSize: compact ? 29 : 42,
+                              height: 1.08,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Reserva tu pista de forma rápida y disfruta de tu club.',
+                            style: TextStyle(
+                              color: _textPrimary,
+                              fontSize: compact ? 13 : 15,
+                              height: 1.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (_reservasActivas) ...[
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              height: 52,
+                              child: FilledButton.icon(
+                                onPressed: _openReserva,
+                                icon: Icon(
+                                  Icons.calendar_month_rounded,
+                                  size: 20,
+                                  color: _textOnAccent,
+                                ),
+                                label: Text(
+                                  'Reservar pista',
+                                  style: TextStyle(
+                                    color: _textOnAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _accent,
+                                  foregroundColor: _textOnAccent,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(17),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -570,7 +653,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
   }
-
   Widget _buildQuickCard({
     required IconData icon,
     required String title,
@@ -609,10 +691,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: primary ? _accentSoft : _surfaceMuted,
+                  color: _surfaceMuted,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: _accent, size: 23),
+                child: Icon(
+                  icon,
+                  color: _accent,
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -668,7 +754,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           builder: (context) {
             return IconButton(
               tooltip: 'Menú',
-              icon: Icon(Icons.menu_rounded, size: 27, color: _textPrimary),
+              icon: Icon(
+                _menuIcon,
+                size: 27,
+                color: _textPrimary,
+              ),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -686,11 +776,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: _surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _border.withValues(alpha: 0.75)),
+                  border: Border.all(
+                    color: _border.withValues(alpha: 0.75),
+                  ),
                 ),
-                child: Image.asset(AppConfig.club.logo, fit: BoxFit.contain),
+                child: Image.asset(
+                  AppConfig.club.logo,
+                  fit: BoxFit.contain,
+                ),
               ),
-            if (AppConfig.club.logo.isNotEmpty) const SizedBox(width: 10),
+            if (AppConfig.club.logo.isNotEmpty)
+              const SizedBox(width: 10),
             Expanded(
               child: Text(
                 AppConfig.club.nombre,
@@ -708,7 +804,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         actions: [
           IconButton(
             tooltip: 'Cerrar sesión',
-            icon: Icon(Icons.logout_rounded, color: _textPrimary),
+            icon: Icon(
+              Icons.logout_rounded,
+              color: _textPrimary,
+            ),
             onPressed: _logout,
           ),
           const SizedBox(width: 6),
@@ -760,7 +859,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(height: 13),
                       LayoutBuilder(
                         builder: (context, quickConstraints) {
-                          final twoColumns = quickConstraints.maxWidth >= 700;
+                          final twoColumns =
+                              quickConstraints.maxWidth >= 700;
 
                           final cardWidth = twoColumns
                               ? (quickConstraints.maxWidth - 14) / 2

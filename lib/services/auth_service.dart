@@ -111,14 +111,8 @@ class AuthService {
     return false;
   }
 
-  Future<void> updateUserData(
-    String userId,
-    Map<String, dynamic> data,
-  ) async {
-    await _firestore
-        .collection('usuarios')
-        .doc(userId)
-        .update(data);
+  Future<void> updateUserData(String userId, Map<String, dynamic> data) async {
+    await _firestore.collection('usuarios').doc(userId).update(data);
   }
 
   Future<void> updatePassword(String newPassword) async {
@@ -133,10 +127,7 @@ class AuthService {
     final user = _auth.currentUser;
 
     if (user != null) {
-      final doc = await _firestore
-          .collection('usuarios')
-          .doc(user.uid)
-          .get();
+      final doc = await _firestore.collection('usuarios').doc(user.uid).get();
 
       if (doc.exists) {
         return doc.data()?['nombre'] ?? user.email;
@@ -150,10 +141,7 @@ class AuthService {
     final user = _auth.currentUser;
 
     if (user != null) {
-      final doc = await _firestore
-          .collection('usuarios')
-          .doc(user.uid)
-          .get();
+      final doc = await _firestore.collection('usuarios').doc(user.uid).get();
 
       if (doc.exists) {
         return doc.data()?['status'];
@@ -167,10 +155,7 @@ class AuthService {
     final user = _auth.currentUser;
 
     if (user != null) {
-      final doc = await _firestore
-          .collection('usuarios')
-          .doc(user.uid)
-          .get();
+      final doc = await _firestore.collection('usuarios').doc(user.uid).get();
 
       if (doc.exists) {
         return doc.data()?['role'];
@@ -184,42 +169,30 @@ class AuthService {
     final user = _auth.currentUser;
 
     if (user != null) {
-      final doc = await _firestore
-          .collection('usuarios')
-          .doc(user.uid)
-          .get();
+      final doc = await _firestore.collection('usuarios').doc(user.uid).get();
 
       if (doc.exists) {
         final data = doc.data();
 
-        return {
-          'status': data?['status'],
-          'role': data?['role'],
-        };
+        return {'status': data?['status'], 'role': data?['role']};
       }
     }
 
-    return {
-      'status': null,
-      'role': null,
-    };
+    return {'status': null, 'role': null};
   }
 
   Future<UserCredential> signInWithGoogle() async {
     await _googleSignIn.initialize();
 
-    final GoogleSignInAccount googleUser =
-        await _googleSignIn.authenticate();
+    final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-    final GoogleSignInAuthentication googleAuth =
-        googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
     );
 
-    final userCredential =
-        await _auth.signInWithCredential(credential);
+    final userCredential = await _auth.signInWithCredential(credential);
 
     // Verificar si el usuario ya existe en Firestore.
     final userDoc = await _firestore

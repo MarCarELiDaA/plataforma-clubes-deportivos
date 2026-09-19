@@ -1,4 +1,4 @@
-name: clubes_deportivos
+﻿name: clubes_deportivos
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -35,13 +35,18 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/logofinal1.png
+    - assets/images/logofinal1.jpeg
     - assets/images/pistanavales.png
     - assets/images/fondo.png
+    - assets/images/login_banner.jpeg
+    - assets/images/home_hero.jpeg
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logofinal1.png"
+  image_path: "assets/images/logofinal1.jpeg"
   adaptive_icon_background: "#182B50"
-  adaptive_icon_foreground: "assets/images/logofinal1.png"
+  adaptive_icon_foreground: "assets/images/logofinal1.jpeg"
+
+
+

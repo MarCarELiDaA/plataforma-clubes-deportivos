@@ -22,55 +22,14 @@ class AppTheme {
   }
 
   // ============================================================
-  // COLORES DE IDENTIDAD DEL CLUB
+  // COLORES BASE CONFIGURABLES DEL CLUB
   // ============================================================
 
   static Color get primary => _colorDesdeHex(AppConfig.club.colorPrimario);
 
-  static Color get primaryLight =>
-      Color.alphaBlend(Colors.white.withValues(alpha: 0.08), primary);
-
-  static Color get primaryDark =>
-      Color.alphaBlend(Colors.black.withValues(alpha: 0.20), primary);
-
   static Color get secondary => _colorDesdeHex(AppConfig.club.colorSecundario);
 
-  static Color get secondaryLight =>
-      Color.alphaBlend(Colors.white.withValues(alpha: 0.12), secondary);
-
   static Color get accent => _colorDesdeHex(AppConfig.club.colorAcento);
-
-  static Color get accentLight =>
-      Color.alphaBlend(Colors.white.withValues(alpha: 0.16), accent);
-
-  // ============================================================
-  // COLORES FUNCIONALES
-  // ============================================================
-
-  static Color get success => secondary;
-
-  static Color get successLight =>
-      Color.alphaBlend(secondary.withValues(alpha: 0.12), clubSurface);
-
-  static Color get warning => accent;
-
-  static Color get warningLight =>
-      Color.alphaBlend(accent.withValues(alpha: 0.12), clubSurface);
-
-  static const Color error = Color(0xFFE53935);
-
-  static Color get errorLight =>
-      Color.alphaBlend(error.withValues(alpha: 0.12), clubSurface);
-
-  // Alias de compatibilidad
-  static Color get accentGreen => secondary;
-  static Color get accentYellow => accent;
-  static const Color errorRed = error;
-  static const Color destructiveRed = error;
-
-  // ============================================================
-  // COLORES DINÁMICOS PERSONALIZABLES DEL CLUB
-  // ============================================================
 
   static Color get clubBackground => _colorDesdeHex(AppConfig.club.colorFondo);
 
@@ -80,25 +39,114 @@ class AppTheme {
   static Color get clubSurfaceSoft =>
       _colorDesdeHex(AppConfig.club.colorSuperficieAlternativa);
 
-  static Color get clubSurfaceMuted =>
-      Color.alphaBlend(const Color(0x14000000), clubSurfaceSoft);
-
   static Color get clubTextPrimary =>
       _colorDesdeHex(AppConfig.club.colorTextoPrincipal);
 
   static Color get clubTextSecondary =>
       _colorDesdeHex(AppConfig.club.colorTextoSecundario);
 
+  static Color get clubBorder => _colorDesdeHex(AppConfig.club.colorBorde);
+
+  // ============================================================
+  // COLORES DERIVADOS DEL TEMA
+  // ============================================================
+
+  static Color get clubSurfaceMuted =>
+      Color.alphaBlend(const Color(0x14000000), clubSurfaceSoft);
+
   static Color get clubTextTertiary =>
       Color.alphaBlend(clubTextSecondary.withValues(alpha: 0.70), clubSurface);
-
-  static Color get clubBorder => _colorDesdeHex(AppConfig.club.colorBorde);
 
   static Color get clubBorderSoft =>
       Color.alphaBlend(clubBorder.withValues(alpha: 0.55), clubSurface);
 
   // ============================================================
-  // CONTRASTE AUTOMÁTICO SOBRE COLORES
+  // COLORES SEMÁNTICOS
+  // ============================================================
+  //
+  // Las pantallas nuevas deberían utilizar preferentemente
+  // estos nombres en lugar de saber qué color concreto utiliza
+  // cada club.
+  // ============================================================
+
+  /// Color principal de identidad del club.
+  static Color get identity => primary;
+
+  /// Color destinado a acciones principales y controles.
+  static Color get action => secondary;
+
+  /// Color de acento visual.
+  static Color get accentColor => accent;
+
+  /// Fondo general de las pantallas.
+  static Color get pageBackground => clubBackground;
+
+  /// Superficie principal para tarjetas, formularios y paneles.
+  static Color get surfaceColor => clubSurface;
+
+  /// Superficie secundaria para bloques diferenciados.
+  static Color get surfaceSoftColor => clubSurfaceSoft;
+
+  /// Texto principal.
+  static Color get textPrimaryColor => clubTextPrimary;
+
+  /// Texto secundario.
+  static Color get textSecondaryColor => clubTextSecondary;
+
+  /// Texto terciario.
+  static Color get textTertiaryColor => clubTextTertiary;
+
+  /// Borde principal.
+  static Color get borderColor => clubBorder;
+
+  /// Borde suave.
+  static Color get borderSoftColor => clubBorderSoft;
+
+  // ============================================================
+  // VARIANTES DE COLORES
+  // ============================================================
+
+  static Color get primaryLight =>
+      Color.alphaBlend(Colors.white.withValues(alpha: 0.08), primary);
+
+  static Color get primaryDark =>
+      Color.alphaBlend(Colors.black.withValues(alpha: 0.20), primary);
+
+  static Color get secondaryLight =>
+      Color.alphaBlend(Colors.white.withValues(alpha: 0.12), secondary);
+
+  static Color get accentLight =>
+      Color.alphaBlend(Colors.white.withValues(alpha: 0.16), accent);
+
+  static Color get actionLight =>
+      Color.alphaBlend(action.withValues(alpha: 0.12), surfaceColor);
+
+  static Color get identityLight =>
+      Color.alphaBlend(identity.withValues(alpha: 0.08), surfaceColor);
+
+  static Color get surfaceMuted => clubSurfaceMuted;
+
+  // ============================================================
+  // COLORES FUNCIONALES
+  // ============================================================
+
+  static Color get success => action;
+
+  static Color get successLight =>
+      Color.alphaBlend(action.withValues(alpha: 0.12), surfaceColor);
+
+  static Color get warning => accentColor;
+
+  static Color get warningLight =>
+      Color.alphaBlend(accentColor.withValues(alpha: 0.12), surfaceColor);
+
+  static const Color error = Color(0xFFE53935);
+
+  static Color get errorLight =>
+      Color.alphaBlend(error.withValues(alpha: 0.12), surfaceColor);
+
+  // ============================================================
+  // CONTRASTE AUTOMÁTICO
   // ============================================================
 
   static Color textoSobreColor(Color fondo) {
@@ -111,15 +159,29 @@ class AppTheme {
 
   static Color get textOnAccent => textoSobreColor(accent);
 
+  static Color get textOnIdentity => textoSobreColor(identity);
+
+  static Color get textOnAction => textoSobreColor(action);
+
+  static Color get textOnAccentColor => textoSobreColor(accentColor);
+
+  // ============================================================
+  // ALIASES DE COMPATIBILIDAD
+  // ============================================================
+
+  static Color get accentGreen => secondary;
+
+  static Color get accentYellow => accent;
+
+  static const Color errorRed = error;
+
+  static const Color destructiveRed = error;
+
+  static Color get primaryBlue => primary;
+
   // ============================================================
   // COLORES CONSTANTES DE COMPATIBILIDAD
   // ============================================================
-  //
-  // Se mantienen const porque existen widgets del proyecto
-  // que utilizan estos colores dentro de constructores const.
-  //
-  // Los nuevos diseños deben utilizar los colores dinámicos
-  // clubBackground, clubSurface, clubTextPrimary, etc.
 
   static const Color background = Color(0xFFF7F9FC);
 
@@ -127,7 +189,7 @@ class AppTheme {
 
   static const Color surfaceSoft = Color(0xFFF1F5F9);
 
-  static const Color surfaceMuted = Color(0xFFE8EDF3);
+  static const Color surfaceMutedCompatibility = Color(0xFFE8EDF3);
 
   static const Color textPrimary = Color(0xFF102033);
 
@@ -140,12 +202,6 @@ class AppTheme {
   static const Color border = Color(0xFFD7DEE7);
 
   static const Color borderSoft = Color(0xFFE8EDF3);
-
-  // ============================================================
-  // ALIASES DE COMPATIBILIDAD
-  // ============================================================
-
-  static Color get primaryBlue => primary;
 
   static const Color backgroundDark = background;
 
@@ -179,35 +235,36 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final ColorScheme colorScheme = ColorScheme.fromSeed(
-      seedColor: primary,
+      seedColor: identity,
       brightness: Brightness.light,
-      primary: primary,
-      secondary: secondary,
+      primary: identity,
+      secondary: action,
       error: error,
-      surface: clubSurface,
+      surface: surfaceColor,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: clubBackground,
+
+      scaffoldBackgroundColor: pageBackground,
 
       textSelectionTheme: TextSelectionThemeData(
-        cursorColor: secondary,
-        selectionColor: secondaryLight,
-        selectionHandleColor: secondary,
+        cursorColor: action,
+        selectionColor: actionLight,
+        selectionHandleColor: action,
       ),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: clubSurface,
-        foregroundColor: clubTextPrimary,
+        backgroundColor: surfaceColor,
+        foregroundColor: textPrimaryColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 21,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
@@ -216,109 +273,109 @@ class AppTheme {
 
       textTheme: TextTheme(
         displayLarge: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 32,
           fontWeight: FontWeight.w600,
           letterSpacing: -1,
         ),
         displayMedium: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.7,
         ),
         displaySmall: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 24,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
         headlineLarge: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 22,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
         ),
         headlineMedium: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         headlineSmall: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
         titleSmall: TextStyle(
-          color: secondary,
+          color: action,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
         bodyLarge: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 16,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: TextStyle(
-          color: clubTextSecondary,
+          color: textSecondaryColor,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodySmall: TextStyle(
-          color: clubTextTertiary,
+          color: textTertiaryColor,
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: TextStyle(
-          color: textOnSecondary,
+          color: textOnAction,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
         labelMedium: TextStyle(
-          color: secondary,
+          color: action,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         labelSmall: TextStyle(
-          color: secondary,
+          color: action,
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
       ),
 
       cardTheme: CardThemeData(
-        color: clubSurface,
+        color: surfaceColor,
         elevation: 0,
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: clubBorderSoft, width: 1),
+          side: BorderSide(color: borderSoftColor, width: 1),
         ),
       ),
 
       listTileTheme: ListTileThemeData(
         tileColor: Colors.transparent,
-        selectedTileColor: secondaryLight,
-        textColor: clubTextPrimary,
-        iconColor: secondary,
+        selectedTileColor: actionLight,
+        textColor: textPrimaryColor,
+        iconColor: action,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: secondary,
-          foregroundColor: textOnSecondary,
+          backgroundColor: action,
+          foregroundColor: textOnAction,
           elevation: 0,
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -331,11 +388,11 @@ class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: secondary,
+          foregroundColor: action,
           backgroundColor: Colors.transparent,
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          side: BorderSide(color: secondary, width: 1),
+          side: BorderSide(color: action, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -345,52 +402,52 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: secondary,
+          foregroundColor: action,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: clubSurface,
+        fillColor: surfaceColor,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         labelStyle: TextStyle(
-          color: secondary,
+          color: action,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         floatingLabelStyle: TextStyle(
-          color: secondary,
+          color: action,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
         hintStyle: TextStyle(
-          color: clubTextTertiary,
+          color: textTertiaryColor,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
-        helperStyle: TextStyle(color: clubTextTertiary, fontSize: 12),
+        helperStyle: TextStyle(color: textTertiaryColor, fontSize: 12),
         errorStyle: const TextStyle(
           color: error,
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
-        prefixIconColor: secondary,
-        suffixIconColor: secondary,
+        prefixIconColor: action,
+        suffixIconColor: action,
         border: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(color: clubBorder, width: 1),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(color: clubBorder, width: 1),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: secondary, width: 1.5),
+          borderSide: BorderSide(color: action, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
@@ -404,90 +461,90 @@ class AppTheme {
 
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-        side: BorderSide(color: secondary, width: 1.5),
+        side: BorderSide(color: action, width: 1.5),
         fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return secondary;
+            return action;
           }
 
-          return clubSurface;
+          return surfaceColor;
         }),
-        checkColor: WidgetStateProperty.all(textOnSecondary),
+        checkColor: WidgetStateProperty.all(textOnAction),
       ),
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return secondary;
+            return action;
           }
 
-          return clubTextTertiary;
+          return textTertiaryColor;
         }),
         trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return secondaryLight;
+            return actionLight;
           }
 
-          return clubSurfaceMuted;
+          return surfaceMuted;
         }),
       ),
 
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return secondary;
+            return action;
           }
 
-          return clubTextTertiary;
+          return textTertiaryColor;
         }),
       ),
 
       dividerTheme: DividerThemeData(
-        color: clubBorderSoft,
+        color: borderSoftColor,
         thickness: 1,
         space: 1,
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: primary,
-        contentTextStyle: TextStyle(color: textOnPrimary, fontSize: 14),
+        backgroundColor: identity,
+        contentTextStyle: TextStyle(color: textOnIdentity, fontSize: 14),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
 
       dialogTheme: DialogThemeData(
-        backgroundColor: clubSurface,
+        backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         titleTextStyle: TextStyle(
-          color: clubTextPrimary,
+          color: textPrimaryColor,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         contentTextStyle: TextStyle(
-          color: clubTextSecondary,
+          color: textSecondaryColor,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
       ),
 
       datePickerTheme: DatePickerThemeData(
-        backgroundColor: clubSurface,
+        backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
-        headerBackgroundColor: primary,
-        headerForegroundColor: textOnPrimary,
+        headerBackgroundColor: action,
+        headerForegroundColor: textOnAction,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        todayBackgroundColor: WidgetStateProperty.all(secondaryLight),
-        todayForegroundColor: WidgetStateProperty.all(secondary),
-        dayForegroundColor: WidgetStateProperty.all(clubTextPrimary),
-        yearForegroundColor: WidgetStateProperty.all(clubTextPrimary),
+        todayBackgroundColor: WidgetStateProperty.all(actionLight),
+        todayForegroundColor: WidgetStateProperty.all(action),
+        dayForegroundColor: WidgetStateProperty.all(textPrimaryColor),
+        yearForegroundColor: WidgetStateProperty.all(textPrimaryColor),
       ),
 
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: clubSurface,
+        backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: clubSurface,
+        modalBackgroundColor: surfaceColor,
         modalBarrierColor: const Color(0x33000000),
         elevation: 8,
         showDragHandle: true,
@@ -495,25 +552,25 @@ class AppTheme {
 
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: primary,
+          color: identity,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: TextStyle(color: textOnPrimary, fontSize: 12),
+        textStyle: TextStyle(color: textOnIdentity, fontSize: 12),
       ),
 
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: secondary,
-        linearTrackColor: secondaryLight,
-        circularTrackColor: clubSurfaceMuted,
+        color: action,
+        linearTrackColor: actionLight,
+        circularTrackColor: surfaceMuted,
       ),
 
-      iconTheme: IconThemeData(color: secondary, size: 24),
+      iconTheme: IconThemeData(color: action, size: 24),
 
       tabBarTheme: TabBarThemeData(
-        labelColor: secondary,
-        unselectedLabelColor: clubTextSecondary,
-        indicatorColor: accent,
-        dividerColor: clubBorderSoft,
+        labelColor: action,
+        unselectedLabelColor: textSecondaryColor,
+        indicatorColor: accentColor,
+        dividerColor: borderSoftColor,
         labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(
           fontSize: 14,
@@ -522,30 +579,30 @@ class AppTheme {
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: secondary,
-        foregroundColor: textOnSecondary,
+        backgroundColor: action,
+        foregroundColor: textOnAction,
         elevation: 2,
       ),
 
       dropdownMenuTheme: DropdownMenuThemeData(
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: clubSurface,
+          fillColor: surfaceColor,
           border: OutlineInputBorder(
             borderRadius: const BorderRadius.all(Radius.circular(14)),
-            borderSide: BorderSide(color: clubBorder),
+            borderSide: BorderSide(color: borderColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: const BorderRadius.all(Radius.circular(14)),
-            borderSide: BorderSide(color: clubBorder),
+            borderSide: BorderSide(color: borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: const BorderRadius.all(Radius.circular(14)),
-            borderSide: BorderSide(color: secondary, width: 1.5),
+            borderSide: BorderSide(color: action, width: 1.5),
           ),
         ),
         menuStyle: MenuStyle(
-          backgroundColor: WidgetStateProperty.all(clubSurface),
+          backgroundColor: WidgetStateProperty.all(surfaceColor),
           surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
           elevation: WidgetStateProperty.all(8),
           shape: WidgetStateProperty.all(
@@ -565,12 +622,12 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
+        seedColor: identity,
         brightness: Brightness.dark,
-        primary: primary,
-        secondary: secondary,
+        primary: identity,
+        secondary: action,
         error: error,
-        surface: clubSurface,
+        surface: surfaceColor,
       ),
     );
   }

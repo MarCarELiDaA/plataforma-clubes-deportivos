@@ -2,8 +2,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 class NetworkUtils {
-  static const String errorNoInternet = 'No hay conexión a internet. Por favor verifica tu conexión.';
-  static const String errorFirebase = 'Error de conexión con el servidor. Intenta nuevamente.';
+  static const String errorNoInternet =
+      'No hay conexión a internet. Por favor verifica tu conexión.';
+  static const String errorFirebase =
+      'Error de conexión con el servidor. Intenta nuevamente.';
 
   static Future<bool> isNetworkAvailable() async {
     final connectivityResult = await Connectivity().checkConnectivity();

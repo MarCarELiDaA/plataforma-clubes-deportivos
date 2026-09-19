@@ -1,4 +1,4 @@
-import '../../models/club/club_config.dart';
+﻿import '../../models/club/club_config.dart';
 import '../../models/club/instalacion.dart';
 
 class ClubConfigActual {
@@ -10,7 +10,7 @@ class ClubConfigActual {
     nombre: 'Pádel Navales',
     deporte: 'Pádel',
 
-    logo: 'assets/images/logofinal1.png',
+    logo: 'assets/images/logofinal1.jpeg',
 
     telefono: '923 30 01 83',
     email: 'aytonavales@yahoo.es',
@@ -60,7 +60,9 @@ class ClubConfigActual {
 
     // De momento usamos la imagen actual como hero.
     // Más adelante podremos sustituirla por una imagen propia.
-    hero: 'assets/images/pistanavales.png',
+    hero: 'assets/images/home_hero.jpeg',
+    imagenLogin: 'assets/images/login_banner.jpeg',
+    menuIcon: 'menuRounded',
 
     imagenInstalaciones: 'assets/images/pistanavales.png',
 

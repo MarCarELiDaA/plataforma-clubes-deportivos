@@ -1,8 +1,4 @@
-enum EstadoReserva {
-  confirmada,
-  canceladaPorUsuario,
-  canceladaPorAdmin,
-}
+enum EstadoReserva { confirmada, canceladaPorUsuario, canceladaPorAdmin }
 
 class Reserva {
   final String usuarioId;

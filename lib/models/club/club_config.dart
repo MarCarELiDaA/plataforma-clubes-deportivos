@@ -69,6 +69,12 @@ class ClubConfig {
   /// Imagen principal o hero de la pantalla de inicio.
   final String hero;
 
+  /// Imagen horizontal utilizada en la tarjeta de acceso del Login.
+  final String imagenLogin;
+
+  /// Icono del botón del menú principal.
+  final String menuIcon;
+
   /// Imagen para la sección de instalaciones.
   final String imagenInstalaciones;
 
@@ -138,6 +144,8 @@ class ClubConfig {
     // Imágenes
     // ------------------------------------------------------------
     this.hero = '',
+    this.imagenLogin = '',
+    this.menuIcon = 'menuRounded',
     this.imagenInstalaciones = '',
     this.imagenReservas = '',
     this.imagenInformacion = '',

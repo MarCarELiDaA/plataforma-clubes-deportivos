@@ -1,4 +1,4 @@
-﻿class Instalacion {
+class Instalacion {
   final String id;
   final String nombre;
   final String tipo;
@@ -41,4 +41,3 @@
     this.accesoDigitalActivo = false,
   });
 }
-

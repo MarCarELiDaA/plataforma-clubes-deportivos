@@ -520,6 +520,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _loginLogoFallback(String logo) {
+    if (logo.isNotEmpty) {
+      return Image.asset(
+        logo,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.sports_tennis_rounded, size: 52, color: _primary);
+        },
+      );
+    }
+
+    return Icon(Icons.sports_tennis_rounded, size: 52, color: _primary);
+  }
+
   @override
   Widget build(BuildContext context) {
     final club = AppConfig.club;
@@ -552,9 +568,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         Container(
-                          width: 116,
+                          width: 280,
                           height: 116,
-                          padding: const EdgeInsets.all(14),
+                          padding: EdgeInsets.zero,
                           decoration: BoxDecoration(
                             color: _surfaceSoft,
                             borderRadius: BorderRadius.circular(28),
@@ -567,23 +583,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          child: club.logo.isNotEmpty
-                              ? Image.asset(
-                                  club.logo,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.sports_tennis_rounded,
-                                      size: 52,
-                                      color: _primary,
-                                    );
-                                  },
-                                )
-                              : Icon(
-                                  Icons.sports_tennis_rounded,
-                                  size: 52,
-                                  color: _primary,
-                                ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(27),
+                            child: club.imagenLogin.isNotEmpty
+                                ? Image.asset(
+                                    club.imagenLogin,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _loginLogoFallback(club.logo);
+                                    },
+                                  )
+                                : _loginLogoFallback(club.logo),
+                          ),
                         ),
                         const SizedBox(height: 24),
                         Text(

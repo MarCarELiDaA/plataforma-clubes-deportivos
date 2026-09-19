@@ -12,10 +12,9 @@ class AdminService {
 
   Future<void> approveUser(String userId) async {
     try {
-      await _firestore
-          .collection('usuarios')
-          .doc(userId)
-          .update({'status': 'approved'});
+      await _firestore.collection('usuarios').doc(userId).update({
+        'status': 'approved',
+      });
     } catch (e) {
       rethrow;
     }
@@ -23,10 +22,9 @@ class AdminService {
 
   Future<void> denyUser(String userId) async {
     try {
-      await _firestore
-          .collection('usuarios')
-          .doc(userId)
-          .update({'status': 'rejected'});
+      await _firestore.collection('usuarios').doc(userId).update({
+        'status': 'rejected',
+      });
     } catch (e) {
       rethrow;
     }

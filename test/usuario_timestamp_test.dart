@@ -5,18 +5,14 @@ import 'package:clubes_deportivos/models/usuario.dart';
 void main() {
   group('Usuario Simplificado Tests', () {
     test('fromMap maneja usuarios nuevos con campos de aceptaciones', () {
-      final timestamp = Timestamp.fromDate(
-        DateTime(2024, 1, 15, 10, 30),
-      );
+      final timestamp = Timestamp.fromDate(DateTime(2024, 1, 15, 10, 30));
 
       final map = {
         'nombre': 'Test User',
         'email': 'test@example.com',
         'telefono': '123456789',
         'nivelPadel': 3.5,
-        'fechaRegistro': Timestamp.fromDate(
-          DateTime(2024, 1, 1),
-        ),
+        'fechaRegistro': Timestamp.fromDate(DateTime(2024, 1, 1)),
         'role': 'user',
         'status': 'approved',
         'aceptaCondiciones': true,
@@ -42,9 +38,7 @@ void main() {
         'email': 'old@example.com',
         'telefono': '987654321',
         'nivelPadel': 2.0,
-        'fechaRegistro': Timestamp.fromDate(
-          DateTime(2023, 6, 15),
-        ),
+        'fechaRegistro': Timestamp.fromDate(DateTime(2023, 6, 15)),
         'role': 'user',
         'status': 'approved',
       };
@@ -69,13 +63,7 @@ void main() {
         status: 'approved',
         aceptaCondiciones: true,
         aceptaPrivacidad: true,
-        fechaAceptaciones: DateTime(
-          2024,
-          1,
-          15,
-          10,
-          30,
-        ),
+        fechaAceptaciones: DateTime(2024, 1, 15, 10, 30),
         versionCondiciones: '1.0',
         versionPrivacidad: '1.0',
       );
