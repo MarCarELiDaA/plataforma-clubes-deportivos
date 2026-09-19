@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base href="/plataforma-clubes-deportivos/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+
+  <meta
+    name="description"
+    content="Clubes Deportivos: gestión de clubes, instalaciones y reservas deportivas."
+  >
+
+  <meta
+    name="theme-color"
+    content="#F7F8FA"
+  >
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="Clubes Deportivos"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="icons/Icon-192.png"
+  >
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="favicon.png"
+  >
+
+  <link
+    rel="manifest"
+    href="manifest.json"
+  >
+
+  <title>Clubes Deportivos</title>
+
+  <style>
+    html {
+      height: 100%;
+      background: #F7F8FA;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #F7F8FA;
+      overflow: hidden;
+    }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #F7F8FA;
+
+      opacity: 1;
+      visibility: visible;
+
+      transition:
+        opacity 220ms ease-out,
+        visibility 220ms ease-out;
+    }
+
+    .splash-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+    }
+
+    .splash-title {
+      color: #1D2939;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+      font-size: 34px;
+      line-height: 1.15;
+      font-weight: 700;
+
+      letter-spacing: -1px;
+    }
+
+    .splash-status {
+      margin-top: 18px;
+
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+
+      color: #667085;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+      font-size: 15px;
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    .splash-dots {
+      display: inline-flex;
+      width: 18px;
+      margin-left: 3px;
+    }
+
+    .splash-dots span {
+      opacity: 0.2;
+
+      animation:
+        splash-dot 1.2s infinite;
+    }
+
+    .splash-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .splash-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes splash-dot {
+      0%,
+      60%,
+      100% {
+        opacity: 0.2;
+      }
+
+      30% {
+        opacity: 1;
+      }
+    }
+
+    .splash-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+      .splash-title {
+        font-size: 30px;
+      }
+
+      .splash-status {
+        font-size: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .splash-dots span {
+        animation: none;
+        opacity: 1;
+      }
+
+      #splash {
+        transition: none;
+      }
+    }
+  </style>
+
+  <script>
+    let splashRemoved = false;
+
+    function removeSplashFromWeb() {
+      if (splashRemoved) {
+        return;
+      }
+
+      splashRemoved = true;
+
+      const splash = document.getElementById('splash');
+
+      if (!splash) {
+        return;
+      }
+
+      splash.classList.add('splash-hidden');
+
+      window.setTimeout(() => {
+        splash.remove();
+        document.body.style.background = 'transparent';
+      }, 240);
+    }
+
+    /*
+     * Flutter avisa cuando ha pintado su primer frame.
+     * En ese momento ya podemos retirar el splash HTML.
+     */
+    window.addEventListener('flutter-first-frame', () => {
+      removeSplashFromWeb();
+    });
+  </script>
+</head>
+
+<body>
+  <div id="splash" aria-hidden="true">
+    <div class="splash-content">
+
+      <div class="splash-title">
+        Clubes Deportivos
+      </div>
+
+      <div class="splash-status">
+        Preparando la web
+        <span class="splash-dots" aria-hidden="true">
+          <span>.</span>
+          <span>.</span>
+          <span>.</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
