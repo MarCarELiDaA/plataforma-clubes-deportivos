@@ -17,7 +17,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver {
   final _authService = AuthService();
 
   String _userRole = 'user';
@@ -50,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addObserver(this);
     _checkUserRole();
   }
@@ -79,13 +81,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              MaterialPageRoute(
+                builder: (context) => const LoginScreen(),
+              ),
             );
           }
         }
-      } catch (_) {
-        // Error silenciado para producción.
-      }
+      } catch (_) {}
     }
   }
 
@@ -105,35 +107,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _openReserva() {
     if (!_reservasActivas) return;
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const ReservaScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ReservaScreen(),
+      ),
+    );
   }
 
   void _openMisReservas() {
     if (!_reservasActivas) return;
 
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const MyReservationsScreen()),
+      MaterialPageRoute(
+        builder: (context) => const MyReservationsScreen(),
+      ),
     );
   }
 
   void _openProfile() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ProfileScreen(),
+      ),
+    );
   }
 
   void _openInfo() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => InfoScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => InfoScreen(),
+      ),
+    );
   }
 
   void _openAdmin() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const AdminScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminScreen(),
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -204,7 +216,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(
+            builder: (context) => const LoginScreen(),
+          ),
         );
       }
     }
@@ -213,9 +227,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildDrawer(BuildContext context) {
     final user = _authService.currentUser;
 
-    final userName = user?.displayName?.trim().isNotEmpty == true
-        ? user!.displayName!
-        : user?.email ?? 'Usuario';
+    final userName =
+        user?.displayName?.trim().isNotEmpty == true
+            ? user!.displayName!
+            : user?.email ?? 'Usuario';
 
     return Drawer(
       backgroundColor: _surface,
@@ -422,9 +437,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         style: TextStyle(
           color: highlighted ? _textPrimary : _textSecondary,
           fontSize: 14,
-          fontWeight: highlighted
-              ? FontWeight.w600
-              : FontWeight.w500,
+          fontWeight:
+              highlighted ? FontWeight.w600 : FontWeight.w500,
         ),
       ),
       trailing: highlighted
@@ -441,6 +455,51 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildActivityCategory({
+    required IconData icon,
+    required String title,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _openReserva,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 7,
+          ),
+          decoration: BoxDecoration(
+            color: _accentSoft,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: _accent.withValues(alpha: 0.16),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: 15,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHero({
     required double height,
     required double padding,
@@ -454,7 +513,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(compact ? 26 : 30),
+        borderRadius: BorderRadius.circular(
+          compact ? 26 : 30,
+        ),
         border: Border.all(
           color: _border.withValues(alpha: 0.8),
         ),
@@ -477,8 +538,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               fit: BoxFit.cover,
             )
           else
-            Container(color: _surfaceMuted),
-
+            Container(
+              color: _surfaceMuted,
+            ),
           if (hasImage)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -493,7 +555,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
             ),
-
           if (hasImage)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -507,55 +568,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
             ),
-
           Padding(
             padding: EdgeInsets.all(padding),
             child: Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
+                constraints: const BoxConstraints(
+                  maxWidth: 620,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _accentSoft,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: _accent.withValues(alpha: 0.16),
-                        ),
-                      ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
+                          _buildActivityCategory(
+                            icon: Icons.sports_tennis_rounded,
+                            title: 'Pádel',
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            AppConfig.club.deporte,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          _buildActivityCategory(
+                            icon: Icons.sports_tennis_rounded,
+                            title: 'Tenis',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildActivityCategory(
+                            icon: Icons.fitness_center_rounded,
+                            title: 'Gimnasio',
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 18),
-
-                    // Sombreado grisáceo para mejorar la lectura del texto.
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
@@ -653,6 +699,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
   }
+
   Widget _buildQuickCard({
     required IconData icon,
     required String title,
@@ -817,15 +864,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= 900;
-
             final contentWidth = constraints.maxWidth > 1280
                 ? 1280.0
                 : constraints.maxWidth;
-
-            final horizontalPadding = isDesktop ? 24.0 : 16.0;
-
+            final horizontalPadding =
+                isDesktop ? 24.0 : 16.0;
             final heroHeight = isDesktop ? 420.0 : 350.0;
-
             final heroPadding = isDesktop ? 42.0 : 24.0;
 
             return Center(
@@ -839,7 +883,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     32,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
                     children: [
                       _buildHero(
                         height: heroHeight,
@@ -861,7 +906,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         builder: (context, quickConstraints) {
                           final twoColumns =
                               quickConstraints.maxWidth >= 700;
-
                           final cardWidth = twoColumns
                               ? (quickConstraints.maxWidth - 14) / 2
                               : quickConstraints.maxWidth;

@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -306,53 +307,80 @@ class _ReservaScreenState extends State<ReservaScreen> {
   Widget _buildInstalacionSelector(bool isWeb) {
     if (_instalaciones.length <= 1) {
       return Container(
-        padding: EdgeInsets.all(isWeb ? 22 : 18),
+        width: double.infinity,
+        height: isWeb ? 220 : 190,
         decoration: BoxDecoration(
-          color: _surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: _borderSoft),
           boxShadow: AppTheme.softShadow,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/banner_padel.jpeg'),
+            fit: BoxFit.cover,
+          ),
         ),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            Container(
-              width: isWeb ? 52 : 48,
-              height: isWeb ? 52 : 48,
-              decoration: BoxDecoration(
-                color: _surfaceSoft,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Icon(
-                Icons.sports_tennis_rounded,
-                color: _textSecondary,
-                size: isWeb ? 27 : 25,
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _identity.withValues(alpha: 0.18),
+                      Colors.black.withValues(alpha: 0.68),
+                    ],
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Instalación',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _textTertiary,
+            Positioned.fill(
+              child: Padding(
+                padding: EdgeInsets.all(isWeb ? 24 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      width: isWeb ? 50 : 46,
+                      height: isWeb ? 50 : 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.sports_tennis_rounded,
+                        color: Colors.white,
+                        size: isWeb ? 27 : 25,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _instalacionActual?.nombre ?? 'Sin instalación',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: isWeb ? 20 : 18,
-                      fontWeight: FontWeight.w600,
-                      color: _textPrimary,
+                    const SizedBox(height: 14),
+                    Text(
+                      'Instalación',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.82),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      _instalacionActual?.nombre ?? 'Sin instalación',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isWeb ? 22 : 20,
+                        height: 1.15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -479,7 +507,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
               onTap: isAvailable ? () => _selectTime(time) : null,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -37,9 +37,10 @@ flutter:
   assets:
     - assets/images/logofinal1.jpeg
     - assets/images/pistanavales.png
-    - assets/images/fondo.png
     - assets/images/login_banner.jpeg
     - assets/images/home_hero.jpeg
+    - assets/images/banner_padel.jpeg
+    - assets/images/banner_tenis.jpeg
 
 flutter_launcher_icons:
   android: true
@@ -47,6 +48,3 @@ flutter_launcher_icons:
   image_path: "assets/images/logofinal1.jpeg"
   adaptive_icon_background: "#182B50"
   adaptive_icon_foreground: "assets/images/logofinal1.jpeg"
-
-
-
