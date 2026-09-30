@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../models/club/instalacion.dart';
 import '../services/auth_service.dart';
 import '../services/reserva_service.dart';
 import '../services/notification_service.dart';
@@ -11,6 +12,7 @@ import '../theme/app_theme.dart';
 class ConfirmationScreen extends StatefulWidget {
   final DateTime selectedDate;
   final String selectedTime;
+  final String? actividadId;
   final String instalacionId;
   final String instalacionName;
   final int duration;
@@ -19,6 +21,7 @@ class ConfirmationScreen extends StatefulWidget {
     super.key,
     required this.selectedDate,
     required this.selectedTime,
+    this.actividadId,
     required this.instalacionId,
     required this.instalacionName,
     required this.duration,
@@ -46,6 +49,38 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
   Color get _textSecondary => AppTheme.clubTextSecondary;
   Color get _borderSoft => AppTheme.clubBorderSoft;
   Color get _textOnPrimary => AppTheme.textOnPrimary;
+
+  Instalacion _getInstalacionSeleccionada() {
+    if (widget.actividadId != null) {
+      final actividad = AppConfig.club.actividad(widget.actividadId!);
+
+      if (actividad != null) {
+        for (final instalacion in actividad.instalaciones) {
+          if (instalacion.id == widget.instalacionId) {
+            return instalacion;
+          }
+        }
+      }
+    }
+
+    for (final actividad in AppConfig.club.actividades) {
+      for (final instalacion in actividad.instalaciones) {
+        if (instalacion.id == widget.instalacionId) {
+          return instalacion;
+        }
+      }
+    }
+
+    for (final instalacion in AppConfig.club.instalaciones) {
+      if (instalacion.id == widget.instalacionId) {
+        return instalacion;
+      }
+    }
+
+    throw Exception(
+      'La instalación seleccionada ya no está disponible',
+    );
+  }
 
   Future<void> _confirmReservation() async {
     if (_isLoading || _isNavigating) {
@@ -78,21 +113,19 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           .collection('usuarios')
           .doc(user.uid)
           .get();
+
       final userName = userDoc.data()?['nombre'] ?? user.email ?? 'Usuario';
 
       final dateFormat =
           '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
 
-      final instalacion = AppConfig.club.instalaciones.firstWhere(
-        (item) => item.id == widget.instalacionId,
-        orElse: () => throw Exception(
-          'La instalación seleccionada ya no está disponible',
-        ),
-      );
+      final instalacion = _getInstalacionSeleccionada();
 
       final reservaData = {
         'usuarioId': user.uid,
         'nombreUsuario': userName,
+        if (widget.actividadId != null)
+          'actividadId': widget.actividadId,
         'instalacionId': widget.instalacionId,
         'fecha': dateFormat,
         'horaInicio': widget.selectedTime,
@@ -101,7 +134,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         'fechaCreacionReserva': FieldValue.serverTimestamp(),
       };
 
-      final reservaId = await _reservaService.crearReservaConVerificacion(
+      final reservaId =
+          await _reservaService.crearReservaConVerificacion(
         reservaData,
         instalacion,
       );
@@ -136,9 +170,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         setState(() {
           _isLoading = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al confirmar reserva: ${e.toString()}'),
+            content: Text(
+              'Error al confirmar reserva: ${e.toString()}',
+            ),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -152,8 +189,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     }
   }
 
-  String _calculateEndTime(String startTime, int durationMinutes) {
+  String _calculateEndTime(
+    String startTime,
+    int durationMinutes,
+  ) {
     final parts = startTime.split(':');
+
     final dateTime = DateTime(
       2024,
       1,
@@ -161,13 +202,21 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       int.parse(parts[0]),
       int.parse(parts[1]),
     );
-    final endTime = dateTime.add(Duration(minutes: durationMinutes));
-    return '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+
+    final endTime = dateTime.add(
+      Duration(minutes: durationMinutes),
+    );
+
+    return '${endTime.hour.toString().padLeft(2, '0')}:'
+        '${endTime.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final endTime = _calculateEndTime(widget.selectedTime, widget.duration);
+    final endTime = _calculateEndTime(
+      widget.selectedTime,
+      widget.duration,
+    );
 
     final dateFormat =
         '${widget.selectedDate.day}/${widget.selectedDate.month}/${widget.selectedDate.year}';
@@ -195,9 +244,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
               ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
+                  constraints: const BoxConstraints(
+                    maxWidth: 900,
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
                     children: [
                       _buildHeader(context, isWide),
                       const SizedBox(height: 28),
@@ -208,7 +260,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                         isWide,
                       ),
                       const SizedBox(height: 24),
-                      _buildActionSection(context, isWide),
+                      _buildActionSection(
+                        context,
+                        isWide,
+                      ),
                     ],
                   ),
                 ),
@@ -220,12 +275,16 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isWide) {
-    final titleStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
-      color: _textPrimary,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.5,
-    );
+  Widget _buildHeader(
+    BuildContext context,
+    bool isWide,
+  ) {
+    final titleStyle =
+        Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: _textPrimary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            );
 
     return Column(
       children: [
@@ -241,25 +300,36 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
           padding: const EdgeInsets.all(14),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.asset(AppConfig.club.logo, fit: BoxFit.contain),
+            child: Image.asset(
+              AppConfig.club.logo,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         const SizedBox(height: 20),
         Text(
-          _isConfirmed ? '¡Reserva confirmada!' : 'Confirmar reserva',
+          _isConfirmed
+              ? '¡Reserva confirmada!'
+              : 'Confirmar reserva',
           style: titleStyle,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(
+            maxWidth: 600,
+          ),
           child: Text(
             _isConfirmed
                 ? 'Tu reserva se ha realizado correctamente.'
                 : 'Revisa los detalles antes de confirmar tu reserva.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge?.copyWith(color: _textSecondary, height: 1.5),
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge
+                ?.copyWith(
+                  color: _textSecondary,
+                  height: 1.5,
+                ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -293,16 +363,23 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   color: _surfaceSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.sports_tennis, color: _primary, size: 23),
+                child: Icon(
+                  Icons.sports_tennis,
+                  color: _primary,
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   'Detalles de la reserva',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(
+                        color: _textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
             ],
@@ -349,7 +426,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   child: _buildDetailItem(
                     icon: Icons.access_time,
                     label: 'Horario',
-                    value: '${widget.selectedTime} - $endTime',
+                    value:
+                        '${widget.selectedTime} - $endTime',
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -366,7 +444,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
             _buildDetailItem(
               icon: Icons.access_time,
               label: 'Horario',
-              value: '${widget.selectedTime} - $endTime',
+              value:
+                  '${widget.selectedTime} - $endTime',
             ),
             const SizedBox(height: 14),
             _buildDetailItem(
@@ -386,8 +465,13 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     required String value,
   }) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 72),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      constraints: const BoxConstraints(
+        minHeight: 72,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: _background,
         borderRadius: BorderRadius.circular(14),
@@ -403,13 +487,19 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
               color: _surfaceSoft,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: _primary, size: 20),
+            child: Icon(
+              icon,
+              color: _primary,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
               children: [
                 Text(
                   label,
@@ -438,27 +528,42 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     );
   }
 
-  Widget _buildActionSection(BuildContext context, bool isWide) {
+  Widget _buildActionSection(
+    BuildContext context,
+    bool isWide,
+  ) {
     if (_isConfirmed) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
         decoration: BoxDecoration(
           color: _surfaceSoft,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _primary.withValues(alpha: 0.25)),
+          border: Border.all(
+            color: _primary.withValues(alpha: 0.25),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: _primary, size: 24),
+            Icon(
+              Icons.check_circle,
+              color: _primary,
+              size: 24,
+            ),
             const SizedBox(width: 10),
             Flexible(
               child: Text(
                 'Reserva confirmada',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: _primary,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(
+                      color: _primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -470,11 +575,13 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     final confirmButton = SizedBox(
       height: 52,
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _confirmReservation,
+        onPressed:
+            _isLoading ? null : _confirmReservation,
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
           foregroundColor: _textOnPrimary,
-          disabledBackgroundColor: _primary.withValues(alpha: 0.55),
+          disabledBackgroundColor:
+              _primary.withValues(alpha: 0.55),
           disabledForegroundColor: _textOnPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -491,13 +598,20 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                 ),
               )
             : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 21),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 21,
+                  ),
                   SizedBox(width: 9),
                   Text(
                     'Confirmar reserva',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -507,10 +621,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     final backButton = SizedBox(
       height: 52,
       child: OutlinedButton(
-        onPressed: _isLoading ? null : _returnWithRefresh,
+        onPressed:
+            _isLoading ? null : _returnWithRefresh,
         style: OutlinedButton.styleFrom(
           foregroundColor: _textPrimary,
-          disabledForegroundColor: _textSecondary.withValues(alpha: 0.5),
+          disabledForegroundColor:
+              _textSecondary.withValues(alpha: 0.5),
           side: BorderSide(color: _borderSoft),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -518,7 +634,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         ),
         child: const Text(
           'Volver',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -528,12 +647,20 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
             children: [
               Expanded(child: confirmButton),
               const SizedBox(width: 14),
-              SizedBox(width: 180, child: backButton),
+              SizedBox(
+                width: 180,
+                child: backButton,
+              ),
             ],
           )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [confirmButton, const SizedBox(height: 12), backButton],
+            crossAxisAlignment:
+                CrossAxisAlignment.stretch,
+            children: [
+              confirmButton,
+              const SizedBox(height: 12),
+              backButton,
+            ],
           );
   }
 }

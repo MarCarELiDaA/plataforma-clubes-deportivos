@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 
 class InfoScreen extends StatelessWidget {
   InfoScreen({super.key});
@@ -22,6 +23,7 @@ class InfoScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: background,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           'Información del Club',
@@ -32,9 +34,13 @@ class InfoScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+        automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: 'Menú',
+            icon: Icon(Icons.menu_rounded, color: textPrimary, size: 27),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
       body: LayoutBuilder(

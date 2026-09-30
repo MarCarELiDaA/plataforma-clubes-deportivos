@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/admin_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -163,6 +164,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _background,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Administración'),
         centerTitle: true,
@@ -170,9 +172,13 @@ class _AdminScreenState extends State<AdminScreen> {
         foregroundColor: _textPrimary,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+        automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: 'Menú',
+            icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
       body: LayoutBuilder(

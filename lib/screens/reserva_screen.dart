@@ -1,17 +1,21 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
+import '../models/club/actividad.dart';
 import '../models/club/instalacion.dart';
 import '../services/auth_service.dart';
 import '../services/reserva_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 import 'confirmation_screen.dart';
+import 'my_reservations_screen.dart';
 
 class ReservaScreen extends StatefulWidget {
-  const ReservaScreen({super.key});
+  final Actividad? actividad;
+
+  const ReservaScreen({super.key, this.actividad});
 
   @override
   State<ReservaScreen> createState() => _ReservaScreenState();
@@ -39,10 +43,63 @@ class _ReservaScreenState extends State<ReservaScreen> {
   Color get _textPrimary => AppTheme.textPrimaryColor;
   Color get _textSecondary => AppTheme.textSecondaryColor;
   Color get _textTertiary => AppTheme.textTertiaryColor;
-  Color get _border => AppTheme.borderColor;
   Color get _borderSoft => AppTheme.borderSoftColor;
   Color get _textOnIdentity => AppTheme.textOnIdentity;
   Color get _action => AppTheme.action;
+
+  Color get _activityAccent {
+    final value =
+        '${widget.actividad?.id ?? ''} ${widget.actividad?.tipo ?? ''} ${widget.actividad?.nombre ?? ''}'
+            .toLowerCase();
+
+    if (value.contains('padel') || value.contains('pádel')) {
+      return const Color(0xFF19B8C8);
+    }
+
+    if (value.contains('tenis') || value.contains('tennis')) {
+      return const Color(0xFF65B741);
+    }
+
+    if (value.contains('gimnasio') ||
+        value.contains('gym') ||
+        value.contains('fitness')) {
+      return const Color(0xFFFFA726);
+    }
+
+    return _identity;
+  }
+
+  String _instalacionImage(Instalacion instalacion) {
+    final instalacionImage = instalacion.imagen?.trim();
+
+    if (instalacionImage != null && instalacionImage.isNotEmpty) {
+      return instalacionImage;
+    }
+
+    final actividadImage = widget.actividad?.imagen?.trim();
+
+    if (actividadImage != null && actividadImage.isNotEmpty) {
+      return actividadImage;
+    }
+
+    return 'assets/images/banner_padel.jpeg';
+  }
+
+  String get _selectedImage {
+    final instalacion = _instalacionActual;
+
+    if (instalacion != null) {
+      return _instalacionImage(instalacion);
+    }
+
+    final actividadImage = widget.actividad?.imagen?.trim();
+
+    if (actividadImage != null && actividadImage.isNotEmpty) {
+      return actividadImage;
+    }
+
+    return 'assets/images/banner_padel.jpeg';
+  }
 
   @override
   void initState() {
@@ -57,9 +114,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
   }
 
   Future<void> _loadInstalacionConfig() async {
-    final instalaciones = AppConfig.club.instalaciones
-        .where((instalacion) => instalacion.activa)
-        .toList();
+    final instalaciones =
+        (widget.actividad != null
+                ? widget.actividad!.instalacionesActivas
+                : AppConfig.club.instalaciones.where(
+                    (instalacion) => instalacion.activa,
+                  ))
+            .toList();
 
     if (!mounted) return;
 
@@ -264,7 +325,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                  'No puedes reservar horarios consecutivos. Debe existir un bloque de 1 hora y 30 minutos entre tus reservas.',
+                  'No puedes reservar horarios consecutivos. '
+                  'Debe existir un bloque de 1 hora y 30 minutos '
+                  'entre tus reservas.',
                 ),
                 backgroundColor: AppTheme.error,
               ),
@@ -278,7 +341,8 @@ class _ReservaScreenState extends State<ReservaScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Error al verificar disponibilidad. Inténtalo de nuevo.',
+                'Error al verificar disponibilidad. '
+                'Inténtalo de nuevo.',
               ),
               backgroundColor: AppTheme.error,
             ),
@@ -296,6 +360,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
         builder: (context) => ConfirmationScreen(
           selectedDate: _selectedDate!,
           selectedTime: time,
+          actividadId: widget.actividad?.id,
           instalacionId: instalacion.id,
           instalacionName: instalacion.nombre,
           duration: instalacion.duracionReservaMinutos,
@@ -304,251 +369,444 @@ class _ReservaScreenState extends State<ReservaScreen> {
     );
   }
 
-  Widget _buildInstalacionSelector(bool isWeb) {
-    if (_instalaciones.length <= 1) {
-      return Container(
-        width: double.infinity,
-        height: isWeb ? 220 : 190,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _borderSoft),
-          boxShadow: AppTheme.softShadow,
-          image: const DecorationImage(
-            image: AssetImage('assets/images/banner_padel.jpeg'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      _identity.withValues(alpha: 0.18),
-                      Colors.black.withValues(alpha: 0.68),
+  IconData get _actividadIcon {
+    switch (widget.actividad?.icono) {
+      case 'fitness_center':
+        return Icons.fitness_center_rounded;
+      case 'sports_tennis':
+      default:
+        return Icons.sports_tennis_rounded;
+    }
+  }
+
+  Widget _buildInstalacionCard({
+    required Instalacion instalacion,
+    required double width,
+    required bool isWeb,
+  }) {
+    final selected = _instalacionActual?.id == instalacion.id;
+    final accent = _activityAccent;
+
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _selectInstalacion(instalacion),
+          borderRadius: BorderRadius.circular(22),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: isWeb ? 210 : 190,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: selected ? accent : _borderSoft,
+                width: selected ? 3 : 1,
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.24),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : AppTheme.softShadow,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  _instalacionImage(instalacion),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: _surfaceSoft,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        _actividadIcon,
+                        size: 52,
+                        color: _textTertiary,
+                      ),
+                    );
+                  },
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.04),
+                        Colors.black.withValues(alpha: 0.24),
+                        Colors.black.withValues(alpha: 0.84),
+                      ],
+                      stops: const [0.0, 0.42, 1.0],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 13,
+                  right: 13,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? accent
+                          : Colors.black.withValues(alpha: 0.46),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          selected
+                              ? Icons.check_circle_rounded
+                              : Icons.touch_app_rounded,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          selected ? 'SELECCIONADA' : 'ELEGIR',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 15,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        instalacion.nombre,
+                        softWrap: true,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
+                        children: [
+                          _buildImageBadge(
+                            icon: Icons.schedule_rounded,
+                            text: '${instalacion.duracionReservaMinutos} min',
+                          ),
+                          _buildImageBadge(
+                            icon: Icons.calendar_month_rounded,
+                            text: '${instalacion.maxDiasAntelacion} días',
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.all(isWeb ? 24 : 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: isWeb ? 50 : 46,
-                      height: isWeb ? 50 : 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.28),
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.sports_tennis_rounded,
-                        color: Colors.white,
-                        size: isWeb ? 27 : 25,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Instalación',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.82),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _instalacionActual?.nombre ?? 'Sin instalación',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: isWeb ? 22 : 20,
-                        height: 1.15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.all(isWeb ? 22 : 18),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _borderSoft),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Instalación',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _textSecondary,
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            initialValue: _instalacionActual?.id,
-            isExpanded: true,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: _surfaceSoft,
-              prefixIcon: Icon(
-                Icons.sports_tennis_rounded,
-                color: _textSecondary,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _borderSoft),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _borderSoft),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _border, width: 1.5),
-              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageBadge({required IconData icon, required String text}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 13),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
             ),
-            items: _instalaciones.map((instalacion) {
-              return DropdownMenuItem<String>(
-                value: instalacion.id,
-                child: Text(
-                  instalacion.nombre,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: _textPrimary),
-                ),
-              );
-            }).toList(),
-            onChanged: (id) {
-              if (id == null) return;
-
-              final instalacion = _instalaciones.firstWhere(
-                (item) => item.id == id,
-              );
-
-              _selectInstalacion(instalacion);
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimeGrid(bool isWeb) {
-    final columns = isWeb ? 4 : 3;
+  Widget _buildInstalacionSelector(bool isWeb) {
+    if (_instalaciones.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      padding: const EdgeInsets.only(bottom: 4),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: isWeb ? 2.8 : 2.2,
-        crossAxisSpacing: isWeb ? 12 : 8,
-        mainAxisSpacing: isWeb ? 12 : 8,
-      ),
-      itemCount: _availableTimes.length,
-      itemBuilder: (context, index) {
-        final time = _availableTimes[index];
-        final isReserved = _reservedTimes.contains(time);
-        final isPast = _isTimePast(time);
-        final isAvailable = !isReserved && !isPast;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        const spacing = 14.0;
 
-        final backgroundColor = isAvailable
-            ? _surface
-            : isReserved
-            ? AppTheme.warning.withValues(alpha: 0.08)
-            : _surfaceSoft;
+        int columns;
+        if (availableWidth >= 900 && _instalaciones.length >= 3) {
+          columns = 3;
+        } else if (availableWidth >= 620 && _instalaciones.length >= 2) {
+          columns = 2;
+        } else {
+          columns = 1;
+        }
 
-        final foregroundColor = isAvailable
-            ? _textPrimary
-            : isReserved
-            ? _textPrimary
-            : _textTertiary;
+        final cardWidth = columns == 1
+            ? availableWidth
+            : (availableWidth - spacing * (columns - 1)) / columns;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isAvailable
-                  ? _borderSoft
-                  : isReserved
-                  ? AppTheme.warning.withValues(alpha: 0.35)
-                  : _border,
-            ),
-            boxShadow: isAvailable ? AppTheme.softShadow : const [],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: isAvailable ? () => _selectTime(time) : null,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 6,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isReserved
-                          ? Icons.block_rounded
-                          : isPast
-                          ? Icons.history_rounded
-                          : Icons.access_time_rounded,
-                      color: isAvailable ? _action : foregroundColor,
-                      size: isWeb ? 19 : 20,
-                    ),
-                    const SizedBox(width: 7),
-                    Flexible(
-                      child: Text(
-                        isReserved
-                            ? 'RESERVADO'
-                            : isPast
-                            ? 'PASADA'
-                            : time,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: foregroundColor,
-                          fontWeight: isAvailable
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          fontSize: isWeb ? 13 : 14,
-                        ),
-                      ),
-                    ),
-                  ],
+        if (columns == 1 && _instalaciones.length > 1) {
+          final mobileCardWidth = (availableWidth * 0.84).clamp(250.0, 340.0);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Elige instalación o actividad',
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                'Desliza para ver todas las opciones disponibles.',
+                style: TextStyle(color: _textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 190,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(right: 4),
+                  itemCount: _instalaciones.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: spacing),
+                  itemBuilder: (context, index) {
+                    return _buildInstalacionCard(
+                      instalacion: _instalaciones[index],
+                      width: mobileCardWidth,
+                      isWeb: false,
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_instalaciones.length > 1) ...[
+              Text(
+                'Elige instalación o actividad',
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: isWeb ? 20 : 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Selecciona dónde quieres realizar tu reserva.',
+                style: TextStyle(color: _textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final instalacion in _instalaciones)
+                  _buildInstalacionCard(
+                    instalacion: instalacion,
+                    width: cardWidth,
+                    isWeb: isWeb,
+                  ),
+              ],
             ),
-          ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildTimeGrid(bool isWeb) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        int columns;
+        if (width >= 850) {
+          columns = 4;
+        } else if (width >= 560) {
+          columns = 3;
+        } else if (width >= 340) {
+          columns = 2;
+        } else {
+          columns = 1;
+        }
+
+        const spacing = 10.0;
+        final cardWidth = (width - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final time in _availableTimes)
+              _buildTimeCard(time: time, width: cardWidth, isWeb: isWeb),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTimeCard({
+    required String time,
+    required double width,
+    required bool isWeb,
+  }) {
+    final isReserved = _reservedTimes.contains(time);
+    final isPast = _isTimePast(time);
+    final isAvailable = !isReserved && !isPast;
+
+    final statusColor = isAvailable
+        ? const Color(0xFF27AE60)
+        : isReserved
+        ? const Color(0xFFE74C3C)
+        : const Color(0xFF7F8C8D);
+
+    final statusText = isAvailable
+        ? 'LIBRE'
+        : isReserved
+        ? 'RESERVADO'
+        : 'PASADA';
+
+    final statusIcon = isAvailable
+        ? Icons.check_circle_rounded
+        : isReserved
+        ? Icons.lock_rounded
+        : Icons.history_rounded;
+
+    return SizedBox(
+      width: width,
+      height: isWeb ? 116 : 108,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isAvailable ? () => _selectTime(time) : null,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: statusColor.withValues(alpha: isAvailable ? 0.70 : 0.58),
+                width: isAvailable ? 1.7 : 1.2,
+              ),
+              boxShadow: isAvailable ? AppTheme.softShadow : const [],
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  _selectedImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(color: _surfaceSoft);
+                  },
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: isPast
+                        ? const Color(0xFF455A64).withValues(alpha: 0.66)
+                        : Colors.black.withValues(alpha: 0.52),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, color: Colors.white, size: 13),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 28, 8, 8),
+                    child: Text(
+                      time,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(
+                          alpha: isPast ? 0.76 : 1,
+                        ),
+                        fontSize: isWeb ? 23 : 21,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.2,
+                        shadows: const [
+                          Shadow(blurRadius: 8, color: Colors.black54),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -578,7 +836,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.sports_tennis_rounded,
+              _actividadIcon,
               size: isWeb ? 38 : 34,
               color: _textSecondary,
             ),
@@ -633,9 +891,20 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
         return Scaffold(
           backgroundColor: _background,
+          drawer: const AppDrawer(),
           appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: Builder(
+              builder: (context) => IconButton(
+                tooltip: 'Menú',
+                icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
+            ),
             title: Text(
-              'Reservar pista',
+              widget.actividad == null
+                  ? 'Reservar pista'
+                  : 'Reservar ${widget.actividad!.nombre}',
               style: TextStyle(
                 fontSize: isWeb ? 20 : 18,
                 fontWeight: FontWeight.w600,
@@ -672,13 +941,35 @@ class _ReservaScreenState extends State<ReservaScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'Fecha',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _textSecondary,
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: _activityAccent.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.calendar_month_rounded,
+                                    color: _activityAccent,
+                                    size: 19,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Elige la fecha',
+                                    style: TextStyle(
+                                      fontSize: isWeb ? 17 : 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: _textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
                             SizedBox(
@@ -700,7 +991,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 icon: Icon(
                                   Icons.calendar_today_outlined,
                                   size: 19,
-                                  color: _textPrimary,
+                                  color: _activityAccent,
                                 ),
                                 label: Text(
                                   _selectedDate == null
@@ -797,8 +1088,41 @@ class _ReservaScreenState extends State<ReservaScreen> {
                               child: CircularProgressIndicator(color: _action),
                             ),
                           )
-                        else
+                        else ...[
                           _buildTimeGrid(isWeb),
+                          const SizedBox(height: 22),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const MyReservationsScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.event_note_rounded,
+                                size: 20,
+                              ),
+                              label: const Text('Mis reservas'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _action,
+                                side: BorderSide(
+                                  color: _action.withValues(alpha: 0.45),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ] else
                         _buildEmptyState(isWeb),
                     ],

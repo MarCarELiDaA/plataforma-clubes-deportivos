@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../services/reserva_service.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 import 'login_screen.dart';
 
 class MyReservationsScreen extends StatefulWidget {
@@ -321,7 +322,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
         return Scaffold(
           backgroundColor: _background,
+          drawer: const AppDrawer(),
           appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: Builder(
+              builder: (context) => IconButton(
+                tooltip: 'Menú',
+                icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
+            ),
             title: Text(
               AppConfig.club.nombre,
               style: TextStyle(

@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
+import '../models/club/actividad.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'admin_screen.dart';
@@ -17,22 +18,27 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with WidgetsBindingObserver {
-  final _authService = AuthService();
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final AuthService _authService = AuthService();
 
   String _userRole = 'user';
 
   Color get _accent => AppTheme.primary;
-  Color get _accentSoft => AppTheme.primaryLight;
   Color get _background => AppTheme.clubBackground;
   Color get _surface => AppTheme.clubSurface;
   Color get _surfaceSoft => AppTheme.clubSurfaceSoft;
-  Color get _surfaceMuted => AppTheme.clubSurfaceMuted;
   Color get _textPrimary => AppTheme.clubTextPrimary;
   Color get _textSecondary => AppTheme.clubTextSecondary;
   Color get _border => AppTheme.clubBorder;
   Color get _textOnAccent => AppTheme.textOnPrimary;
+
+  bool get _reservasActivas => AppConfig.club.moduloActivo('reservations');
+
+  List<Actividad> get _actividades {
+    return AppConfig.club.actividades
+        .where((actividad) => actividad.activa && actividad.reservasActivas)
+        .toList();
+  }
 
   IconData get _menuIcon {
     switch (AppConfig.club.menuIcon) {
@@ -51,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addObserver(this);
     _checkUserRole();
   }
@@ -72,23 +77,23 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _checkUserExists() async {
     final user = _authService.currentUser;
 
-    if (user != null && mounted) {
-      try {
-        final userStatus = await _authService.getUserStatus();
-
-        if (userStatus == null && mounted) {
-          await _authService.signOut();
-
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const LoginScreen(),
-              ),
-            );
-          }
-        }
-      } catch (_) {}
+    if (user == null || !mounted) {
+      return;
     }
+
+    try {
+      final userStatus = await _authService.getUserStatus();
+
+      if (userStatus == null && mounted) {
+        await _authService.signOut();
+
+        if (!mounted) return;
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkUserRole() async {
@@ -101,15 +106,12 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  bool get _reservasActivas =>
-      AppConfig.club.moduloActivo('reservations');
-
-  void _openReserva() {
+  void _openReserva(Actividad actividad) {
     if (!_reservasActivas) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const ReservaScreen(),
+        builder: (context) => ReservaScreen(actividad: actividad),
       ),
     );
   }
@@ -118,34 +120,26 @@ class _HomeScreenState extends State<HomeScreen>
     if (!_reservasActivas) return;
 
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const MyReservationsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const MyReservationsScreen()),
     );
   }
 
   void _openProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ProfileScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
   }
 
   void _openInfo() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => InfoScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => InfoScreen()));
   }
 
   void _openAdmin() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AdminScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const AdminScreen()));
   }
 
   Future<void> _logout() async {
@@ -160,33 +154,18 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           title: Text(
             'Cerrar sesión',
-            style: TextStyle(
-              color: _textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w700),
           ),
           content: Text(
             '¿Estás seguro de que quieres cerrar sesión?',
-            style: TextStyle(
-              color: _textSecondary,
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: TextStyle(color: _textSecondary),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
-              child: Text(
-                'Cancelar',
-                style: TextStyle(
-                  color: _textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
             ),
             FilledButton(
               onPressed: () {
@@ -195,14 +174,6 @@ class _HomeScreenState extends State<HomeScreen>
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.error,
                 foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
               ),
               child: const Text('Cerrar sesión'),
             ),
@@ -211,26 +182,142 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
 
-    if (confirm == true) {
-      await _authService.signOut();
+    if (confirm != true) return;
 
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
-          ),
-        );
-      }
+    await _authService.signOut();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
+  IconData _activityIcon(String icono) {
+    switch (icono) {
+      case 'fitness_center':
+        return Icons.fitness_center_rounded;
+      case 'sports_tennis':
+        return Icons.sports_tennis_rounded;
+      case 'sports_soccer':
+        return Icons.sports_soccer_rounded;
+      case 'sports_basketball':
+        return Icons.sports_basketball_rounded;
+      case 'sports_volleyball':
+        return Icons.sports_volleyball_rounded;
+      case 'pool':
+        return Icons.pool_rounded;
+      case 'directions_run':
+        return Icons.directions_run_rounded;
+      case 'self_improvement':
+        return Icons.self_improvement_rounded;
+      default:
+        return Icons.sports_rounded;
     }
+  }
+
+  Widget _clubLogo({double size = 42, bool clickable = false}) {
+    Widget logo;
+
+    if (AppConfig.club.logo.isEmpty) {
+      logo = Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: _accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(size * 0.28),
+        ),
+        child: Icon(Icons.sports_rounded, color: _accent, size: size * 0.55),
+      );
+    } else {
+      logo = Container(
+        width: size,
+        height: size,
+        padding: EdgeInsets.all(size * 0.12),
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(size * 0.28),
+          border: Border.all(color: _border.withValues(alpha: 0.7)),
+        ),
+        child: Image.asset(
+          AppConfig.club.logo,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(Icons.sports_rounded, color: _accent);
+          },
+        ),
+      );
+    }
+
+    if (!clickable) {
+      return logo;
+    }
+
+    return Tooltip(
+      message: 'Información del club',
+      child: InkWell(
+        onTap: _openInfo,
+        borderRadius: BorderRadius.circular(size * 0.28),
+        child: logo,
+      ),
+    );
+  }
+
+  Widget _buildPlatformBrand({required bool compact}) {
+    if (compact) {
+      return RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          style: TextStyle(color: _textSecondary, fontSize: 9, height: 1),
+          children: [
+            const TextSpan(text: 'powered by '),
+            TextSpan(
+              text: 'Yo Reservo',
+              style: TextStyle(color: _accent, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            'powered by',
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 10,
+              height: 1,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'Yo Reservo',
+            style: TextStyle(
+              color: _accent,
+              fontSize: 17,
+              height: 1,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDrawer(BuildContext context) {
     final user = _authService.currentUser;
 
-    final userName =
-        user?.displayName?.trim().isNotEmpty == true
-            ? user!.displayName!
-            : user?.email ?? 'Usuario';
+    final userName = user?.displayName?.trim().isNotEmpty == true
+        ? user!.displayName!
+        : user?.email ?? 'Usuario';
 
     return Drawer(
       backgroundColor: _surface,
@@ -244,44 +331,14 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 color: _surfaceSoft,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _accent.withValues(alpha: 0.12),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 18,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
+                border: Border.all(color: _accent.withValues(alpha: 0.12)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: _surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _border.withValues(alpha: 0.75),
-                          ),
-                        ),
-                        child: AppConfig.club.logo.isNotEmpty
-                            ? Image.asset(
-                                AppConfig.club.logo,
-                                fit: BoxFit.contain,
-                              )
-                            : Icon(
-                                Icons.sports_tennis_rounded,
-                                color: _accent,
-                                size: 27,
-                              ),
-                      ),
+                      _clubLogo(size: 54),
                       const SizedBox(width: 13),
                       Expanded(
                         child: Text(
@@ -298,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 17),
+                  const SizedBox(height: 16),
                   Text(
                     userName,
                     maxLines: 1,
@@ -312,17 +369,14 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(height: 4),
                   Text(
                     AppConfig.club.deporte,
-                    style: TextStyle(
-                      color: _textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: _textSecondary, fontSize: 12),
                   ),
                 ],
               ),
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 children: [
                   _drawerSection('CUENTA'),
                   _drawerItem(
@@ -330,22 +384,16 @@ class _HomeScreenState extends State<HomeScreen>
                     title: 'Mi perfil',
                     onTap: _openProfile,
                   ),
-                  const SizedBox(height: 16),
                   if (_reservasActivas) ...[
+                    const SizedBox(height: 14),
                     _drawerSection('RESERVAS'),
-                    _drawerItem(
-                      icon: Icons.calendar_month_rounded,
-                      title: 'Reservar pista',
-                      highlighted: true,
-                      onTap: _openReserva,
-                    ),
                     _drawerItem(
                       icon: Icons.event_available_rounded,
                       title: 'Mis reservas',
                       onTap: _openMisReservas,
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _drawerSection('CLUB'),
                   _drawerItem(
                     icon: Icons.info_outline_rounded,
@@ -353,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen>
                     onTap: _openInfo,
                   ),
                   if (_userRole == 'admin') ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     _drawerSection('ADMINISTRACIÓN'),
                     _drawerItem(
                       icon: Icons.admin_panel_settings_outlined,
@@ -364,24 +412,13 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              padding: const EdgeInsets.only(top: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: _border.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                leading: Icon(
-                  Icons.logout_rounded,
-                  color: AppTheme.error,
-                ),
+                leading: Icon(Icons.logout_rounded, color: AppTheme.error),
                 title: Text(
                   'Cerrar sesión',
                   style: TextStyle(
@@ -417,37 +454,19 @@ class _HomeScreenState extends State<HomeScreen>
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    bool highlighted = false,
   }) {
     return ListTile(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      tileColor: highlighted ? _surfaceMuted : Colors.transparent,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 2,
-      ),
-      leading: Icon(
-        icon,
-        color: highlighted ? _textPrimary : _textSecondary,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      leading: Icon(icon, color: _textSecondary),
       title: Text(
         title,
         style: TextStyle(
-          color: highlighted ? _textPrimary : _textSecondary,
+          color: _textSecondary,
           fontSize: 14,
-          fontWeight:
-              highlighted ? FontWeight.w600 : FontWeight.w500,
+          fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: highlighted
-          ? Icon(
-              Icons.chevron_right_rounded,
-              color: _accent,
-              size: 20,
-            )
-          : null,
       onTap: () {
         Navigator.of(context).pop();
         onTap();
@@ -455,43 +474,115 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildActivityCategory({
-    required IconData icon,
-    required String title,
+  Widget _buildHeroImage() {
+    final hero = AppConfig.club.hero.trim();
+
+    if (hero.isEmpty) {
+      return Container(
+        color: const Color(0xFF0C1B30),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.sports_rounded,
+          color: Colors.white.withValues(alpha: 0.35),
+          size: 70,
+        ),
+      );
+    }
+
+    return Image.asset(
+      hero,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: const Color(0xFF0C1B30),
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.sports_rounded,
+            color: Colors.white.withValues(alpha: 0.35),
+            size: 70,
+          ),
+        );
+      },
+    );
+  }
+
+  Color _activityColor(Actividad actividad) {
+    switch (actividad.id.toLowerCase()) {
+      case 'padel':
+        return const Color(0xFF19B8C8);
+      case 'tenis':
+        return const Color(0xFF65B741);
+      case 'gimnasio':
+        return const Color(0xFFFFA726);
+      default:
+        return _accent;
+    }
+  }
+
+  Widget _buildActivityMenuItem({
+    required Actividad actividad,
+    required double height,
+    bool compact = false,
   }) {
+    final iconSize = height < 55
+        ? 34.0
+        : compact
+        ? 42.0
+        : 44.0;
+
+    final activityColor = _activityColor(actividad);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: _openReserva,
-        borderRadius: BorderRadius.circular(30),
+        onTap: () => _openReserva(actividad),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 7,
-          ),
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: height < 55 ? 10 : 13),
           decoration: BoxDecoration(
-            color: _accentSoft,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: _accent.withValues(alpha: 0.16),
-            ),
+            color: Colors.white.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: Colors.white,
-                size: 15,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: BoxDecoration(
+                  color: activityColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: activityColor.withValues(alpha: 0.34),
+                      blurRadius: 12,
+                    ),
+                  ],
                 ),
+                child: Icon(
+                  _activityIcon(actividad.icono),
+                  color: _textOnAccent,
+                  size: iconSize * 0.50,
+                ),
+              ),
+              SizedBox(width: height < 55 ? 8 : 10),
+              Expanded(
+                child: Text(
+                  actividad.nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: height < 55 ? 13 : 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white.withValues(alpha: 0.68),
+                size: height < 55 ? 19 : 21,
               ),
             ],
           ),
@@ -500,199 +591,289 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildHero({
-    required double height,
-    required double padding,
-    required bool compact,
-  }) {
-    final hasImage = AppConfig.club.hero.trim().isNotEmpty;
+  Widget _buildDesktopActivities() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = _actividades.length;
 
+        if (count == 0) {
+          return const SizedBox.shrink();
+        }
+
+        const spacing = 8.0;
+        final availableHeight = constraints.maxHeight - (spacing * (count - 1));
+
+        final calculatedHeight = availableHeight / count;
+
+        if (calculatedHeight >= 46) {
+          final itemHeight = calculatedHeight.clamp(46.0, 66.0);
+
+          return Column(
+            children: [
+              for (int index = 0; index < count; index++) ...[
+                Expanded(
+                  child: _buildActivityMenuItem(
+                    actividad: _actividades[index],
+                    height: itemHeight,
+                  ),
+                ),
+                if (index < count - 1) const SizedBox(height: spacing),
+              ],
+            ],
+          );
+        }
+
+        return Scrollbar(
+          child: ListView.separated(
+            padding: EdgeInsets.zero,
+            itemCount: count,
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: spacing),
+            itemBuilder: (context, index) {
+              return _buildActivityMenuItem(
+                actividad: _actividades[index],
+                height: 50,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopHero() {
     return Container(
-      width: double.infinity,
-      height: height,
+      height: 370,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(
-          compact ? 26 : 30,
-        ),
-        border: Border.all(
-          color: _border.withValues(alpha: 0.8),
-        ),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 30,
-            offset: const Offset(0, 14),
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 26,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (hasImage)
-            Image.asset(
-              AppConfig.club.hero,
-              width: double.infinity,
-              height: 190,
-              fit: BoxFit.cover,
-            )
-          else
-            Container(
-              color: _surfaceMuted,
-            ),
-          if (hasImage)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    _surface.withValues(alpha: 0.35),
-                    _surface.withValues(alpha: 0.04),
-                    _surface.withValues(alpha: 0.04),
-                  ],
-                ),
+          _buildHeroImage(),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  const Color(0xFF07182B).withValues(alpha: 0.98),
+                  const Color(0xFF07182B).withValues(alpha: 0.86),
+                  const Color(0xFF07182B).withValues(alpha: 0.32),
+                  Colors.black.withValues(alpha: 0.08),
+                ],
+                stops: const [0.0, 0.30, 0.60, 1.0],
               ),
             ),
-          if (hasImage)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    _surface.withValues(alpha: 0.15),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.all(padding),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 620,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildActivityCategory(
-                            icon: Icons.sports_tennis_rounded,
-                            title: 'Pádel',
-                          ),
-                          const SizedBox(width: 8),
-                          _buildActivityCategory(
-                            icon: Icons.sports_tennis_rounded,
-                            title: 'Tenis',
-                          ),
-                          const SizedBox(width: 8),
-                          _buildActivityCategory(
-                            icon: Icons.fitness_center_rounded,
-                            title: 'Gimnasio',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _surfaceMuted.withValues(alpha: 0.78),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _border.withValues(alpha: 0.55),
+          ),
+          Row(
+            children: [
+              SizedBox(
+                width: 290,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Actividades',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Elige qué quieres reservar',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.68),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Expanded(child: _buildDesktopActivities()),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(34, 28, 34, 28),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 570),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Bienvenido a',
-                            style: TextStyle(
-                              color: _textPrimary,
-                              fontSize: compact ? 16 : 18,
-                              fontWeight: FontWeight.w700,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.20),
+                              ),
+                            ),
+                            child: const Text(
+                              'TU CLUB, TUS RESERVAS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.1,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 11),
                           Text(
                             AppConfig.club.nombre,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _textPrimary,
-                              fontSize: compact ? 29 : 42,
-                              height: 1.08,
-                              fontWeight: FontWeight.w700,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              height: 1.05,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: -0.8,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           Text(
-                            'Reserva tu pista de forma rápida y disfruta de tu club.',
+                            'Selecciona una actividad y gestiona tu reserva de forma rápida y sencilla.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: _textPrimary,
-                              fontSize: compact ? 13 : 15,
-                              height: 1.5,
-                              fontWeight: FontWeight.w700,
+                              color: Colors.white.withValues(alpha: 0.88),
+                              fontSize: 14,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if (_reservasActivas) ...[
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              height: 52,
-                              child: FilledButton.icon(
-                                onPressed: _openReserva,
-                                icon: Icon(
-                                  Icons.calendar_month_rounded,
-                                  size: 20,
-                                  color: _textOnAccent,
-                                ),
-                                label: Text(
-                                  'Reservar pista',
-                                  style: TextStyle(
-                                    color: _textOnAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _accent,
-                                  foregroundColor: _textOnAccent,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(17),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileHero() {
+    return Container(
+      height: 335,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, 9),
+          ),
+        ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildHeroImage(),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF07182B).withValues(alpha: 0.18),
+                  const Color(0xFF07182B).withValues(alpha: 0.48),
+                  const Color(0xFF07182B).withValues(alpha: 0.97),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 18,
+            right: 18,
+            top: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppConfig.club.nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  'Elige una actividad para reservar',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 0,
+            bottom: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Actividades',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                SizedBox(
+                  height: 66,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(right: 16),
+                    itemCount: _actividades.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 205,
+                        child: _buildActivityMenuItem(
+                          actividad: _actividades[index],
+                          height: 66,
+                          compact: true,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -700,88 +881,178 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildHero({required bool desktop}) {
+    if (_actividades.isEmpty) {
+      return Container(
+        height: desktop ? 260 : 220,
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: _border),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sports_rounded, color: _accent, size: 42),
+            const SizedBox(height: 12),
+            Text(
+              'No hay actividades disponibles',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return desktop ? _buildDesktopHero() : _buildMobileHero();
+  }
+
   Widget _buildQuickCard({
     required IconData icon,
     required String title,
     required String subtitle,
+    required Color color,
     required VoidCallback onTap,
-    required bool primary,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             color: _surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: primary
-                  ? _accent.withValues(alpha: 0.14)
-                  : _border.withValues(alpha: 0.8),
-            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
             boxShadow: [
               BoxShadow(
-                color: primary
-                    ? _accent.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.045),
-                blurRadius: 22,
-                offset: const Offset(0, 9),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: _surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
+                  color: color.withValues(alpha: 0.13),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  color: _accent,
-                  size: 23,
-                ),
+                child: Icon(icon, color: color, size: 23),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       title,
+                      softWrap: true,
                       style: TextStyle(
                         color: _textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      softWrap: true,
                       style: TextStyle(
                         color: _textSecondary,
-                        fontSize: 12,
-                        height: 1.35,
+                        fontSize: 11,
+                        height: 1.25,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: _accent.withValues(alpha: 0.65),
+                Icons.chevron_right_rounded,
+                color: _textSecondary,
+                size: 22,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickAccess({required bool desktop}) {
+    final cards = <Widget>[
+      if (_reservasActivas)
+        _buildQuickCard(
+          icon: Icons.calendar_month_rounded,
+          title: 'Mis reservas',
+          subtitle: 'Consulta y gestiona tus reservas.',
+          color: const Color(0xFF2F80ED),
+          onTap: _openMisReservas,
+        ),
+      _buildQuickCard(
+        icon: Icons.info_outline_rounded,
+        title: 'Información del club',
+        subtitle: 'Horarios, normas y contacto.',
+        color: const Color(0xFF27AE60),
+        onTap: _openInfo,
+      ),
+      _buildQuickCard(
+        icon: Icons.person_outline_rounded,
+        title: 'Mi perfil',
+        subtitle: 'Consulta y actualiza tus datos.',
+        color: const Color(0xFF8E5BD9),
+        onTap: _openProfile,
+      ),
+      if (_userRole == 'admin')
+        _buildQuickCard(
+          icon: Icons.settings_outlined,
+          title: 'Administración',
+          subtitle: 'Gestiona usuarios, reservas y club.',
+          color: const Color(0xFFF2994A),
+          onTap: _openAdmin,
+        ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+
+        int columns;
+        if (constraints.maxWidth >= 1120 && cards.length >= 4) {
+          columns = 4;
+        } else if (constraints.maxWidth >= 620 && cards.length >= 2) {
+          columns = 2;
+        } else {
+          columns = 1;
+        }
+
+        columns = columns.clamp(1, cards.length);
+
+        final cardWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final card in cards)
+              SizedBox(
+                width: cardWidth,
+                child: card,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -801,11 +1072,7 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (context) {
             return IconButton(
               tooltip: 'Menú',
-              icon: Icon(
-                _menuIcon,
-                size: 27,
-                color: _textPrimary,
-              ),
+              icon: Icon(_menuIcon, color: _textPrimary, size: 27),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -813,144 +1080,97 @@ class _HomeScreenState extends State<HomeScreen>
           },
         ),
         titleSpacing: 0,
-        title: Row(
-          children: [
-            if (AppConfig.club.logo.isNotEmpty)
-              Container(
-                width: 36,
-                height: 36,
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: _surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: _border.withValues(alpha: 0.75),
-                  ),
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = MediaQuery.sizeOf(context).width < 650;
+
+            return Row(
+              children: [
+                _clubLogo(size: compact ? 36 : 40, clickable: true),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: compact
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppConfig.club.nombre,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _textPrimary,
+                                fontSize: 14,
+                                height: 1.05,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            _buildPlatformBrand(compact: true),
+                          ],
+                        )
+                      : Text(
+                          AppConfig.club.nombre,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
-                child: Image.asset(
-                  AppConfig.club.logo,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            if (AppConfig.club.logo.isNotEmpty)
-              const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                AppConfig.club.nombre,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: _textPrimary,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+                if (!compact) _buildPlatformBrand(compact: false),
+              ],
+            );
+          },
         ),
         actions: [
           IconButton(
+            tooltip: 'Mi perfil',
+            icon: Icon(Icons.person_outline_rounded, color: _textPrimary),
+            onPressed: _openProfile,
+          ),
+          IconButton(
             tooltip: 'Cerrar sesión',
-            icon: Icon(
-              Icons.logout_rounded,
-              color: _textPrimary,
-            ),
+            icon: Icon(Icons.logout_rounded, color: _textPrimary),
             onPressed: _logout,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
         ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= 900;
-            final contentWidth = constraints.maxWidth > 1280
-                ? 1280.0
-                : constraints.maxWidth;
-            final horizontalPadding =
-                isDesktop ? 24.0 : 16.0;
-            final heroHeight = isDesktop ? 420.0 : 350.0;
-            final heroPadding = isDesktop ? 42.0 : 24.0;
+            final desktop = constraints.maxWidth >= 850;
+            final horizontalPadding = desktop ? 24.0 : 14.0;
 
             return Center(
-              child: SizedBox(
-                width: contentWidth,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1280),
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
-                    18,
+                    14,
                     horizontalPadding,
-                    32,
+                    24,
                   ),
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildHero(
-                        height: heroHeight,
-                        padding: heroPadding,
-                        compact: !isDesktop,
-                      ),
-                      const SizedBox(height: 28),
+                      _buildHero(desktop: desktop),
+                      const SizedBox(height: 18),
                       Text(
                         'Accesos rápidos',
                         style: TextStyle(
                           color: _textPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.3,
+                          fontSize: desktop ? 22 : 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
                         ),
                       ),
-                      const SizedBox(height: 13),
-                      LayoutBuilder(
-                        builder: (context, quickConstraints) {
-                          final twoColumns =
-                              quickConstraints.maxWidth >= 700;
-                          final cardWidth = twoColumns
-                              ? (quickConstraints.maxWidth - 14) / 2
-                              : quickConstraints.maxWidth;
-
-                          return Wrap(
-                            spacing: 14,
-                            runSpacing: 14,
-                            children: [
-                              if (_reservasActivas) ...[
-                                SizedBox(
-                                  width: cardWidth,
-                                  child: _buildQuickCard(
-                                    icon: Icons.calendar_month_rounded,
-                                    title: 'Reservar pista',
-                                    subtitle:
-                                        'Consulta horarios y disponibilidad.',
-                                    primary: true,
-                                    onTap: _openReserva,
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: cardWidth,
-                                  child: _buildQuickCard(
-                                    icon: Icons.event_available_rounded,
-                                    title: 'Mis reservas',
-                                    subtitle:
-                                        'Consulta y gestiona tus reservas.',
-                                    primary: false,
-                                    onTap: _openMisReservas,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      _buildQuickCard(
-                        icon: Icons.info_outline_rounded,
-                        title: 'Información del club',
-                        subtitle:
-                            'Dirección, instalaciones, horarios y normas.',
-                        primary: false,
-                        onTap: _openInfo,
-                      ),
+                      const SizedBox(height: 10),
+                      _buildQuickAccess(desktop: desktop),
                     ],
                   ),
                 ),

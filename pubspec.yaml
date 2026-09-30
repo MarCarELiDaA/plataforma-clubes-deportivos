@@ -39,8 +39,10 @@ flutter:
     - assets/images/pistanavales.png
     - assets/images/login_banner.jpeg
     - assets/images/home_hero.jpeg
+    - assets/images/hero_club_general.png
     - assets/images/banner_padel.jpeg
     - assets/images/banner_tenis.jpeg
+    - assets/images/banner_gym.jpeg
 
 flutter_launcher_icons:
   android: true
