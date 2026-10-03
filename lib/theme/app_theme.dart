@@ -170,6 +170,20 @@ class AppTheme {
     return contrasteNegro >= contrasteBlanco ? Colors.black : Colors.white;
   }
 
+  /// Conserva el color cuando contrasta y lo adapta para iconos sobre claro.
+  static Color colorLegibleSobre(Color color, Color fondo) {
+    final luminanciaFondo = fondo.computeLuminance();
+    for (var paso = 0; paso <= 20; paso++) {
+      final candidato = Color.lerp(color, textoSobreColor(fondo), paso / 20)!;
+      final luminanciaColor = candidato.computeLuminance();
+      final contraste = luminanciaColor > luminanciaFondo
+          ? (luminanciaColor + 0.05) / (luminanciaFondo + 0.05)
+          : (luminanciaFondo + 0.05) / (luminanciaColor + 0.05);
+      if (contraste >= 4.5) return candidato;
+    }
+    return textoSobreColor(fondo);
+  }
+
   static Color get textOnPrimary => textoSobreColor(primary);
 
   static Color get textOnSecondary => textoSobreColor(secondary);
@@ -590,7 +604,7 @@ class AppTheme {
       tabBarTheme: TabBarThemeData(
         labelColor: action,
         unselectedLabelColor: textSecondaryColor,
-        indicatorColor: accentColor,
+        indicatorColor: colorLegibleSobre(accentColor, surfaceColor),
         dividerColor: borderSoftColor,
         labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(

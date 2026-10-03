@@ -606,7 +606,7 @@ class _LoginScreenState extends State<LoginScreen> {
         logo,
         width: double.infinity,
         height: double.infinity,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Icon(
             Icons.sports_tennis_rounded,
@@ -680,7 +680,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Container(
                           width: 280,
-                          height: 116,
+                          height: club.imagenLogin == club.logo ? null : 116,
                           padding: EdgeInsets.zero,
                           decoration: BoxDecoration(
                             color: _surfaceSoft,
@@ -702,13 +702,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: ClipRRect(
                             borderRadius:
                                 BorderRadius.circular(27),
-                            child: club.imagenLogin.isNotEmpty
+                            child: AspectRatio(
+                              aspectRatio: club.imagenLogin == club.logo
+                                  ? 1 : 280 / 116,
+                              child: club.imagenLogin.isNotEmpty
                                 ? Image.asset(
                                     club.imagenLogin,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    fit: club.imagenLogin == club.logo
-                                        ? BoxFit.contain : BoxFit.cover,
+                                    fit: BoxFit.cover,
                                     errorBuilder:
                                         (context, error, stackTrace) {
                                       return _loginLogoFallback(
@@ -719,6 +721,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : _loginLogoFallback(
                                     club.logo,
                                   ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),

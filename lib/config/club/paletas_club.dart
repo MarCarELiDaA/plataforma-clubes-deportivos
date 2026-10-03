@@ -12,10 +12,10 @@ class PaletasClub {
 
   static const naranja = PaletaClub(
     nombre: 'Naranja',
-    primario: '#7C2D12',
-    accion: '#C2410C',
-    acento: '#9A3412',
-    fondo: '#FFF7ED',
+    primario: '#C2410C',
+    accion: '#C94500',
+    acento: '#B7E532',
+    fondo: '#FFF4E8',
   );
 
   static const verde = PaletaClub(

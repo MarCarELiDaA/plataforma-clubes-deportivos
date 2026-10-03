@@ -283,7 +283,7 @@ class _AppDrawerState extends State<AppDrawer> {
         AppConfig.club.logo,
         width: size,
         height: size,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Container(
             width: size,

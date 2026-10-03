@@ -1112,7 +1112,13 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                   ),
                                   child: Icon(
                                     Icons.calendar_month_rounded,
-                                    color: _activityAccent,
+                                    color: AppTheme.colorLegibleSobre(
+                                      _activityAccent,
+                                      Color.alphaBlend(
+                                        _activityAccent.withValues(alpha: 0.12),
+                                        _surface,
+                                      ),
+                                    ),
                                     size: 19,
                                   ),
                                 ),
@@ -1149,7 +1155,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
                                 icon: Icon(
                                   Icons.calendar_today_outlined,
                                   size: 19,
-                                  color: _activityAccent,
+                                  color: AppTheme.colorLegibleSobre(
+                                    _activityAccent, _surfaceSoft,
+                                  ),
                                 ),
                                 label: Text(
                                   _selectedDate == null

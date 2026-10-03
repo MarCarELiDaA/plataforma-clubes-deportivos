@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       logo = Container(
         width: size,
         height: size,
-        padding: EdgeInsets.all(size * 0.12),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: _surface,
           borderRadius: BorderRadius.circular(size * 0.28),
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         child: Image.asset(
           AppConfig.club.logo,
-          fit: BoxFit.contain,
+          fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Icon(Icons.sports_rounded, color: _accent);
           },
@@ -1049,7 +1049,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   color: color.withValues(alpha: 0.13),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 23),
+                child: Icon(
+                  icon,
+                  color: AppTheme.colorLegibleSobre(
+                    color,
+                    Color.alphaBlend(color.withValues(alpha: 0.13), _surface),
+                  ),
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

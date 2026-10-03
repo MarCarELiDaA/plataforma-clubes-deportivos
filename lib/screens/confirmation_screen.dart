@@ -340,12 +340,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
             border: Border.all(color: _borderSoft),
             boxShadow: AppTheme.softShadow,
           ),
-          padding: const EdgeInsets.all(14),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             child: Image.asset(
               AppConfig.club.logo,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
             ),
           ),
         ),

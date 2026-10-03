@@ -154,7 +154,7 @@ class InfoScreen extends StatelessWidget {
           Container(
             width: isWide ? 180 : 150,
             height: isWide ? 180 : 150,
-            padding: const EdgeInsets.all(16),
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: background,
               borderRadius: BorderRadius.circular(18),
@@ -162,7 +162,7 @@ class InfoScreen extends StatelessWidget {
             ),
             child: Image.asset(
               AppConfig.club.logo,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Icon(
                   Icons.sports_tennis,
