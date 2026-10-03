@@ -9,6 +9,7 @@ import '../screens/login_screen.dart';
 import '../screens/my_reservations_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/reserva_screen.dart';
+import '../screens/wallet_screen.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
@@ -194,6 +195,15 @@ class _AppDrawerState extends State<AppDrawer> {
     Navigator.of(context).pop();
   }
 
+  void _openHome() {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    _closeDrawer();
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
   void _openScreen(Widget screen) {
     _closeDrawer();
 
@@ -220,6 +230,17 @@ class _AppDrawerState extends State<AppDrawer> {
 
   void _openInfo() {
     _openScreen(InfoScreen());
+  }
+
+  void _openWallet() {
+    if (!AppConfig.club.moduloActivo('wallet')) return;
+    if (_esVisitante) {
+      _openLogin();
+      return;
+    }
+    final navigator = Navigator.of(context);
+    _closeDrawer();
+    navigator.push(MaterialPageRoute(builder: (context) => const WalletScreen()));
   }
 
   void _openActividad(Actividad actividad) {
@@ -387,6 +408,12 @@ class _AppDrawerState extends State<AppDrawer> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 children: [
+                  _drawerItem(
+                    icon: Icons.home_outlined,
+                    title: 'Inicio',
+                    onTap: _openHome,
+                  ),
+                  const SizedBox(height: 14),
                   if (_actividades.isNotEmpty) ...[
                     _drawerSection('DEPORTES'),
                     for (final actividad in _actividades)
@@ -416,6 +443,12 @@ class _AppDrawerState extends State<AppDrawer> {
                       icon: Icons.person_outline_rounded,
                       title: 'Mi perfil',
                       onTap: _openProfile,
+                    ),
+                  if (!_esVisitante && AppConfig.club.moduloActivo('wallet'))
+                    _drawerItem(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Wallet',
+                      onTap: _openWallet,
                     ),
                   if (!_esVisitante && _reservasActivas) ...[
                     const SizedBox(height: 14),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../config/app_config.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,9 @@ import '../widgets/app_drawer.dart';
 
 
 class MyReservationsScreen extends StatefulWidget {
-  const MyReservationsScreen({super.key});
+  final String? usuarioId;
+  final String? correoUsuario;
+  const MyReservationsScreen({super.key, this.usuarioId, this.correoUsuario});
 
   @override
   State<MyReservationsScreen> createState() => _MyReservationsScreenState();
@@ -23,6 +26,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
   List<Map<String, dynamic>> _reservas = [];
   bool _isLoading = false;
+  bool get _gestionAdmin => widget.usuarioId != null &&
+      AppConfig.esAdministrador(_authService.currentUser?.email);
 
   Color get _primary => AppTheme.primary;
   Color get _background => AppTheme.clubBackground;
@@ -48,9 +53,15 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     try {
       final user = _authService.currentUser;
       if (user != null) {
+        if (widget.usuarioId != null && !_gestionAdmin) {
+          throw StateError('Solo el administrador puede gestionar estas reservas.');
+        }
         final reservas = await _reservaService
-            .getReservasUsuarioConId(user.uid)
-            .timeout(const Duration(seconds: 5), onTimeout: () => []);
+            .getReservasUsuarioConId(widget.usuarioId ?? user.uid)
+            .timeout(const Duration(seconds: 5), onTimeout: () {
+              if (_gestionAdmin) throw StateError('No se pudieron consultar las reservas. Reintenta.');
+              return [];
+            });
 
         if (mounted) {
           setState(() {
@@ -67,6 +78,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        if (widget.usuarioId != null) ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se pudieron consultar las reservas: $e')));
         setState(() {
           _isLoading = false;
         });
@@ -97,7 +110,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           hora.minute,
         );
 
-        return fechaHora.isAfter(now);
+        return (_gestionAdmin && (reserva['clubId'] == null ||
+            reserva['clubId'] == AppConfig.club.clubId)) ||
+            (!_gestionAdmin && fechaHora.isAfter(now));
       } catch (e) {
         return false;
       }
@@ -139,9 +154,10 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       final puedeCancelar = _reservaService.puedeCancelarReserva(
         reserva['fecha'],
         reserva['horaInicio'],
+        limiteCancelacion: reserva['limiteCancelacion'] as Timestamp?,
       );
 
-      if (!puedeCancelar) {
+      if (!_gestionAdmin && !puedeCancelar) {
         if (mounted) {
           showDialog(
             context: context,
@@ -155,7 +171,11 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 ),
               ),
               content: Text(
-                'No puedes cancelar esta reserva porque falta menos de 1 hora para su inicio.',
+                'El plazo de cancelación de esta reserva ha terminado '
+                    '(${NumberFormat('0.##', 'es_ES').format(
+                        (reserva['minutosAntelacionCancelacion'] ?? 60) / 60)} '
+                    '${(reserva['minutosAntelacionCancelacion'] ?? 60) == 60 ? 'hora' : 'horas'} '
+                    'antes de su inicio).',
                 style: TextStyle(color: _textSecondary, height: 1.45),
               ),
               shape: RoundedRectangleBorder(
@@ -188,7 +208,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
           ),
           content: Text(
-            '¿Deseas cancelar esta reserva?',
+            _gestionAdmin && reserva['estadoWallet'] == 'COBRADO'
+                ? '¿Deseas cancelar esta reserva? El importe ya cobrado no se devolverá automáticamente. '
+                    'Puedes ingresar saldo al usuario desde la gestión de Wallet.'
+                : reserva['estadoWallet'] == 'BLOQUEADO'
+                ? '¿Deseas cancelar esta reserva? Su importe bloqueado volverá a estar disponible en Wallet.'
+                : '¿Deseas cancelar esta reserva?',
             style: TextStyle(color: _textSecondary),
           ),
           shape: RoundedRectangleBorder(
@@ -217,11 +242,13 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         });
 
         try {
-          await _reservaService.cancelarReserva(reserva['id']);
+          await _reservaService.cancelarReserva(reserva['id'], comoAdministrador: _gestionAdmin);
 
-          await _notificationService.cancelReminder(reserva['id']);
+          if (widget.usuarioId == null || widget.usuarioId == _authService.currentUser?.uid) {
+            await _notificationService.cancelReminder(reserva['id']);
 
-          await _notificationService.showCancellationNotification();
+            await _notificationService.showCancellationNotification();
+          }
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -364,7 +391,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mis reservas',
+                  _gestionAdmin ? 'Reservas de ${widget.correoUsuario}' : 'Mis reservas',
                   style: TextStyle(
                     fontSize: isWeb ? 21 : 19,
                     fontWeight: FontWeight.w600,
@@ -481,6 +508,10 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       final fecha = dateFormat.parse(reserva['fecha']);
       final fechaFormateada = DateFormat('dd/MM/yyyy').format(fecha);
       final estado = reserva['estadoReserva'] == 'CONFIRMADA';
+      final importe = reserva['importeWalletCentimos'];
+      final coste = importe is int && importe >= 0
+          ? NumberFormat.currency(locale: 'es_ES', symbol: '€').format(importe / 100)
+          : 'No registrado';
 
       return Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -580,6 +611,19 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 child: Column(
                   children: [
                     _buildDetailRow(
+                      Icons.receipt_long_outlined,
+                      'ID',
+                      reserva['id'] as String,
+                      seleccionable: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                      Icons.euro_rounded,
+                      'Importe',
+                      coste,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
                       Icons.access_time_rounded,
                       'Hora',
                       reserva['horaInicio'],
@@ -639,7 +683,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     return instalacionId;
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(IconData icon, String label, String value, {
+    bool seleccionable = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -655,7 +701,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         ),
         const SizedBox(width: 7),
         Expanded(
-          child: Text(
+          child: seleccionable ? SelectableText(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: _textPrimary,
+            ),
+          ) : Text(
             value,
             style: TextStyle(
               fontSize: 14,

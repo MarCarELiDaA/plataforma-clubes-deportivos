@@ -1,6 +1,7 @@
 import '../../models/club/actividad.dart';
 import '../../models/club/instalacion.dart';
 import 'paleta_club.dart';
+import 'wallet_config.dart';
 
 class ClubConfig {
   // ============================================================
@@ -59,6 +60,7 @@ class ClubConfig {
   final List<String> administradores;
 
   final Map<String, bool> modulos;
+  final WalletConfig wallet;
 
   const ClubConfig({
     // Identidad
@@ -101,6 +103,7 @@ class ClubConfig {
     this.actividades = const [],
     required this.administradores,
     this.modulos = const {},
+    this.wallet = const WalletConfig(),
   });
 
   bool moduloActivo(String modulo) {

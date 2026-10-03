@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../services/wallet_service.dart';
 import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_drawer.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -92,7 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _finishLogin() {
+  Future<void> _finishLogin() async {
+    await WalletService().cobrarReservasIniciadas();
     if (!mounted) return;
     final onLoginSuccess = widget.onLoginSuccess;
     if (onLoginSuccess != null) {
@@ -122,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (status == 'approved') {
-          _finishLogin();
+          await _finishLogin();
         } else {
           await _authService.signOut();
 
@@ -132,6 +133,9 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (_) {
+      if (mounted) setState(() {
+        _errorMessage = 'No se pudo completar la comprobación del Wallet. Vuelve a iniciar sesión para reintentar.';
+      });
       // Si no se puede comprobar el usuario actual,
       // permanecemos en la pantalla de login.
     }
@@ -226,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      _finishLogin();
+      await _finishLogin();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
@@ -643,16 +647,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Row(
                     children: [
-                      TextButton.icon(
-                        onPressed: _isLoading || _authService.currentUser != null
-                            ? null
-                            : () => AppDrawer.volverAtras(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _primary,
-                        ),
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        label: const Text('Atrás'),
-                      ),
                       TextButton(
                         onPressed: _isLoading || _authService.currentUser != null
                             ? null

@@ -34,6 +34,8 @@ class _ReservaScreenState extends State<ReservaScreen> {
   bool _volverAlHorarioPendiente = false;
   List<String> _availableTimes = [];
   List<String> _reservedTimes = [];
+  Map<String, int> _plazasOcupadas = {};
+  Set<String> _misHorariosClase = {};
   List<Instalacion> _instalaciones = [];
   Instalacion? _instalacionActual;
 
@@ -281,6 +283,8 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
     setState(() {
       _reservedTimes = [];
+      _plazasOcupadas = {};
+      _misHorariosClase = {};
       _hasAvailability = false;
       _availabilityError = null;
       _isLoading = true;
@@ -289,6 +293,29 @@ class _ReservaScreenState extends State<ReservaScreen> {
     String formatDate(DateTime value) =>
         '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
     final day = DateTime(date.year, date.month, date.day);
+    final visitante = _esVisitante;
+
+    List<String> calcularOcupacion(List<({DateTime inicio, DateTime fin})> intervals,
+        {Set<String> propios = const {}}) {
+      final counts = <String, int>{};
+      final completos = <String>[];
+      for (final time in instalacion.horarios) {
+        final start = visitante ? _reservaService.getInicioHorarioPublico(day, time)
+            : DateTime.parse('${formatDate(day)}T$time:00');
+        final end = start.add(Duration(minutes: instalacion.duracionReservaMinutos));
+        final overlaps = intervals.where((interval) =>
+            start.isBefore(interval.fin) && end.isAfter(interval.inicio)).toList();
+        counts[time] = overlaps.length;
+        final incompatible = overlaps.any((interval) =>
+            interval.inicio != start || interval.fin != end);
+        if (overlaps.length >= instalacion.aforoPorHorario || incompatible) completos.add(time);
+      }
+      if (mounted && requestId == _availabilityRequestId) {
+        _plazasOcupadas = counts;
+        _misHorariosClase = propios;
+      }
+      return completos;
+    }
 
     void handleError([Object? error]) {
       if (!mounted || requestId != _availabilityRequestId) return;
@@ -329,18 +356,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
       if (_esVisitante) {
         _reservedTimesSubscription = _reservaService
             .getDisponibilidadPublicaStream(instalacion.id, formatDate(day))
-            .map((intervals) {
-              // Una consulta vacía confirmada por el servidor no tiene ocupación.
-              if (intervals.isEmpty) return <String>[];
-              return instalacion.horarios.where((time) {
-                final start = _reservaService.getInicioHorarioPublico(day, time);
-                final end = start.add(
-                  Duration(minutes: instalacion.duracionReservaMinutos),
-                );
-                return intervals.any((interval) =>
-                    start.isBefore(interval.fin) && end.isAfter(interval.inicio));
-              }).toList();
-            })
+            .map(calcularOcupacion)
             .listen(handleData, onError: (Object error) => handleError(error));
         return;
       }
@@ -365,16 +381,14 @@ class _ReservaScreenState extends State<ReservaScreen> {
               );
               final duration = data['duracionMinutos'] as int;
               if (duration <= 0) throw StateError('Duración inválida');
-              return (start: start, end: start.add(Duration(minutes: duration)));
+              return (inicio: start, fin: start.add(Duration(minutes: duration)));
             }).toList();
-            return instalacion.horarios.where((time) {
-              final start = DateTime.parse('${formatDate(day)}T$time:00');
-              final end = start.add(
-                Duration(minutes: instalacion.duracionReservaMinutos),
-              );
-              return intervals.any((interval) =>
-                  start.isBefore(interval.end) && end.isAfter(interval.start));
-            }).toList();
+            final propios = instalacion.aforoPorHorario > 1 &&
+                !AppConfig.esAdministrador(_authService.currentUser?.email) ? snapshot.docs
+                .where((doc) => doc.data()['usuarioId'] == _authService.currentUser?.uid &&
+                    doc.data()['fecha'] == formatDate(day))
+                .map((doc) => doc.data()['horaInicio'] as String).toSet() : <String>{};
+            return calcularOcupacion(intervals, propios: propios);
           })
           .listen(handleData, onError: (_) => handleError());
     } catch (error) {
@@ -421,6 +435,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
 
     if (!_availabilityReady ||
         _reservedTimes.contains(time) ||
+        _misHorariosClase.contains(time) ||
         _isTimePast(time)) {
       return;
     }
@@ -439,6 +454,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
         requestId != _availabilityRequestId ||
         _authService.currentUser?.uid != user?.uid ||
         _reservedTimes.contains(time) ||
+        _misHorariosClase.contains(time) ||
         _isTimePast(time)) {
       return;
     }
@@ -514,6 +530,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _selectInstalacion(instalacion),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           borderRadius: BorderRadius.circular(22),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
@@ -521,131 +538,115 @@ class _ReservaScreenState extends State<ReservaScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: selected ? accent : _borderSoft,
-                width: selected ? 3 : 1,
-              ),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.24),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : AppTheme.softShadow,
+              boxShadow: AppTheme.softShadow,
             ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  _instalacionImage(instalacion),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: _surfaceSoft,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        _actividadIcon,
-                        size: 52,
-                        color: _textTertiary,
-                      ),
-                    );
-                  },
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.04),
-                        Colors.black.withValues(alpha: 0.24),
-                        Colors.black.withValues(alpha: 0.84),
-                      ],
-                      stops: const [0.0, 0.42, 1.0],
-                    ),
+            foregroundDecoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: selected ? accent : _borderSoft,
+                  width: selected ? 4 : 1),
+            ),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(shadows: [
+                Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+                Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
+              ]),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    _instalacionImage(instalacion),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: _surfaceSoft,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          _actividadIcon,
+                          size: 52,
+                          color: _textTertiary,
+                        ),
+                      );
+                    },
                   ),
-                ),
-                Positioned(
-                  top: 13,
-                  right: 13,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? accent
-                          : Colors.black.withValues(alpha: 0.46),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.28),
+                  Positioned(
+                    top: 13,
+                    right: 13,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          selected
-                              ? Icons.check_circle_rounded
-                              : Icons.touch_app_rounded,
-                          size: 15,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          selected ? 'SELECCIONADA' : 'ELEGIR',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 15,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        instalacion.nombre,
-                        softWrap: true,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 19,
-                          height: 1.1,
-                          fontWeight: FontWeight.w800,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.70),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected ? accent : Colors.white.withValues(alpha: 0.28),
+                          width: selected ? 2 : 1,
                         ),
                       ),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 7,
-                        runSpacing: 6,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildImageBadge(
-                            icon: Icons.schedule_rounded,
-                            text: '${instalacion.duracionReservaMinutos} min',
+                          Icon(
+                            selected
+                                ? Icons.check_circle_rounded
+                                : Icons.touch_app_rounded,
+                            size: 15,
+                            color: Colors.white,
                           ),
-                          _buildImageBadge(
-                            icon: Icons.calendar_month_rounded,
-                            text: '${instalacion.maxDiasAntelacion} días',
+                          const SizedBox(width: 5),
+                          Text(
+                            selected ? 'SELECCIONADA' : 'ELEGIR',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 15,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          instalacion.nombre,
+                          softWrap: true,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 19,
+                            height: 1.1,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Wrap(
+                          spacing: 7,
+                          runSpacing: 6,
+                          children: [
+                            _buildImageBadge(
+                              icon: Icons.schedule_rounded,
+                              text: '${instalacion.duracionReservaMinutos} min',
+                            ),
+                            _buildImageBadge(
+                              icon: Icons.calendar_month_rounded,
+                              text: '${instalacion.maxDiasAntelacion} días',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -819,9 +820,11 @@ class _ReservaScreenState extends State<ReservaScreen> {
     final precioCentimos =
         _instalacionActual?.preciosPorHorarioCentimos[time];
     final availabilityKnown = _availabilityReady;
+    final esClase = (_instalacionActual?.aforoPorHorario ?? 1) > 1;
+    final esMiReserva = availabilityKnown && _misHorariosClase.contains(time);
     final isReserved = availabilityKnown && _reservedTimes.contains(time);
     final isPast = _isTimePast(time);
-    final isAvailable = availabilityKnown && !isReserved && !isPast;
+    final isAvailable = availabilityKnown && !isReserved && !isPast && !esMiReserva;
 
     final statusColor = !availabilityKnown
         ? _textSecondary
@@ -834,10 +837,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
     final statusText = !availabilityKnown
         ? (isPast ? 'PASADA' : 'SIN CONFIRMAR')
         : isAvailable
-        ? 'LIBRE'
+        ? (esClase ? 'LIBRE · ${_plazasOcupadas[time] ?? 0}/${_instalacionActual!.aforoPorHorario}' : 'LIBRE')
         : isReserved
-        ? 'RESERVADO'
-        : 'PASADA';
+        ? (esClase ? 'COMPLETO' : 'RESERVADO')
+        : esMiReserva && !isPast ? 'TU RESERVA' : 'PASADA';
 
     final statusIcon = !availabilityKnown
         ? Icons.help_outline_rounded
@@ -857,6 +860,7 @@ class _ReservaScreenState extends State<ReservaScreen> {
           onTap: isAvailable
               ? () => _selectTime(time)
               : null,
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           borderRadius: BorderRadius.circular(18),
           child: Container(
             clipBehavior: Clip.antiAlias,
@@ -877,13 +881,6 @@ class _ReservaScreenState extends State<ReservaScreen> {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(color: _surfaceSoft);
                   },
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: isPast
-                        ? AppTheme.primaryDark.withValues(alpha: 0.66)
-                        : Colors.black.withValues(alpha: 0.52),
-                  ),
                 ),
                 Positioned(
                   top: 10,
@@ -951,6 +948,10 @@ class _ReservaScreenState extends State<ReservaScreen> {
                               ),
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
+                              shadows: const [
+                                Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+                                Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
+                              ],
                             ),
                           ),
                         ],

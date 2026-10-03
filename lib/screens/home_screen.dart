@@ -10,6 +10,7 @@ import 'login_screen.dart';
 import 'my_reservations_screen.dart';
 import 'profile_screen.dart';
 import 'reserva_screen.dart';
+import 'wallet_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -144,6 +145,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+  }
+
+  void _openWallet() {
+    if (!AppConfig.club.moduloActivo('wallet')) return;
+    if (_redirectVisitanteToLogin()) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const WalletScreen()),
+    );
   }
 
   void _openInfo() {
@@ -414,6 +423,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 children: [
+                  Builder(
+                    builder: (drawerContext) => _drawerItem(
+                      icon: Icons.home_outlined,
+                      title: 'Inicio',
+                      onTap: () => Scaffold.of(drawerContext).closeDrawer(),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   if (AppConfig.club.actividades.any((actividad) => actividad.activa)) ...[
                     _drawerSection('DEPORTES'),
                     for (final actividad in AppConfig.club.actividades.where(
@@ -457,6 +474,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       title: 'Mi perfil',
                       onTap: _openProfile,
                     ),
+                    if (AppConfig.club.moduloActivo('wallet'))
+                      _drawerItem(
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: 'Wallet',
+                        onTap: () {
+                          final navigator = Navigator.of(context);
+                          navigator.pop();
+                          _openWallet();
+                        },
+                      ),
                     if (_reservasActivas) ...[
                       const SizedBox(height: 14),
                       _drawerSection('RESERVAS'),
@@ -606,20 +633,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         : 44.0;
 
     final activityColor = _activityColor(actividad);
+    final buttonColor = Color.alphaBlend(
+      AppTheme.identity.withValues(alpha: 0.08),
+      AppTheme.clubSurface,
+    );
+    final foregroundColor = AppTheme.textoSobreColor(buttonColor);
 
     return Material(
-      color: Colors.transparent,
+      color: buttonColor.withValues(alpha: 0.86),
+      elevation: 3,
+      shadowColor: Colors.black.withValues(alpha: 0.30),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: activityColor,
+          width: 2,
+        ),
+      ),
       child: InkWell(
         onTap: () => _openReserva(actividad),
         borderRadius: BorderRadius.circular(16),
+        hoverColor: foregroundColor.withValues(alpha: 0.10),
+        focusColor: foregroundColor.withValues(alpha: 0.12),
+        splashColor: foregroundColor.withValues(alpha: 0.18),
         child: Container(
           height: height,
           padding: EdgeInsets.symmetric(horizontal: height < 55 ? 10 : 13),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-          ),
           child: Row(
             children: [
               Container(
@@ -628,12 +668,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: activityColor,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: activityColor.withValues(alpha: 0.34),
-                      blurRadius: 12,
-                    ),
-                  ],
                 ),
                 child: Icon(
                   _activityIcon(actividad.icono),
@@ -648,15 +682,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: foregroundColor,
+                    shadows: const [],
                     fontSize: height < 55 ? 13 : 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.white.withValues(alpha: 0.68),
+                color: foregroundColor,
                 size: height < 55 ? 19 : 21,
               ),
             ],
@@ -730,124 +765,119 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildHeroImage(),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  AppTheme.primaryDark.withValues(alpha: 0.98),
-                  AppTheme.primaryDark.withValues(alpha: 0.86),
-                  AppTheme.primaryDark.withValues(alpha: 0.32),
-                  Colors.black.withValues(alpha: 0.08),
-                ],
-                stops: const [0.0, 0.30, 0.60, 1.0],
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              SizedBox(
-                width: 290,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Actividades',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppTheme.identity, width: 2),
+      ),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(shadows: [
+          Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+          Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
+        ]),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildHeroImage(),
+            Row(
+              children: [
+                SizedBox(
+                  width: 290,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Actividades',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Elige qué quieres reservar',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.68),
-                          fontSize: 12,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Elige qué quieres reservar',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.68),
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      Expanded(child: _buildDesktopActivities()),
-                    ],
+                        const SizedBox(height: 14),
+                        Expanded(child: _buildDesktopActivities()),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(34, 28, 34, 28),
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 570),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.20),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(34, 28, 34, 28),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 570),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.20),
+                                ),
+                              ),
+                              child: const Text(
+                                'TU CLUB, TUS RESERVAS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                ),
                               ),
                             ),
-                            child: const Text(
-                              'TU CLUB, TUS RESERVAS',
-                              style: TextStyle(
+                            const SizedBox(height: 11),
+                            Text(
+                              AppConfig.club.nombre,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.1,
+                                fontSize: 34,
+                                height: 1.05,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.8,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 11),
-                          Text(
-                            AppConfig.club.nombre,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              height: 1.05,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.8,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Selecciona una actividad y gestiona tu reserva de forma rápida y sencilla.',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 14,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Selecciona una actividad y gestiona tu reserva de forma rápida y sencilla.',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.88),
-                              fontSize: 14,
-                              height: 1.4,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -866,92 +896,89 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildHeroImage(),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.primaryDark.withValues(alpha: 0.18),
-                  AppTheme.primaryDark.withValues(alpha: 0.48),
-                  AppTheme.primaryDark.withValues(alpha: 0.97),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.identity, width: 2),
+      ),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(shadows: [
+          Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+          Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
+        ]),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildHeroImage(),
+            Positioned(
+              left: 18,
+              right: 18,
+              top: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppConfig.club.nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 25,
+                      height: 1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    'Elige una actividad para reservar',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Positioned(
-            left: 18,
-            right: 18,
-            top: 18,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppConfig.club.nombre,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    height: 1,
-                    fontWeight: FontWeight.w800,
+            Positioned(
+              left: 16,
+              right: 0,
+              bottom: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Actividades',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  'Elige una actividad para reservar',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 12,
+                  const SizedBox(height: 9),
+                  SizedBox(
+                    height: 66,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(right: 16),
+                      itemCount: _actividades.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        return SizedBox(
+                          width: 205,
+                          child: _buildActivityMenuItem(
+                            actividad: _actividades[index],
+                            height: 66,
+                            compact: true,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            left: 16,
-            right: 0,
-            bottom: 18,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Actividades',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 9),
-                SizedBox(
-                  height: 66,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(right: 16),
-                    itemCount: _actividades.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 10),
-                    itemBuilder: (context, index) {
-                      return SizedBox(
-                        width: 205,
-                        child: _buildActivityMenuItem(
-                          actividad: _actividades[index],
-                          height: 66,
-                          compact: true,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -21,15 +21,184 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // INICIO CONFIG WALLET GENERADA (tools/generar_config_wallet_reglas.ps1)
+    function configuracionReserva(instalacionId) {
+      return {
+        'instalacion_deportiva_1': {'horarios': [ '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': {}, 'duracion': 90, 'cancelacion': 720},
+        'pista_padel_1': {'horarios': [ '06:30', '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': { '06:30': 1200, '08:00': 1200, '09:30': 1200, '11:00': 1200, '12:30': 1600, '14:00': 1600, '15:30': 1600, '17:00': 1600, '18:30': 2400, '20:00': 2400, '21:30': 2400}, 'duracion': 90, 'cancelacion': 720},
+        'pista_padel_2': {'horarios': [ '06:30', '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': { '06:30': 1200, '08:00': 1200, '09:30': 1200, '11:00': 1200, '12:30': 1600, '14:00': 1600, '15:30': 1600, '17:00': 1600, '18:30': 2400, '20:00': 2400, '21:30': 2400}, 'duracion': 90, 'cancelacion': 720},
+        'pista_padel_3': {'horarios': [ '06:30', '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': { '06:30': 1200, '08:00': 1200, '09:30': 1200, '11:00': 1200, '12:30': 1600, '14:00': 1600, '15:30': 1600, '17:00': 1600, '18:30': 2400, '20:00': 2400, '21:30': 2400}, 'duracion': 90, 'cancelacion': 720},
+        'pista_tenis_1': {'horarios': [ '06:30', '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': { '06:30': 1200, '08:00': 1200, '09:30': 1200, '11:00': 1200, '12:30': 1600, '14:00': 1600, '15:30': 1600, '17:00': 1600, '18:30': 2400, '20:00': 2400, '21:30': 2400}, 'duracion': 90, 'cancelacion': 720},
+        'pista_tenis_2': {'horarios': [ '06:30', '08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'], 'precios': { '06:30': 1200, '08:00': 1200, '09:30': 1200, '11:00': 1200, '12:30': 1600, '14:00': 1600, '15:30': 1600, '17:00': 1600, '18:30': 2400, '20:00': 2400, '21:30': 2400}, 'duracion': 90, 'cancelacion': 720},
+        'gimnasio_zumba': {'horarios': ['09:00', '10:00', '17:00', '18:00', '19:00', '20:00'], 'precios': {}, 'duracion': 60, 'cancelacion': 720},
+        'gimnasio_spinning': {'horarios': [ '08:00', '09:00', '16:00', '17:00', '18:00', '19:00', '20:00'], 'precios': {}, 'duracion': 45, 'cancelacion': 720},
+        'gimnasio_boxeo': {'horarios': ['10:00', '11:00', '17:00', '18:00', '19:00', '20:00'], 'precios': {}, 'duracion': 60, 'cancelacion': 720}
+      }.get(instalacionId, {});
+    }
+    // FIN CONFIG WALLET GENERADA
+
+    // Europe/Madrid: cambio europeo de hora el último domingo de marzo/octubre.
+    // El generador rechaza otros clubes o zonas para no aplicar este cálculo allí.
+    function inicioMadridValido(reserva) {
+      let inicio = reserva.inicioReserva;
+      let marzo = timestamp.date(inicio.year(), 3, 31);
+      let octubre = timestamp.date(inicio.year(), 10, 31);
+      let veranoInicio = marzo - duration.value(marzo.dayOfWeek() % 7, 'd') + duration.value(1, 'h');
+      let veranoFin = octubre - duration.value(octubre.dayOfWeek() % 7, 'd') + duration.value(1, 'h');
+      let local = inicio + duration.value(inicio >= veranoInicio && inicio < veranoFin ? 2 : 1, 'h');
+      let fecha = reserva.fecha.split('-');
+      let hora = reserva.horaInicio.split(':');
+      return inicio is timestamp
+        && reserva.fecha.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && reserva.horaInicio.matches('[0-9]{2}:[0-9]{2}')
+        && local.year() == int(fecha[0]) && local.month() == int(fecha[1]) && local.day() == int(fecha[2])
+        && local.hours() == int(hora[0]) && local.minutes() == int(hora[1])
+        && local.seconds() == 0 && local.nanos() == 0;
+    }
+
+    function reservaNuevaValida(reserva) {
+      let config = configuracionReserva(reserva.instalacionId);
+      let precio = config.precios.get(reserva.horaInicio, 0);
+      return reserva.clubId == 'club-demo' && reserva.estadoReserva == 'CONFIRMADA'
+        && config.horarios.hasAny([reserva.horaInicio])
+        && reserva.duracionMinutos == config.duracion
+        && inicioMadridValido(reserva) && reserva.inicioReserva > request.time
+        && reserva.minutosAntelacionCancelacion == config.cancelacion
+        && reserva.limiteCancelacion == reserva.inicioReserva - duration.value(config.cancelacion, 'm')
+        && reserva.importeWalletCentimos == precio
+        && reserva.estadoWallet == (precio > 0 ? 'BLOQUEADO' : 'SIN_CARGO');
+    }
+
+    function saldoReservaValido(antes, despues, movimientoId) {
+      return despues.keys().hasAll(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+        && despues.keys().hasOnly(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+        && despues.saldoTotalCentimos is int && despues.saldoBloqueadoCentimos is int
+        && despues.saldoTotalCentimos <= 9007199254740991
+        && despues.saldoBloqueadoCentimos >= 0 && despues.saldoTotalCentimos >= despues.saldoBloqueadoCentimos
+        && despues.moneda == antes.moneda && despues.moneda == 'EUR'
+        && despues.esPrueba == antes.esPrueba
+        && despues.fechaActualizacion == request.time && despues.ultimoMovimientoId == movimientoId;
+    }
+
+    function cambioReservaValido(antes, despues, tipo) {
+      return antes.usuarioId == despues.usuarioId
+        && (antes.usuarioId == request.auth.uid || isAdmin())
+        && antes.clubId == 'club-demo' && despues.clubId == antes.clubId
+        && antes.estadoReserva == 'CONFIRMADA' && antes.estadoWallet == 'BLOQUEADO'
+        && ((tipo == 'LIBERACION' && despues.estadoWallet == 'LIBERADO'
+              && ((antes.usuarioId == request.auth.uid && request.time < antes.limiteCancelacion
+                    && despues.diff(antes).affectedKeys().hasOnly(['estadoReserva', 'estadoWallet'])
+                    && despues.estadoReserva == 'CANCELADA_POR_USUARIO')
+                || cancelacionAdminValida(antes, despues)))
+          || (tipo == 'COBRO' && antes.usuarioId == request.auth.uid
+              && despues.diff(antes).affectedKeys().hasOnly(['estadoReserva', 'estadoWallet'])
+              && request.time >= antes.inicioReserva
+              && despues.estadoReserva == 'CONFIRMADA' && despues.estadoWallet == 'COBRADO'));
+    }
+
+    function cancelacionAdminValida(antes, despues) {
+      return isAdmin() && antes.get('clubId', 'club-demo') == 'club-demo'
+        && antes.estadoReserva == 'CONFIRMADA'
+        && despues.usuarioId == antes.usuarioId
+        && despues.diff(antes).affectedKeys().hasOnly([
+          'estadoReserva', 'estadoWallet', 'canceladaPorUid', 'fechaCancelacion'
+        ])
+        && despues.estadoReserva == 'CANCELADA_POR_ADMIN'
+        && despues.canceladaPorUid == request.auth.uid && despues.fechaCancelacion == request.time;
+    }
+
+    function operacionReservaWalletValida(clubId, userId, saldo, movimientoId) {
+      let walletPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId);
+      let movimientoPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)/movimientos/$(movimientoId);
+      let anterior = get(walletPath).data;
+      let movimiento = getAfter(movimientoPath).data;
+      let reservaPath = /databases/$(database)/documents/reservas/$(movimiento.reservaId);
+      let reserva = getAfter(reservaPath).data;
+      let creada = !exists(reservaPath);
+      let reservaAntes = creada ? {} : get(reservaPath).data;
+      return clubId == 'club-demo' && request.auth != null
+        && (request.auth.uid == userId || isAdmin())
+        && !exists(movimientoPath) && saldoReservaValido(anterior, saldo, movimientoId)
+        && movimiento.keys().hasAll(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'reservaId', 'saldoAntesCentimos', 'saldoDespuesCentimos', 'bloqueadoAntesCentimos', 'bloqueadoDespuesCentimos'])
+        && movimiento.keys().hasOnly(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'reservaId', 'saldoAntesCentimos', 'saldoDespuesCentimos', 'bloqueadoAntesCentimos', 'bloqueadoDespuesCentimos'])
+        && movimiento.importeCentimos is int && movimiento.importeCentimos > 0
+        && movimiento.importeCentimos == reserva.importeWalletCentimos
+        && movimiento.fecha == request.time && movimiento.autorUid == request.auth.uid
+        && reserva.usuarioId == userId
+        && movimiento.motivo is string && movimiento.motivo.size() > 0
+        && movimiento.saldoAntesCentimos == anterior.saldoTotalCentimos
+        && movimiento.saldoDespuesCentimos == saldo.saldoTotalCentimos
+        && movimiento.bloqueadoAntesCentimos == anterior.saldoBloqueadoCentimos
+        && movimiento.bloqueadoDespuesCentimos == saldo.saldoBloqueadoCentimos
+        && ((movimiento.tipo == 'BLOQUEO' && creada && reservaNuevaValida(reserva)
+              && movimientoId == 'bloqueo-' + movimiento.reservaId
+              && saldo.saldoTotalCentimos == anterior.saldoTotalCentimos
+              && saldo.saldoBloqueadoCentimos == anterior.saldoBloqueadoCentimos + movimiento.importeCentimos)
+          || (movimiento.tipo == 'LIBERACION' && !creada && cambioReservaValido(reservaAntes, reserva, 'LIBERACION')
+              && movimientoId == 'liberacion-' + movimiento.reservaId
+              && saldo.saldoTotalCentimos == anterior.saldoTotalCentimos
+              && saldo.saldoBloqueadoCentimos == anterior.saldoBloqueadoCentimos - movimiento.importeCentimos)
+          || (movimiento.tipo == 'COBRO' && !creada && cambioReservaValido(reservaAntes, reserva, 'COBRO')
+              && movimientoId == 'cobro-' + movimiento.reservaId
+              && saldo.saldoTotalCentimos == anterior.saldoTotalCentimos - movimiento.importeCentimos
+              && saldo.saldoBloqueadoCentimos == anterior.saldoBloqueadoCentimos - movimiento.importeCentimos));
+    }
+
+    function movimientoDeReservaValido(reservaId, reserva, tipo) {
+      let walletPath = /databases/$(database)/documents/clubes/$(reserva.clubId)/wallets/$(reserva.usuarioId);
+      let movimientoId = tipo + '-' + reservaId;
+      return operacionReservaWalletValida(reserva.clubId, reserva.usuarioId, getAfter(walletPath).data, movimientoId);
+    }
+
+    // Coordinación obligatoria de las operaciones del cliente. No es un índice
+    // de ocupación ni valida por sí sola todos los solapamientos de un cliente ajeno.
+    function controlReservaAplicado(reservaId, reserva, operacion) {
+      let clubId = reserva.get('clubId', 'club-demo');
+      let control = getAfter(/databases/$(database)/documents/clubes/$(clubId)/controlReservas/$(reserva.instalacionId)).data;
+      return clubId == 'club-demo'
+        && control.keys().hasAll(['reservaId', 'operacion', 'actualizadoEn'])
+        && control.keys().hasOnly(['reservaId', 'operacion', 'actualizadoEn'])
+        && control.reservaId == reservaId && control.operacion == operacion
+        && control.actualizadoEn == request.time;
+    }
+
     match /reservas/{reservaId} {
       allow read: if request.auth != null;
 
       allow create: if request.auth != null
-        && request.resource.data.usuarioId == request.auth.uid;
+        && (request.resource.data.usuarioId == request.auth.uid || isAdmin())
+        && request.resource.data.get('creadaPorUid', request.auth.uid) == request.auth.uid
+        && (request.resource.data.usuarioId == request.auth.uid
+          || (request.resource.data.creadaPorUid == request.auth.uid
+            && exists(/databases/$(database)/documents/usuarios/$(request.resource.data.usuarioId))))
+        && ((request.resource.data.importeWalletCentimos == 0
+              && reservaNuevaValida(request.resource.data))
+          || (request.resource.data.importeWalletCentimos > 0
+              && movimientoDeReservaValido(reservaId, request.resource.data, 'bloqueo')))
+        && controlReservaAplicado(reservaId, request.resource.data, 'CREAR');
 
-      allow update: if request.auth != null
+      allow update: if (request.auth != null
         && resource.data.usuarioId == request.auth.uid
-        && request.resource.data.usuarioId == request.auth.uid;
+        && request.resource.data.usuarioId == request.auth.uid
+        && ((!('estadoWallet' in resource.data) && !('estadoWallet' in request.resource.data))
+          || (resource.data.estadoWallet == 'SIN_CARGO'
+              && resource.data.estadoReserva == 'CONFIRMADA'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estadoReserva'])
+              && request.resource.data.estadoReserva == 'CANCELADA_POR_USUARIO'
+              && request.time < resource.data.limiteCancelacion)
+          || (resource.data.estadoWallet == 'BLOQUEADO'
+              && ((request.resource.data.estadoWallet == 'LIBERADO'
+                    && movimientoDeReservaValido(reservaId, request.resource.data, 'liberacion'))
+                || (request.resource.data.estadoWallet == 'COBRADO'
+                    && movimientoDeReservaValido(reservaId, request.resource.data, 'cobro')))))
+        || (cancelacionAdminValida(resource.data, request.resource.data)
+            && ((resource.data.get('estadoWallet', 'SIN_CARGO') in ['SIN_CARGO', 'COBRADO']
+                  && request.resource.data.get('estadoWallet', 'SIN_CARGO') == resource.data.get('estadoWallet', 'SIN_CARGO'))
+              || (resource.data.estadoWallet == 'BLOQUEADO'
+                  && request.resource.data.estadoWallet == 'LIBERADO'
+                  && movimientoDeReservaValido(reservaId, request.resource.data, 'liberacion')))))
+        && (request.resource.data.estadoReserva == resource.data.estadoReserva
+          || controlReservaAplicado(reservaId, resource.data, 'CANCELAR'));
 
       allow delete: if false;
     }
@@ -39,12 +208,153 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Wallet privado: ajustes administrativos y recargas simuladas registradas.
+    match /clubes/{clubId}/wallets/{userId} {
+      function ajusteAdminValido(saldo, movimientoId) {
+        let walletPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId);
+        let movimientoPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)/movimientos/$(movimientoId);
+        let nuevo = !exists(walletPath);
+        let totalAntes = nuevo ? 0 : get(walletPath).data.saldoTotalCentimos;
+        let bloqueadoAntes = nuevo ? 0 : get(walletPath).data.saldoBloqueadoCentimos;
+        let pruebaAntes = nuevo ? true : get(walletPath).data.esPrueba;
+        let movimiento = getAfter(movimientoPath).data;
+        return clubId == 'club-demo' && isAdmin()
+          && exists(/databases/$(database)/documents/usuarios/$(userId))
+          && !exists(movimientoPath)
+          && saldo.keys().hasAll(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+          && saldo.keys().hasOnly(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+          && saldo.ultimoMovimientoId == movimientoId
+          && saldo.saldoTotalCentimos is int
+          && saldo.saldoTotalCentimos <= 9007199254740991
+          && saldo.saldoBloqueadoCentimos is int
+          && saldo.saldoBloqueadoCentimos == bloqueadoAntes
+          && saldo.saldoTotalCentimos >= bloqueadoAntes
+          && bloqueadoAntes >= 0
+          && saldo.moneda == 'EUR' && saldo.esPrueba == pruebaAntes
+          && saldo.fechaActualizacion == request.time
+          && movimiento.keys().hasAll(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'saldoAntesCentimos', 'saldoDespuesCentimos'])
+          && movimiento.keys().hasOnly(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'saldoAntesCentimos', 'saldoDespuesCentimos'])
+          && movimiento.importeCentimos is int && movimiento.importeCentimos > 0
+          && movimiento.motivo is string && movimiento.motivo.matches('.*[^\\s].*')
+          && movimiento.fecha == request.time && movimiento.autorUid == request.auth.uid
+          && movimiento.saldoAntesCentimos == totalAntes
+          && movimiento.saldoDespuesCentimos == saldo.saldoTotalCentimos
+          && ((movimiento.tipo == 'INGRESO'
+                && saldo.saldoTotalCentimos == totalAntes + movimiento.importeCentimos)
+            || (movimiento.tipo == 'RETIRADA' && !nuevo
+                && saldo.saldoTotalCentimos == totalAntes - movimiento.importeCentimos));
+      }
+
+      // Exclusivamente para pruebas en club-demo; retirar al activar pagos reales.
+      function recargaSimuladaValida(saldo, movimientoId) {
+        let walletPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId);
+        let movimientoPath = /databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)/movimientos/$(movimientoId);
+        let nuevo = !exists(walletPath);
+        let totalAntes = nuevo ? 0 : get(walletPath).data.saldoTotalCentimos;
+        let bloqueadoAntes = nuevo ? 0 : get(walletPath).data.saldoBloqueadoCentimos;
+        let movimiento = getAfter(movimientoPath).data;
+        return clubId == 'club-demo' && request.auth != null && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/usuarios/$(userId))
+          && (nuevo || get(walletPath).data.esPrueba == true)
+          && movimientoId.matches('sim-[A-Za-z0-9]{20}')
+          && !exists(movimientoPath)
+          && saldo.keys().hasAll(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+          && saldo.keys().hasOnly(['saldoTotalCentimos', 'saldoBloqueadoCentimos', 'moneda', 'esPrueba', 'fechaActualizacion', 'ultimoMovimientoId'])
+          && saldo.ultimoMovimientoId == movimientoId
+          && saldo.saldoTotalCentimos is int && saldo.saldoTotalCentimos <= 9007199254740991
+          && saldo.saldoBloqueadoCentimos is int && saldo.saldoBloqueadoCentimos == bloqueadoAntes
+          && bloqueadoAntes >= 0 && saldo.saldoTotalCentimos >= bloqueadoAntes
+          && saldo.moneda == 'EUR' && saldo.esPrueba == true
+          && saldo.fechaActualizacion == request.time
+          && movimiento.keys().hasAll(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'saldoAntesCentimos', 'saldoDespuesCentimos', 'origen', 'referenciaOperacion'])
+          && movimiento.keys().hasOnly(['tipo', 'importeCentimos', 'motivo', 'fecha', 'autorUid', 'saldoAntesCentimos', 'saldoDespuesCentimos', 'origen', 'referenciaOperacion'])
+          && movimiento.tipo == 'RECARGA_SIMULADA'
+          && movimiento.importeCentimos is int
+          && movimiento.importeCentimos > 0 && movimiento.importeCentimos <= 9007199254740991
+          && movimiento.motivo == 'Recarga simulada sin pago real'
+          && movimiento.fecha == request.time && movimiento.autorUid == request.auth.uid
+          && movimiento.origen == 'SIMULACION' && movimiento.referenciaOperacion == movimientoId
+          && movimiento.saldoAntesCentimos == totalAntes
+          && movimiento.saldoDespuesCentimos == saldo.saldoTotalCentimos
+          && saldo.saldoTotalCentimos == totalAntes + movimiento.importeCentimos;
+      }
+
+      allow read: if clubId == 'club-demo'
+        && request.auth != null
+        && (request.auth.uid == userId || isAdmin());
+      allow create: if ajusteAdminValido(request.resource.data, request.resource.data.ultimoMovimientoId)
+        || recargaSimuladaValida(request.resource.data, request.resource.data.ultimoMovimientoId);
+      allow update: if request.resource.data.ultimoMovimientoId.matches('(bloqueo|liberacion|cobro)-[A-Za-z0-9]{20}')
+        ? operacionReservaWalletValida(clubId, userId, request.resource.data, request.resource.data.ultimoMovimientoId)
+        : (ajusteAdminValido(request.resource.data, request.resource.data.ultimoMovimientoId)
+          || recargaSimuladaValida(request.resource.data, request.resource.data.ultimoMovimientoId));
+      allow delete: if false;
+
+      match /movimientos/{movimientoId} {
+        allow read: if clubId == 'club-demo'
+          && request.auth != null
+          && (request.auth.uid == userId || isAdmin());
+        allow create: if movimientoId.matches('(bloqueo|liberacion|cobro)-[A-Za-z0-9]{20}')
+          ? operacionReservaWalletValida(clubId, userId, getAfter(/databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)).data, movimientoId)
+          : (ajusteAdminValido(getAfter(/databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)).data, movimientoId)
+            || recargaSimuladaValida(getAfter(/databases/$(database)/documents/clubes/$(clubId)/wallets/$(userId)).data, movimientoId));
+        allow update, delete: if false;
+      }
+    }
+
+    match /clubes/{clubId}/controlReservas/{instalacionId} {
+      function operacionConReservaValida() {
+        let control = request.resource.data;
+        let path = /databases/$(database)/documents/reservas/$(control.reservaId);
+        let despues = getAfter(path).data;
+        let nueva = !exists(path);
+        let antes = nueva ? {} : get(path).data;
+        return control.keys().hasAll(['reservaId', 'operacion', 'actualizadoEn'])
+          && control.keys().hasOnly(['reservaId', 'operacion', 'actualizadoEn'])
+          && control.actualizadoEn == request.time
+          && despues.get('clubId', 'club-demo') == clubId
+          && despues.instalacionId == instalacionId
+          && (despues.usuarioId == request.auth.uid || isAdmin())
+          && ((control.operacion == 'CREAR' && nueva && despues.estadoReserva == 'CONFIRMADA')
+            || (control.operacion == 'CANCELAR' && !nueva
+              && antes.get('clubId', 'club-demo') == clubId
+              && antes.instalacionId == instalacionId && antes.usuarioId == despues.usuarioId
+              && antes.estadoReserva == 'CONFIRMADA'
+              && despues.estadoReserva in ['CANCELADA_POR_USUARIO', 'CANCELADA_POR_ADMIN']));
+      }
+      allow read: if clubId == 'club-demo' && request.auth != null;
+      allow create, update: if clubId == 'club-demo' && request.auth != null
+        && operacionConReservaValida();
+      allow delete: if false;
+    }
+
+    // Coordinación privada de altas de clases; nunca contiene datos públicos.
+    match /clubes/{clubId}/controlClases/{horarioId} {
+      function altaClaseValida() {
+        let data = request.resource.data;
+        let reservaPath = /databases/$(database)/documents/reservas/$(data.ultimaReservaId);
+        let reserva = getAfter(reservaPath).data;
+        return data.keys().hasAll(['instalacionId', 'fecha', 'horaInicio', 'ultimaReservaId'])
+          && data.keys().hasOnly(['instalacionId', 'fecha', 'horaInicio', 'ultimaReservaId'])
+          && horarioId == data.instalacionId + '_' + data.fecha + '_' + data.horaInicio
+          && !exists(reservaPath)
+          && (reserva.usuarioId == request.auth.uid || isAdmin())
+          && reserva.clubId == clubId && reserva.estadoReserva == 'CONFIRMADA'
+          && reserva.instalacionId == data.instalacionId
+          && reserva.fecha == data.fecha && reserva.horaInicio == data.horaInicio;
+      }
+      allow read: if clubId == 'club-demo' && request.auth != null;
+      allow create, update: if clubId == 'club-demo' && request.auth != null && altaClaseValida();
+      allow delete: if false;
+    }
+
     match /clubes/{clubId}/disponibilidadPublica/{reservaId} {
       function reservaCreadaConDisponibilidad() {
         let reservaPath = /databases/$(database)/documents/reservas/$(reservaId);
         let reserva = getAfter(reservaPath).data;
         return !exists(reservaPath)
-          && reserva.usuarioId == request.auth.uid
+          && (reserva.usuarioId == request.auth.uid || isAdmin())
+          && reserva.clubId == clubId
           && reserva.estadoReserva == 'CONFIRMADA'
           && request.resource.data.keys().hasAll([
             'instalacionId', 'fecha', 'horaInicio', 'duracionMinutos'
@@ -62,8 +372,8 @@ service cloud.firestore {
         let reservaPath = /databases/$(database)/documents/reservas/$(reservaId);
         let antes = get(reservaPath).data;
         let despues = getAfter(reservaPath).data;
-        return antes.usuarioId == request.auth.uid
-          && despues.usuarioId == request.auth.uid
+        return (antes.usuarioId == request.auth.uid || isAdmin())
+          && despues.usuarioId == antes.usuarioId
           && antes.estadoReserva == 'CONFIRMADA'
           && despues.estadoReserva in [
             'CANCELADA_POR_USUARIO', 'CANCELADA_POR_ADMIN'

@@ -155,6 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final credential = await _authService.createUserWithEmailAndPassword(
         email,
         _passwordController.text,
+        telefono: _phoneController.text.trim(),
       );
 
       createdUser = credential.user;
@@ -167,9 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         createdUser.uid,
         _nameController.text.trim(),
         email,
-        _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
+        _phoneController.text.trim(),
         _nivelPadel == null ? null : double.tryParse(_nivelPadel!),
         aceptaCondiciones: _aceptaCondiciones,
         aceptaPrivacidad: _aceptaPrivacidad,
@@ -216,6 +215,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           break;
         case 'weak-password':
           message = 'La contraseña es demasiado débil.';
+          break;
+        case 'invalid-phone-number':
+          message = 'Introduce un teléfono de 9 dígitos.';
           break;
         case 'network-request-failed':
           message =
@@ -524,12 +526,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 enabled: !_isLoading,
                                 keyboardType: TextInputType.phone,
                                 decoration: _inputDecoration(
-                                  label: 'Teléfono (opcional)',
+                                  label: 'Teléfono (obligatorio)',
                                   icon: Icons.phone_outlined,
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return null;
+                                    return 'Introduce tu teléfono';
                                   }
 
                                   final phone = value.trim();

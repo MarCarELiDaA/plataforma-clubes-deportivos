@@ -24,8 +24,15 @@ class AuthService {
 
   Future<UserCredential> createUserWithEmailAndPassword(
     String email,
-    String password,
-  ) async {
+    String password, {
+    required String telefono,
+  }) async {
+    if (!RegExp(r'^\d{9}$').hasMatch(telefono.trim())) {
+      throw FirebaseAuthException(
+        code: 'invalid-phone-number',
+        message: 'Introduce un teléfono de 9 dígitos.',
+      );
+    }
     return await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,

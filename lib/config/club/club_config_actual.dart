@@ -2,6 +2,7 @@ import '../../models/club/actividad.dart';
 import '../../models/club/club_config.dart';
 import '../../models/club/instalacion.dart';
 import 'paletas_club.dart';
+import '../../models/club/wallet_config.dart';
 
 class ClubConfigActual {
   static const _horariosPistas = [
@@ -47,29 +48,35 @@ class ClubConfigActual {
 
     horario: 'Lunes a Domingo\n08:00 – 22:00',
 
-    fondo: 'assets/images/gimnasio_real.jpg',
+    fondo: 'assets/images/gimnasio_ia.png',
 
     // Cambiar solo esta selección aplica la paleta completa al club.
-    paleta: PaletasClub.violeta,
+    paleta: PaletasClub.verde,
 
     estilo: 'claro',
 
-    hero: 'assets/images/padel_ia.png',
-    imagenLogin: 'assets/images/gimnasio_real.jpg',
+    hero: 'assets/images/gimnasio_real.jpg',
+    imagenLogin: 'assets/images/padel_ia.png',
     menuIcon: 'menuRounded',
 
-    imagenInstalaciones: 'assets/images/padel_real.jpg',
-    imagenReservas: 'assets/images/padel_real.jpg',
-    imagenInformacion: 'assets/images/padel_real.jpg',
-    imagenBienvenida: 'assets/images/padel_real.jpg',
+    imagenInstalaciones: 'assets/images/gimnasio_real_2.jpg',
+    imagenReservas: 'assets/images/padel_ia.png',
+    imagenInformacion: 'assets/images/gimnasio_real.jpg',
+    imagenBienvenida: 'assets/images/gimnasio_real.jpg',
 
     imagenes: {},
 
     administradores: ['martin.bautista.sanchez@gmail.com'],
 
+    wallet: WalletConfig(
+      recargasCentimos: [2000, 4000, 5000, 10000],
+      simulacionRecargas: true,
+    ),
+
     modulos: {
       'reservations': true,
       'payments': false,
+      'wallet': true,
       'accessControl': false,
       'notifications': true,
       'matches': false,
@@ -97,9 +104,10 @@ class ClubConfigActual {
           '21:30',
         ],
         duracionReservaMinutos: 90,
+        minutosAntelacionCancelacion: 720,
         normas: [
           'Las reservas tienen una duración de 1 hora y 30 minutos.',
-          'Las reservas pueden cancelarse hasta 1 hora antes.',
+          'Las reservas pueden cancelarse hasta 12 horas antes.',
           'Las reservas no son transferibles.',
         ],
         reservasActivas: true,
@@ -114,7 +122,7 @@ class ClubConfigActual {
         nombre: 'Pádel',
         tipo: 'Pádel',
         descripcion: 'Reserva de pistas de pádel.',
-        imagen: 'assets/images/padel_ia.png',
+        imagen: 'assets/images/padel_real.jpg',
         icono: 'sports_tennis',
         instalaciones: [
           Instalacion(
@@ -122,16 +130,16 @@ class ClubConfigActual {
             nombre: 'Pista de Pádel 1',
             tipo: 'Pista de pádel',
             descripcion: 'Pista de pádel 1.',
-            imagen: 'assets/images/padel_real.jpg',
+            imagen: 'assets/images/padel_ia.png',
             horarios: _horariosPistas,
             preciosPorHorarioCentimos: _preciosPistasCentimos,
             duracionReservaMinutos: 90,
             maxMinutosPorDia: 180,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'Las reservas tienen una duración de 1 hora y 30 minutos.',
-              'Las reservas pueden cancelarse hasta 1 hora antes.',
+              'Las reservas pueden cancelarse hasta 12 horas antes.',
               'Las reservas no son transferibles.',
             ],
             reservasActivas: true,
@@ -143,16 +151,16 @@ class ClubConfigActual {
             nombre: 'Pista de Pádel 2',
             tipo: 'Pista de pádel',
             descripcion: 'Pista de pádel 2.',
-            imagen: 'assets/images/padel_ia.png',
+            imagen: 'assets/images/padel_real.jpg',
             horarios: _horariosPistas,
             preciosPorHorarioCentimos: _preciosPistasCentimos,
             duracionReservaMinutos: 90,
             maxMinutosPorDia: 180,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'Las reservas tienen una duración de 1 hora y 30 minutos.',
-              'Las reservas pueden cancelarse hasta 1 hora antes.',
+              'Las reservas pueden cancelarse hasta 12 horas antes.',
               'Las reservas no son transferibles.',
             ],
             reservasActivas: true,
@@ -164,16 +172,16 @@ class ClubConfigActual {
             nombre: 'Pista de Pádel 3',
             tipo: 'Pista de pádel',
             descripcion: 'Pista de pádel 3.',
-            imagen: 'assets/images/padel_ia.png',
+            imagen: 'assets/images/padel_real.jpg',
             horarios: _horariosPistas,
             preciosPorHorarioCentimos: _preciosPistasCentimos,
             duracionReservaMinutos: 90,
             maxMinutosPorDia: 180,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'Las reservas tienen una duración de 1 hora y 30 minutos.',
-              'Las reservas pueden cancelarse hasta 1 hora antes.',
+              'Las reservas pueden cancelarse hasta 12 horas antes.',
               'Las reservas no son transferibles.',
             ],
             reservasActivas: true,
@@ -188,7 +196,7 @@ class ClubConfigActual {
         nombre: 'Tenis',
         tipo: 'Tenis',
         descripcion: 'Reserva de pistas de tenis.',
-        imagen: 'assets/images/tenis_ia.png',
+        imagen: 'assets/images/banner_tenis.jpeg',
         icono: 'sports_tennis',
         instalaciones: [
           Instalacion(
@@ -196,16 +204,16 @@ class ClubConfigActual {
             nombre: 'Pista de Tenis 1',
             tipo: 'Pista de tenis',
             descripcion: 'Pista de tenis 1.',
-            imagen: 'assets/images/tenis_ia.png',
+            imagen: 'assets/images/banner_tenis.jpeg',
             horarios: _horariosPistas,
             preciosPorHorarioCentimos: _preciosPistasCentimos,
             duracionReservaMinutos: 90,
             maxMinutosPorDia: 180,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'Las reservas tienen una duración de 1 hora y 30 minutos.',
-              'Las reservas pueden cancelarse hasta 1 hora antes.',
+              'Las reservas pueden cancelarse hasta 12 horas antes.',
             ],
             reservasActivas: true,
             pagosActivos: false,
@@ -216,16 +224,16 @@ class ClubConfigActual {
             nombre: 'Pista de Tenis 2',
             tipo: 'Pista de tenis',
             descripcion: 'Pista de tenis 2.',
-            imagen: 'assets/images/tenis_ia.png',
+            imagen: 'assets/images/banner_tenis.jpeg',
             horarios: _horariosPistas,
             preciosPorHorarioCentimos: _preciosPistasCentimos,
             duracionReservaMinutos: 90,
             maxMinutosPorDia: 180,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'Las reservas tienen una duración de 1 hora y 30 minutos.',
-              'Las reservas pueden cancelarse hasta 1 hora antes.',
+              'Las reservas pueden cancelarse hasta 12 horas antes.',
             ],
             reservasActivas: true,
             pagosActivos: false,
@@ -239,23 +247,24 @@ class ClubConfigActual {
         nombre: 'Gimnasio',
         tipo: 'Gimnasio',
         descripcion: 'Clases y actividades dirigidas del gimnasio.',
-        imagen: 'assets/images/gimnasio_ia.png',
+        imagen: 'assets/images/gimnasio_real.jpg',
         icono: 'fitness_center',
         instalaciones: [
           Instalacion(
             id: 'gimnasio_zumba',
+            aforoPorHorario: 3,
             nombre: 'Zumba',
             tipo: 'Clase dirigida',
             descripcion: 'Clase dirigida de Zumba.',
-            imagen: 'assets/images/gimnasio_real.jpg',
+            imagen: 'assets/images/gimnasio_ia.png',
             horarios: ['09:00', '10:00', '17:00', '18:00', '19:00', '20:00'],
             duracionReservaMinutos: 60,
             maxMinutosPorDia: 60,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'La clase tiene una duración de 60 minutos.',
-              'La reserva puede cancelarse hasta 1 hora antes.',
+              'La reserva puede cancelarse hasta 12 horas antes.',
               'La reserva es personal y no transferible.',
             ],
             reservasActivas: true,
@@ -264,10 +273,11 @@ class ClubConfigActual {
           ),
           Instalacion(
             id: 'gimnasio_spinning',
+            aforoPorHorario: 3,
             nombre: 'Spinning',
             tipo: 'Clase dirigida',
             descripcion: 'Clase dirigida de Spinning.',
-            imagen: 'assets/images/gimnasio_real_2.jpg',
+            imagen: 'assets/images/gimnasio_real.jpg',
             horarios: [
               '08:00',
               '09:00',
@@ -280,10 +290,10 @@ class ClubConfigActual {
             duracionReservaMinutos: 45,
             maxMinutosPorDia: 45,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'La clase tiene una duración de 45 minutos.',
-              'La reserva puede cancelarse hasta 1 hora antes.',
+              'La reserva puede cancelarse hasta 12 horas antes.',
               'La reserva es personal y no transferible.',
             ],
             reservasActivas: true,
@@ -292,18 +302,19 @@ class ClubConfigActual {
           ),
           Instalacion(
             id: 'gimnasio_boxeo',
+            aforoPorHorario: 3,
             nombre: 'Boxeo',
             tipo: 'Clase dirigida',
             descripcion: 'Clase dirigida de Boxeo.',
-            imagen: 'assets/images/mancuernas.jpg',
+            imagen: 'assets/images/gimnasio_real_2.jpg',
             horarios: ['10:00', '11:00', '17:00', '18:00', '19:00', '20:00'],
             duracionReservaMinutos: 60,
             maxMinutosPorDia: 60,
             maxDiasAntelacion: 10,
-            minutosAntelacionCancelacion: 60,
+            minutosAntelacionCancelacion: 720,
             normas: [
               'La clase tiene una duración de 60 minutos.',
-              'La reserva puede cancelarse hasta 1 hora antes.',
+              'La reserva puede cancelarse hasta 12 horas antes.',
               'La reserva es personal y no transferible.',
             ],
             reservasActivas: true,

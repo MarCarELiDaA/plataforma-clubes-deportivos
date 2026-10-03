@@ -9,6 +9,7 @@ import '../services/notification_service.dart';
 import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/seleccionar_usuario_dialog.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -41,6 +42,20 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
   bool _isLoading = false;
   bool _isConfirmed = false;
   bool _isNavigating = false;
+  bool _seleccionandoUsuario = false;
+  ({String id, String email, String nombre})? _destinatario;
+
+  Future<void> _seleccionarDestinatario() async {
+    if (_isLoading || _seleccionandoUsuario ||
+        !AppConfig.esAdministrador(_authService.currentUser?.email)) return;
+    setState(() => _seleccionandoUsuario = true);
+    final cuenta = await seleccionarUsuario(context);
+    if (!mounted) return;
+    setState(() {
+      if (cuenta != null) _destinatario = cuenta;
+      _seleccionandoUsuario = false;
+    });
+  }
 
   Color get _primary => AppTheme.primary;
   Color get _background => AppTheme.clubBackground;
@@ -84,7 +99,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
   }
 
   Future<void> _confirmReservation() async {
-    if (_isLoading || _isNavigating) {
+    if (_isLoading || _isNavigating || _seleccionandoUsuario) {
       return;
     }
 
@@ -110,12 +125,19 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         throw Exception('Usuario no autenticado');
       }
 
+      final destinatario = _destinatario;
+      if (destinatario != null && !AppConfig.esAdministrador(user.email)) {
+        throw StateError('Solo el administrador puede asignar reservas.');
+      }
+      final usuarioId = destinatario?.id ?? user.uid;
       final userDoc = await _firestore
           .collection('usuarios')
-          .doc(user.uid)
+          .doc(usuarioId)
           .get();
 
-      final userName = userDoc.data()?['nombre'] ?? user.email ?? 'Usuario';
+      if (!userDoc.exists) throw StateError('La cuenta seleccionada ya no existe.');
+
+      final userName = userDoc.data()?['nombre'] ?? userDoc.data()?['email'] ?? 'Usuario';
 
       final dateFormat =
           '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
@@ -123,7 +145,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       final instalacion = _getInstalacionSeleccionada();
 
       final reservaData = {
-        'usuarioId': user.uid,
+        'usuarioId': usuarioId,
         'nombreUsuario': userName,
         if (widget.actividadId != null)
           'actividadId': widget.actividadId,
@@ -141,13 +163,16 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         instalacion,
       );
 
-      await _notificationService.showReservationConfirmation();
+      // Los recordatorios locales pertenecen al dispositivo del usuario actual.
+      if (usuarioId == user.uid) {
+        await _notificationService.showReservationConfirmation();
 
-      await _notificationService.scheduleReminder(
-        reservaId,
-        DateFormat('dd/MM/yyyy').format(widget.selectedDate),
-        widget.selectedTime,
-      );
+        await _notificationService.scheduleReminder(
+          reservaId,
+          DateFormat('dd/MM/yyyy').format(widget.selectedDate),
+          widget.selectedTime,
+        );
+      }
 
       if (mounted) {
         setState(() {
@@ -166,7 +191,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         Navigator.of(context).pop();
         _isNavigating = false;
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('Error al confirmar reserva: $e\n$stack');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -175,7 +201,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error al confirmar reserva: ${e.toString()}',
+              'Error al confirmar reserva: ${e is FirebaseException ? '${e.code}: ${e.message ?? e.toString()}' : e.toString()}',
             ),
             backgroundColor: AppTheme.error,
           ),
@@ -254,6 +280,21 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                         CrossAxisAlignment.stretch,
                     children: [
                       _buildHeader(context, isWide),
+                      if (AppConfig.esAdministrador(_authService.currentUser?.email)) ...[
+                        const SizedBox(height: 16),
+                        Text(_destinatario == null ? 'Reserva para tu cuenta'
+                            : 'Reserva para ${_destinatario!.nombre} (${_destinatario!.email})'),
+                        Wrap(spacing: 12, children: [
+                          OutlinedButton(onPressed: _isLoading || _seleccionandoUsuario
+                              ? null : _seleccionarDestinatario,
+                              child: Text(_destinatario == null
+                                  ? 'Reservar para otro usuario' : 'Cambiar usuario')),
+                          if (_destinatario != null)
+                            TextButton(onPressed: _isLoading || _seleccionandoUsuario ? null
+                                : () => setState(() => _destinatario = null),
+                                child: const Text('Reservar para mí')),
+                        ]),
+                      ],
                       const SizedBox(height: 28),
                       _buildReservationCard(
                         context,
@@ -345,6 +386,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     String endTime,
     bool isWide,
   ) {
+    final instalacion = _getInstalacionSeleccionada();
+    final importe = AppConfig.club.moduloActivo('wallet')
+        ? instalacion.preciosPorHorarioCentimos[widget.selectedTime] ?? 0 : 0;
     return Container(
       decoration: BoxDecoration(
         color: _surface,
@@ -386,6 +430,14 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
               ),
             ],
           ),
+          if (importe > 0) ...[
+            const SizedBox(height: 16),
+            Text('${NumberFormat.currency(locale: 'es_ES', symbol: '€').format(importe / 100)} '
+                'se bloquearán en ${_destinatario == null ? 'tu Wallet' : 'el Wallet de ${_destinatario!.email}'} '
+                'al confirmar. Se cobrarán tras el inicio de la reserva, '
+                'en el siguiente inicio de sesión del usuario. Al cancelar dentro del plazo se liberará el importe.',
+                style: TextStyle(color: _textSecondary, height: 1.45)),
+          ],
           const SizedBox(height: 24),
           if (isWide)
             Row(
@@ -578,7 +630,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       height: 52,
       child: ElevatedButton(
         onPressed:
-            _isLoading ? null : _confirmReservation,
+            _isLoading || _seleccionandoUsuario ? null : _confirmReservation,
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
           foregroundColor: _textOnPrimary,

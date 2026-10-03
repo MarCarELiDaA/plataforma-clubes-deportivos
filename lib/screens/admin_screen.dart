@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/admin_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
+import '../config/app_config.dart';
+import 'wallet_screen.dart';
+import 'my_reservations_screen.dart';
+import 'admin_reservas_screen.dart';
+import 'admin_informes_screen.dart';
+import 'reserva_screen.dart';
+import '../models/club/actividad.dart';
+import '../widgets/seleccionar_usuario_dialog.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -14,6 +23,31 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   final _adminService = AdminService();
+  bool _buscandoReservas = false;
+
+  Future<void> _crearReserva() async {
+    if (!AppConfig.esAdministrador(FirebaseAuth.instance.currentUser?.email) ||
+        !AppConfig.club.moduloActivo('reservas')) return;
+    final actividades = AppConfig.club.actividades.where((a) => a.activa && a.reservasActivas).toList();
+    final actividad = await showDialog<Actividad>(context: context, builder: (dialogContext) =>
+        SimpleDialog(title: const Text('Crear reserva: elegir deporte'),
+          children: actividades.map((a) => SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(a), child: Text(a.nombre))).toList()));
+    if (!mounted || actividad == null) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReservaScreen(actividad: actividad)));
+  }
+
+  Future<void> _gestionarReservas() async {
+    if (_buscandoReservas ||
+        !AppConfig.esAdministrador(FirebaseAuth.instance.currentUser?.email)) return;
+    setState(() => _buscandoReservas = true);
+    final cuenta = await seleccionarUsuario(context);
+    if (!mounted) return;
+    setState(() => _buscandoReservas = false);
+    if (cuenta == null) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
+        MyReservationsScreen(usuarioId: cuenta.id, correoUsuario: cuenta.email)));
+  }
 
   Color get _primary => AppTheme.primary;
   Color get _background => AppTheme.clubBackground;
@@ -170,14 +204,46 @@ class _AdminScreenState extends State<AdminScreen> {
         centerTitle: true,
         backgroundColor: _surface,
         foregroundColor: _textPrimary,
-        actions: [AppDrawer.botonCerrarSesion(context)],
+        actions: [
+          AppDrawer.botonCerrarSesion(context),
+        ],
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leadingWidth: 96,
         leading: AppDrawer.menuConAtras(context),
       ),
-      body: LayoutBuilder(
+      body: Column(children: [
+        if (AppConfig.esAdministrador(FirebaseAuth.instance.currentUser?.email))
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(spacing: 12, runSpacing: 12, children: [
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AdminReservasScreen())),
+                icon: const Icon(Icons.event_note_outlined),
+                label: const Text('Reservas e informes')),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AdminInformesScreen())),
+                icon: const Icon(Icons.assessment_outlined),
+                label: const Text('Informes del club')),
+              OutlinedButton.icon(
+                onPressed: _buscandoReservas ? null : _gestionarReservas,
+                icon: const Icon(Icons.person_search_outlined),
+                label: const Text('Reservas de un usuario')),
+              if (AppConfig.club.moduloActivo('reservas')) OutlinedButton.icon(
+                onPressed: _crearReserva,
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Crear reserva')),
+              if (AppConfig.club.moduloActivo('wallet')) OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const WalletScreen(gestionAdmin: true))),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('Gestión de saldos')),
+            ]),
+          ),
+        Expanded(child: LayoutBuilder(
         builder: (context, constraints) {
           final maxWidth = constraints.maxWidth > 1050
               ? 1050.0
@@ -239,7 +305,8 @@ class _AdminScreenState extends State<AdminScreen> {
             },
           );
         },
-      ),
+      )),
+      ]),
     );
   }
 
