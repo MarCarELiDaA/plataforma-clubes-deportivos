@@ -1,10 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_config.dart';
 import '../models/usuario.dart';
 
 class AuthService {
+  static bool _enviandoVerificacion = false;
+  static Future<FirebaseAuth>? _authDeVerificacion;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -97,17 +102,118 @@ class AuthService {
   }
 
   Future<void> sendEmailVerification() async {
-    final user = _auth.currentUser;
+    await _enviarVerificacion(_auth);
+  }
+
+  Future<void> _enviarVerificacion(FirebaseAuth auth) async {
+    final user = auth.currentUser;
 
     if (user != null && !user.emailVerified) {
+      if (_enviandoVerificacion) {
+        throw FirebaseAuthException(
+          code: 'verification-in-progress',
+          message: 'Ya se está enviando un correo. Espera a que termine.',
+        );
+      }
+      _enviandoVerificacion = true;
       try {
-        await _auth.setLanguageCode('es');
+        final email = user.email ?? '';
+        final proximoEnvio = await proximoEnvioVerificacion(email);
+        if (proximoEnvio != null && proximoEnvio.isAfter(DateTime.now())) {
+          throw FirebaseAuthException(
+            code: 'verification-cooldown',
+            message: 'Espera antes de solicitar otro correo de verificación.',
+          );
+        }
+        await auth.setLanguageCode('es');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.reload();
+        final ahora = DateTime.now().millisecondsSinceEpoch;
+        final peticiones = _peticionesVerificacion(prefs, email, ahora);
+        peticiones.add(ahora);
+        final guardado = await prefs.setStringList(
+          _claveVerificacion(email),
+          peticiones.map((peticion) => peticion.toString()).toList(),
+        );
+        if (!guardado) {
+          throw StateError('No se pudo guardar el límite de reenvíos.');
+        }
         await user.sendEmailVerification();
       } on FirebaseAuthException {
         rethrow;
       } catch (e) {
         throw Exception('Error al enviar email de verificación: $e');
+      } finally {
+        _enviandoVerificacion = false;
       }
+    }
+  }
+
+  String _claveVerificacion(String email) =>
+      'email_verification_${AppConfig.club.clubId}_${email.trim().toLowerCase()}';
+
+  List<int> _peticionesVerificacion(
+    SharedPreferences prefs, String email, int ahora,
+  ) {
+    final peticiones = (prefs.getStringList(_claveVerificacion(email)) ?? [])
+        .map(int.tryParse)
+        .whereType<int>()
+        .where((peticion) => peticion > ahora - const Duration(hours: 1).inMilliseconds)
+        .toList()..sort();
+    return peticiones;
+  }
+
+  Future<DateTime?> proximoEnvioVerificacion(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final ahora = DateTime.now().millisecondsSinceEpoch;
+    final peticiones = _peticionesVerificacion(prefs, email, ahora);
+    if (peticiones.isEmpty) return null;
+    final trasUltimo = peticiones.last + const Duration(seconds: 60).inMilliseconds;
+    final trasLimite = peticiones.length >= 5
+        ? peticiones[peticiones.length - 5] + const Duration(hours: 1).inMilliseconds
+        : trasUltimo;
+    return DateTime.fromMillisecondsSinceEpoch(
+      trasLimite > trasUltimo ? trasLimite : trasUltimo,
+    );
+  }
+
+  Future<void> reenviarCorreoVerificacion(String email, String password) async {
+    final proximoEnvio = await proximoEnvioVerificacion(email);
+    if (proximoEnvio != null && proximoEnvio.isAfter(DateTime.now())) {
+      throw FirebaseAuthException(
+        code: 'verification-cooldown',
+        message: 'Espera antes de solicitar otro correo de verificación.',
+      );
+    }
+    // Una instancia separada evita activar las pantallas privadas al reenviar.
+    final authCorreo = await (_authDeVerificacion ??= () async {
+      try {
+        final existentes = Firebase.apps.where((app) => app.name == 'verificacionCorreo');
+        final app = existentes.isNotEmpty ? existentes.first : await Firebase.initializeApp(
+          name: 'verificacionCorreo', options: Firebase.app().options,
+        );
+        final auth = FirebaseAuth.instanceFor(app: app);
+        if (kIsWeb) await auth.setPersistence(Persistence.NONE);
+        return auth;
+      } catch (_) {
+        _authDeVerificacion = null;
+        rethrow;
+      }
+    }());
+    try {
+      await authCorreo.signInWithEmailAndPassword(email: email.trim(), password: password);
+      await authCorreo.currentUser?.reload();
+      if (authCorreo.currentUser?.emailVerified == true) {
+        throw FirebaseAuthException(
+          code: 'email-already-verified',
+          message: 'Tu correo ya está verificado. Cierra este aviso e inicia sesión.',
+        );
+      }
+      await _enviarVerificacion(authCorreo);
+    } finally {
+      // Reenviar el correo no concede acceso a la aplicación.
+      await authCorreo.signOut();
     }
   }
 

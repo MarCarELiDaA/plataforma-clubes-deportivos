@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -468,10 +470,35 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _showEmailVerificationDialog() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    var proximoEnvio = await _authService.proximoEnvioVerificacion(email);
+    if (!mounted) return;
+    Timer? temporizador;
+    var enviando = false;
+    String? mensaje;
+    var errorEnvio = false;
+    try {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
+        return StatefulBuilder(builder: (dialogContext, actualizarDialogo) {
+        final milisegundos = proximoEnvio?.difference(DateTime.now()).inMilliseconds ?? 0;
+        final segundos = milisegundos > 0 ? (milisegundos / 1000).ceil() : 0;
+        if (temporizador == null && segundos > 0) {
+          temporizador = Timer.periodic(const Duration(seconds: 1), (timer) {
+            if (!dialogContext.mounted) {
+              timer.cancel();
+              return;
+            }
+            if (proximoEnvio == null || !proximoEnvio!.isAfter(DateTime.now())) {
+              timer.cancel();
+              temporizador = null;
+            }
+            actualizarDialogo(() {});
+          });
+        }
         return AlertDialog(
           backgroundColor: _surface,
           surfaceTintColor: Colors.transparent,
@@ -505,7 +532,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          content: Text(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [Text(
             'Debes verificar tu correo electrónico antes de iniciar sesión. '
             'Revisa tu bandeja de entrada y la carpeta de spam.',
             style: TextStyle(
@@ -514,13 +544,75 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 1.5,
             ),
           ),
+              const SizedBox(height: 12),
+              Text(
+                'Puedes solicitar hasta 5 envíos por hora, con al menos '
+                '60 segundos entre solicitudes.',
+                style: TextStyle(color: _textSecondary, fontSize: 13),
+              ),
+              if (mensaje != null) ...[
+                const SizedBox(height: 12),
+                Text(mensaje!, style: TextStyle(
+                  color: errorEnvio ? AppTheme.error : _textPrimary,
+                )),
+              ],
+            ],
+          ),
           actionsPadding:
               const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             SizedBox(
               width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: enviando || segundos > 0 ? null : () async {
+                  actualizarDialogo(() {
+                    enviando = true;
+                    mensaje = null;
+                    errorEnvio = false;
+                  });
+                  try {
+                    await _authService.reenviarCorreoVerificacion(email, password);
+                    mensaje = 'Correo enviado. Revisa también la carpeta de spam.';
+                  } on FirebaseAuthException catch (e) {
+                    errorEnvio = e.code != 'email-already-verified';
+                    if (e.code == 'email-already-verified' ||
+                        e.code.startsWith('verification-')) {
+                      mensaje = e.message;
+                    } else if (e.code == 'too-many-requests') {
+                      mensaje = 'Firebase ha limitado temporalmente los envíos. '
+                          'Espera e inténtalo más tarde.';
+                    } else {
+                      mensaje = _getErrorMessage(e.code);
+                    }
+                  } catch (_) {
+                    errorEnvio = true;
+                    mensaje = 'No se pudo enviar el correo. Inténtalo de nuevo más tarde.';
+                  } finally {
+                    try {
+                      proximoEnvio = await _authService.proximoEnvioVerificacion(email);
+                    } catch (_) {
+                      errorEnvio = true;
+                      mensaje = 'No se pudo consultar el límite de reenvíos. Cierra este aviso e inténtalo de nuevo.';
+                    }
+                    if (dialogContext.mounted) {
+                      actualizarDialogo(() => enviando = false);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.forward_to_inbox_outlined),
+                label: Text(
+                  enviando ? 'Enviando…' : segundos > 0
+                      ? 'Solicitar otro correo en ${segundos > 60 ? '${(segundos / 60).ceil()} min' : '${segundos}s'}'
+                      : 'Solicitar otro correo de verificación',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
               child: FilledButton(
-                onPressed: () {
+                onPressed: enviando ? null : () {
                   Navigator.of(dialogContext).pop();
                 },
                 style: FilledButton.styleFrom(
@@ -544,8 +636,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         );
+        });
       },
     );
+    } finally {
+      temporizador?.cancel();
+    }
   }
 
   InputDecoration _inputDecoration({

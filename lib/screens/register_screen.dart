@@ -176,7 +176,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         versionPrivacidad: LegalConfig.versionPrivacidad,
       );
 
-      await _authService.sendEmailVerification();
+      var avisoVerificacion = 'Cuenta creada correctamente. Revisa tu correo para verificarla.';
+      try {
+        await _authService.sendEmailVerification();
+      } catch (_) {
+        // Si falla el envío, conservar la cuenta permite solicitar el reenvío.
+        avisoVerificacion = 'Cuenta creada, pero no se pudo enviar el correo. '
+            'Introduce tus datos en el login para solicitar el reenvío.';
+      }
 
       await FirebaseAuth.instance.signOut();
 
@@ -191,10 +198,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Cuenta creada correctamente. Revisa tu correo para verificarla.',
-          ),
+        SnackBar(
+          content: Text(avisoVerificacion),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -308,7 +313,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: CheckboxListTile(
         value: value,
-        onChanged: _isLoading || !enabled ? null : onChanged,
+        onChanged: _isLoading ? null : (value) {
+          if (!enabled) {
+            _avisarLecturaObligatoria(onTap);
+            return;
+          }
+          onChanged?.call(value);
+        },
         title: Row(
           children: [
             Expanded(
@@ -349,6 +360,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         checkColor: _textOnPrimary,
       ),
     );
+  }
+
+  Future<void> _avisarLecturaObligatoria(VoidCallback? abrirDocumento) async {
+    final leer = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Lee el documento completo'),
+        content: const Text(
+          'Para marcar esta casilla, debes abrir el documento, leerlo completo '
+          'y pulsar «Acepto» al final.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          if (abrirDocumento != null)
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Leer documento'),
+            ),
+        ],
+      ),
+    );
+    if (mounted && leer == true) abrirDocumento?.call();
   }
 
   @override
