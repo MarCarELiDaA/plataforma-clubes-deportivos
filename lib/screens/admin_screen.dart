@@ -243,7 +243,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 label: const Text('Gestión de saldos')),
             ]),
           ),
-        Expanded(child: LayoutBuilder(
+        Expanded(child: AppConfig.club.requiereAprobacionUsuarios
+          ? LayoutBuilder(
         builder: (context, constraints) {
           final maxWidth = constraints.maxWidth > 1050
               ? 1050.0
@@ -305,6 +306,15 @@ class _AdminScreenState extends State<AdminScreen> {
             },
           );
         },
+      ) : Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text(
+            'El acceso se habilita al verificar el correo electrónico.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _textSecondary),
+          ),
+        ),
       )),
       ]),
     );

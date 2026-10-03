@@ -176,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         versionPrivacidad: LegalConfig.versionPrivacidad,
       );
 
-      await createdUser.sendEmailVerification();
+      await _authService.sendEmailVerification();
 
       await FirebaseAuth.instance.signOut();
 

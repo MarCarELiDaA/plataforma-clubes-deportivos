@@ -110,6 +110,8 @@ class ClubConfig {
     return modulos[modulo] ?? false;
   }
 
+  bool get requiereAprobacionUsuarios => modulos['userApproval'] ?? true;
+
   String imagen(String clave) {
     return imagenes[clave] ?? '';
   }

@@ -54,7 +54,8 @@ class AuthService {
     // La configuración del club determina los datos iniciales
     // del administrador durante el registro.
     String finalRole = role;
-    String finalStatus = 'pending';
+    String finalStatus = AppConfig.club.requiereAprobacionUsuarios
+        ? 'pending' : 'approved';
 
     if (AppConfig.esAdministrador(email)) {
       finalRole = 'admin';
@@ -100,7 +101,10 @@ class AuthService {
 
     if (user != null && !user.emailVerified) {
       try {
+        await _auth.setLanguageCode('es');
         await user.sendEmailVerification();
+      } on FirebaseAuthException {
+        rethrow;
       } catch (e) {
         throw Exception('Error al enviar email de verificación: $e');
       }

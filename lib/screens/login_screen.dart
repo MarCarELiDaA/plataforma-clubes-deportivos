@@ -122,7 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
-        if (status == 'approved') {
+        if (status == 'approved' ||
+            (!AppConfig.club.requiereAprobacionUsuarios && status != null)) {
           await _finishLogin();
         } else {
           await _authService.signOut();
@@ -214,7 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      if (status != 'approved') {
+      if (status == null ||
+          (AppConfig.club.requiereAprobacionUsuarios && status != 'approved')) {
         await _authService.signOut();
 
         if (!mounted) return;

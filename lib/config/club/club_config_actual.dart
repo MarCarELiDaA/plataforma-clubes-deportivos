@@ -74,6 +74,7 @@ class ClubConfigActual {
     ),
 
     modulos: {
+      'userApproval': false,
       'reservations': true,
       'payments': false,
       'wallet': true,
