@@ -1,4 +1,4 @@
-﻿# Plataforma Clubes Deportivos - Flutter App
+# Plataforma Clubes Deportivos - Flutter App
 
 Aplicación Flutter para gestión de reservas de pistas de pádel, migrada desde la aplicación Android original.
 
@@ -38,7 +38,6 @@ lib/
 │   ├── admin_service.dart    # Servicio de administración
 │   └── notification_service.dart # Servicio de notificaciones
 ├── screens/                   # Pantallas de la aplicación
-│   ├── splash_screen.dart    # Pantalla de carga
 │   ├── login_screen.dart     # Pantalla de login
 │   ├── register_screen.dart  # Pantalla de registro
 │   ├── home_screen.dart      # Pantalla principal (reservas)

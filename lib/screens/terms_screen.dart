@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -19,6 +20,7 @@ class TermsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
+        leading: AppDrawer.botonAtras(context),
         title: const Text('Términos y condiciones'),
         backgroundColor: surface,
         foregroundColor: textPrimary,

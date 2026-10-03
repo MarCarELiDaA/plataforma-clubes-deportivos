@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
@@ -21,6 +22,7 @@ class PrivacyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
+        leading: AppDrawer.botonAtras(context),
         title: const Text('Política de privacidad'),
         backgroundColor: surface,
         foregroundColor: textPrimary,

@@ -6,11 +6,14 @@ import '../config/app_config.dart';
 import '../services/auth_service.dart';
 import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final VoidCallback? onLoginSuccess;
+
+  const LoginScreen({super.key, this.onLoginSuccess});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -80,6 +83,27 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _volverAlInicio() {
+    if (_isLoading || _authService.currentUser != null) return;
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
+  void _finishLogin() {
+    if (!mounted) return;
+    final onLoginSuccess = widget.onLoginSuccess;
+    if (onLoginSuccess != null) {
+      onLoginSuccess();
+      return;
+    }
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
   Future<void> _checkCurrentUser() async {
     final user = _authService.currentUser;
 
@@ -98,11 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (status == 'approved') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-          );
+          _finishLogin();
         } else {
           await _authService.signOut();
 
@@ -206,11 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
+      _finishLogin();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
@@ -625,6 +641,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment:
                     CrossAxisAlignment.stretch,
                 children: [
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: _isLoading || _authService.currentUser != null
+                            ? null
+                            : () => AppDrawer.volverAtras(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _primary,
+                        ),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        label: const Text('Atrás'),
+                      ),
+                      TextButton(
+                        onPressed: _isLoading || _authService.currentUser != null
+                            ? null
+                            : _volverAlInicio,
+                        style: TextButton.styleFrom(
+                          foregroundColor: _primary,
+                        ),
+                        child: const Text('Volver al inicio'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
@@ -985,7 +1025,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const RegisterScreen(),
+                                          RegisterScreen(
+                                            onLoginSuccess: widget.onLoginSuccess,
+                                          ),
                                     ),
                                   );
                                 },

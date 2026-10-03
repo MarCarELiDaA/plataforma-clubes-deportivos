@@ -1,105 +1,83 @@
-﻿rules_version = '2';
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ============================================================
-    // USUARIOS
-    // ============================================================
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'martin.bautista.sanchez@gmail.com';
+    }
+
     match /usuarios/{userId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isAdmin());
 
-      // El administrador puede leer todos los usuarios.
-      // La autoridad para seguridad es el campo 'role'.
-      allow read: if request.auth != null &&
-                    get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+      allow create: if request.auth != null
+        && request.auth.uid == userId;
 
-      // Un usuario normal solo puede leer su propio documento.
-      allow read: if request.auth != null &&
-                    request.auth.uid == userId;
+      allow update: if request.auth != null
+        && (request.auth.uid == userId || isAdmin());
 
-      // El administrador puede gestionar cualquier usuario.
-      allow write: if request.auth != null &&
-                     get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
-
-      // Un usuario puede crear su propio documento.
-      //
-      // Bootstrap:
-      // El primer administrador se identifica mediante el email
-      // configurado para el club. Solo se permite si el documento
-      // todavía no existe y se crea directamente como administrador.
-      //
-      // Usuarios normales:
-      // Deben crearse como user/pending y aceptar las condiciones
-      // legales.
-      allow create: if request.auth != null &&
-                     request.auth.uid == userId &&
-                     (
-                       (
-                         !exists(/databases/$(database)/documents/usuarios/$(userId)) &&
-                         ['BOOTSTRAP_ADMIN_EMAIL@CLUB.ES'].contains(request.auth.token.email) &&
-                         request.resource.data.role == 'admin' &&
-                         request.resource.data.status == 'approved'
-                       )
-                       ||
-                       (
-                         request.resource.data.role == 'user' &&
-                         request.resource.data.status == 'pending' &&
-                         request.resource.data.aceptaCondiciones == true &&
-                         request.resource.data.aceptaPrivacidad == true
-                       )
-                     );
-
-      // Un usuario normal puede modificar únicamente sus datos
-      // personales permitidos.
-      allow update: if request.auth != null &&
-                    request.auth.uid == userId &&
-
-                    // Campos protegidos
-                    request.resource.data.role == resource.data.role &&
-                    request.resource.data.status == resource.data.status &&
-                    request.resource.data.email == resource.data.email &&
-                    request.resource.data.fechaRegistro == resource.data.fechaRegistro &&
-
-                    // Aceptaciones legales protegidas
-                    request.resource.data.aceptaCondiciones == resource.data.aceptaCondiciones &&
-                    request.resource.data.aceptaPrivacidad == resource.data.aceptaPrivacidad &&
-                    request.resource.data.fechaAceptaciones == resource.data.fechaAceptaciones &&
-                    request.resource.data.versionCondiciones == resource.data.versionCondiciones &&
-                    request.resource.data.versionPrivacidad == resource.data.versionPrivacidad;
+      allow delete: if isAdmin();
     }
 
-
-    // ============================================================
-    // PISTAS
-    // ============================================================
-    match /pistas/{pistaId} {
-
-      // Cualquier usuario autenticado puede consultar las pistas.
-      allow read: if request.auth != null;
-
-      // Las pistas no pueden modificarse desde la aplicación.
-      allow write: if false;
-    }
-
-
-    // ============================================================
-    // RESERVAS
-    // ============================================================
     match /reservas/{reservaId} {
-
-      // Usuarios autenticados pueden consultar reservas.
       allow read: if request.auth != null;
 
-      // Un usuario solo puede crear una reserva para sí mismo.
-      allow create: if request.auth != null &&
-                      request.resource.data.usuarioId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid;
 
-      // Un usuario solo puede modificar sus propias reservas.
-      allow update: if request.auth != null &&
-                      resource.data.usuarioId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid
+        && request.resource.data.usuarioId == request.auth.uid;
 
-      // Las reservas no pueden eliminarse.
       allow delete: if false;
+    }
+
+    match /pistas/{pistaId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /clubes/{clubId}/disponibilidadPublica/{reservaId} {
+      function reservaCreadaConDisponibilidad() {
+        let reservaPath = /databases/$(database)/documents/reservas/$(reservaId);
+        let reserva = getAfter(reservaPath).data;
+        return !exists(reservaPath)
+          && reserva.usuarioId == request.auth.uid
+          && reserva.estadoReserva == 'CONFIRMADA'
+          && request.resource.data.keys().hasAll([
+            'instalacionId', 'fecha', 'horaInicio', 'duracionMinutos'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'instalacionId', 'fecha', 'horaInicio', 'duracionMinutos'
+          ])
+          && request.resource.data.instalacionId == reserva.instalacionId
+          && request.resource.data.fecha == reserva.fecha
+          && request.resource.data.horaInicio == reserva.horaInicio
+          && request.resource.data.duracionMinutos == reserva.duracionMinutos;
+      }
+
+      function reservaCanceladaConDisponibilidad() {
+        let reservaPath = /databases/$(database)/documents/reservas/$(reservaId);
+        let antes = get(reservaPath).data;
+        let despues = getAfter(reservaPath).data;
+        return antes.usuarioId == request.auth.uid
+          && despues.usuarioId == request.auth.uid
+          && antes.estadoReserva == 'CONFIRMADA'
+          && despues.estadoReserva in [
+            'CANCELADA_POR_USUARIO', 'CANCELADA_POR_ADMIN'
+          ];
+      }
+
+      allow read: if clubId == 'club-demo';
+      allow create: if clubId == 'club-demo'
+        && request.auth != null
+        && reservaCreadaConDisponibilidad();
+      allow delete: if clubId == 'club-demo'
+        && request.auth != null
+        && reservaCanceladaConDisponibilidad();
+      allow update: if false;
     }
   }
 }

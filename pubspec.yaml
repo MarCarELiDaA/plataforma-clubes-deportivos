@@ -1,4 +1,4 @@
-﻿name: clubes_deportivos
+name: clubes_deportivos
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -43,6 +43,15 @@ flutter:
     - assets/images/banner_padel.jpeg
     - assets/images/banner_tenis.jpeg
     - assets/images/banner_gym.jpeg
+    - assets/images/yo_reservo_alternativo.png
+    - assets/images/yo_reservo_logo.png
+    - assets/images/gimnasio_ia.png
+    - assets/images/padel_ia.png
+    - assets/images/tenis_ia.png
+    - assets/images/gimnasio_real_2.jpg
+    - assets/images/mancuernas.jpg
+    - assets/images/padel_real.jpg
+    - assets/images/gimnasio_real.jpg
 
 flutter_launcher_icons:
   android: true

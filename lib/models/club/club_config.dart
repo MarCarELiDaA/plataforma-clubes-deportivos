@@ -1,11 +1,14 @@
 import '../../models/club/actividad.dart';
 import '../../models/club/instalacion.dart';
+import 'paleta_club.dart';
 
 class ClubConfig {
   // ============================================================
   // 1. IDENTIDAD DEL CLUB
   // ============================================================
 
+  final String clubId;
+  final String zonaHoraria;
   final String nombre;
   final String deporte;
   final String telefono;
@@ -21,6 +24,7 @@ class ClubConfig {
   // ============================================================
 
   final String colorPrimario;
+  final PaletaClub? paleta;
   final String colorSecundario;
   final String colorAcento;
   final String colorFondo;
@@ -58,6 +62,8 @@ class ClubConfig {
 
   const ClubConfig({
     // Identidad
+    required this.clubId,
+    required this.zonaHoraria,
     required this.nombre,
     required this.deporte,
     required this.logo,
@@ -68,6 +74,7 @@ class ClubConfig {
     required this.fondo,
 
     // Apariencia
+    this.paleta,
     this.colorPrimario = '#071A42',
     this.colorSecundario = '#50C878',
     this.colorAcento = '#FFD700',
@@ -106,9 +113,7 @@ class ClubConfig {
 
   Actividad? actividad(String id) {
     try {
-      return actividades.firstWhere(
-        (actividad) => actividad.id == id,
-      );
+      return actividades.firstWhere((actividad) => actividad.id == id);
     } catch (_) {
       return null;
     }

@@ -7,6 +7,8 @@ class Instalacion {
   final bool activa;
 
   final List<String> horarios;
+  /// Precio por reserva completa, en céntimos, según la hora de inicio.
+  final Map<String, int> preciosPorHorarioCentimos;
   final int duracionReservaMinutos;
 
   final int maxReservasPorDia;
@@ -30,6 +32,7 @@ class Instalacion {
     this.imagen,
     this.activa = true,
     this.horarios = const [],
+    this.preciosPorHorarioCentimos = const {},
     this.duracionReservaMinutos = 60,
     this.maxReservasPorDia = 2,
     this.maxMinutosPorDia = 180,

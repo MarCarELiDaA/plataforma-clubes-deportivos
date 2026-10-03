@@ -8,6 +8,7 @@ import '../services/reserva_service.dart';
 import '../services/notification_service.dart';
 import '../utils/network_utils.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -224,6 +225,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
+        leading: AppDrawer.botonAtras(context, habilitado: !_isLoading),
         title: Text(AppConfig.club.nombre),
         backgroundColor: _surface,
         foregroundColor: _textPrimary,

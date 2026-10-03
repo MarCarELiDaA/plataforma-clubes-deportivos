@@ -1,50 +1,83 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+import '../config/app_config.dart';
 import '../models/club/instalacion.dart';
 
 class ReservaService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static bool _publicTimeZonesInitialized = false;
 
-  Future<List<String>> getHorariosReservados(
-    String instalacionId,
-    String fecha,
-  ) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('reservas')
-          .where('instalacionId', isEqualTo: instalacionId)
-          .where('fecha', isEqualTo: fecha)
-          .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-          .get()
-          .timeout(const Duration(seconds: 5));
-
-      return querySnapshot.docs
-          .map((doc) => doc.data()['horaInicio'] as String)
-          .toList();
-    } catch (e) {
-      return [];
+  DateTime getInicioHorarioPublico(DateTime date, String time) {
+    if (!_publicTimeZonesInitialized) {
+      if (!tz.timeZoneDatabase.isInitialized) {
+        tzdata.initializeTimeZones();
+      }
+      _publicTimeZonesInitialized = true;
     }
+    final parts = time.split(':');
+    return tz.TZDateTime(
+      tz.getLocation(AppConfig.club.zonaHoraria),
+      date.year, date.month, date.day,
+      int.parse(parts[0]), int.parse(parts[1]),
+    ).toUtc();
   }
 
-  Stream<List<String>> getHorariosReservadosStream(
-    String instalacionId,
-    String fecha,
-  ) {
-    return _firestore
-        .collection('reservas')
-        .where('instalacionId', isEqualTo: instalacionId)
-        .where('fecha', isEqualTo: fecha)
-        .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => doc.data()['horaInicio'] as String)
-              .toList(),
+  Stream<List<({DateTime inicio, DateTime fin})>>
+      getDisponibilidadPublicaStream(String instalacionId, String fecha) {
+      final day = DateTime.parse(fecha);
+      String formatDate(DateTime value) =>
+          '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+      return _firestore.collection('clubes').doc(AppConfig.club.clubId)
+          .collection('disponibilidadPublica')
+          .where('instalacionId', isEqualTo: instalacionId)
+          .where('fecha', whereIn: [
+            formatDate(DateTime(day.year, day.month, day.day - 1)),
+            fecha,
+            formatDate(DateTime(day.year, day.month, day.day + 1)),
+          ])
+          .snapshots(includeMetadataChanges: true)
+          .map((snapshot) {
+      if (snapshot.metadata.isFromCache) {
+        throw StateError('Disponibilidad pendiente de confirmar con el servidor');
+      }
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        if (data.length != 4 || data['instalacionId'] != instalacionId ||
+            data['fecha'] is! String || data['horaInicio'] is! String ||
+            data['duracionMinutos'] is! int) {
+          throw const FormatException('Intervalo inválido');
+        }
+        final duration = data['duracionMinutos'] as int;
+        final time = data['horaInicio'] as String;
+        if (duration <= 0 ||
+            !RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d$').hasMatch(time)) {
+          throw const FormatException('Intervalo inválido');
+        }
+        final inicio = getInicioHorarioPublico(
+          DateTime.parse(data['fecha'] as String), time,
         );
+        final fin = inicio.add(Duration(minutes: duration));
+        return (inicio: inicio, fin: fin);
+      }).toList();
+    });
   }
 
   Future<String> crearReserva(Map<String, dynamic> reservaData) async {
     try {
-      final docRef = await _firestore.collection('reservas').add(reservaData);
+      final docRef = _firestore.collection('reservas').doc();
+      final publicRef = _firestore.collection('clubes')
+          .doc(AppConfig.club.clubId)
+          .collection('disponibilidadPublica').doc(docRef.id);
+      final batch = _firestore.batch();
+      batch.set(docRef, reservaData);
+      batch.set(publicRef, {
+        'instalacionId': reservaData['instalacionId'],
+        'fecha': reservaData['fecha'],
+        'horaInicio': reservaData['horaInicio'],
+        'duracionMinutos': reservaData['duracionMinutos'],
+      });
+      await batch.commit();
 
       return docRef.id;
     } catch (e) {
@@ -60,7 +93,14 @@ class ReservaService {
       final instalacionId = reservaData['instalacionId'] as String;
       final fecha = reservaData['fecha'] as String;
       final horaInicio = reservaData['horaInicio'] as String;
-      final usuarioId = reservaData['usuarioId'] as String;
+      final duration = reservaData['duracionMinutos'] as int;
+      if (duration <= 0) throw Exception('Duración de reserva inválida');
+      final start = DateTime.parse('${fecha}T$horaInicio:00');
+      final end = start.add(Duration(minutes: duration));
+      String formatDate(DateTime value) =>
+          '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+      final previousDay = DateTime(start.year, start.month, start.day - 1);
+      final nextDay = DateTime(start.year, start.month, start.day + 1);
 
       return await _firestore.runTransaction((transaction) async {
         final fechaParts = fecha.split('-');
@@ -80,74 +120,42 @@ class ReservaService {
         final querySnapshot = await _firestore
             .collection('reservas')
             .where('instalacionId', isEqualTo: instalacionId)
-            .where('fecha', isEqualTo: fecha)
-            .where('horaInicio', isEqualTo: horaInicio)
+            .where('fecha', whereIn: [formatDate(previousDay), fecha, formatDate(nextDay)])
             .where('estadoReserva', isEqualTo: 'CONFIRMADA')
             .get();
 
-        if (querySnapshot.docs.isNotEmpty) {
-          throw Exception('Este horario ya está reservado');
-        }
-
-        final usuarioReservasSnapshot = await _firestore
-            .collection('reservas')
-            .where('usuarioId', isEqualTo: usuarioId)
-            .where('fecha', isEqualTo: fecha)
-            .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-            .get();
-
-        if (usuarioReservasSnapshot.docs.length >=
-            instalacion.maxReservasPorDia) {
-          throw Exception(
-            'Has alcanzado el máximo de ${instalacion.maxReservasPorDia} reservas permitidas para este día.',
+        for (final doc in querySnapshot.docs) {
+          final data = doc.data();
+          final existingStart = DateTime.parse(
+            '${data['fecha']}T${data['horaInicio']}:00',
           );
-        }
-
-        for (var doc in usuarioReservasSnapshot.docs) {
-          final horaInicioExistente = doc.data()['horaInicio'] as String;
-
-          if (sonReservasConsecutivas(
-            horaInicioExistente,
-            horaInicio,
-            instalacion.duracionReservaMinutos,
-          )) {
-            throw Exception(
-              'No puedes reservar horarios consecutivos. '
-              'Debe existir un intervalo de ${_formatearDuracion(instalacion.duracionReservaMinutos)} '
-              'entre tus reservas.',
-            );
+          final existingDuration = data['duracionMinutos'] as int;
+          if (existingDuration <= 0) {
+            throw Exception('No se pudo verificar la ocupación');
+          }
+          final existingEnd = existingStart.add(Duration(minutes: existingDuration));
+          if (start.isBefore(existingEnd) && end.isAfter(existingStart)) {
+            throw Exception('Este horario se solapa con una reserva existente');
           }
         }
 
         final docRef = _firestore.collection('reservas').doc();
 
         transaction.set(docRef, reservaData);
+        final publicRef = _firestore.collection('clubes')
+            .doc(AppConfig.club.clubId)
+            .collection('disponibilidadPublica').doc(docRef.id);
+        transaction.set(publicRef, {
+          'instalacionId': instalacionId,
+          'fecha': fecha,
+          'horaInicio': horaInicio,
+          'duracionMinutos': duration,
+        });
 
         return docRef.id;
       });
     } catch (e) {
       rethrow;
-    }
-  }
-
-  Future<bool> isHorarioDisponible(
-    String instalacionId,
-    String fecha,
-    String hora,
-  ) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('reservas')
-          .where('instalacionId', isEqualTo: instalacionId)
-          .where('fecha', isEqualTo: fecha)
-          .where('horaInicio', isEqualTo: hora)
-          .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-          .get()
-          .timeout(const Duration(seconds: 5));
-
-      return querySnapshot.docs.isEmpty;
-    } catch (e) {
-      return false;
     }
   }
 
@@ -173,9 +181,14 @@ class ReservaService {
 
   Future<void> cancelarReserva(String reservaId) async {
     try {
-      await _firestore.collection('reservas').doc(reservaId).update({
+      final batch = _firestore.batch();
+      batch.update(_firestore.collection('reservas').doc(reservaId), {
         'estadoReserva': 'CANCELADA_POR_USUARIO',
       });
+      batch.delete(_firestore.collection('clubes')
+          .doc(AppConfig.club.clubId)
+          .collection('disponibilidadPublica').doc(reservaId));
+      await batch.commit();
     } catch (e) {
       rethrow;
     }
@@ -207,69 +220,6 @@ class ReservaService {
     }
   }
 
-  Future<int> contarReservasEnDia(String usuarioId, String fecha) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('reservas')
-          .where('usuarioId', isEqualTo: usuarioId)
-          .where('fecha', isEqualTo: fecha)
-          .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-          .get();
-
-      return querySnapshot.docs.length;
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getReservasUsuarioEnDia(
-    String usuarioId,
-    String fecha,
-  ) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('reservas')
-          .where('usuarioId', isEqualTo: usuarioId)
-          .where('fecha', isEqualTo: fecha)
-          .where('estadoReserva', isEqualTo: 'CONFIRMADA')
-          .get();
-
-      return querySnapshot.docs.map((doc) => doc.data()).toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  bool sonReservasConsecutivas(
-    String horaInicio1,
-    String horaInicio2,
-    int duracionReservaMinutos,
-  ) {
-    try {
-      final time1 = horaInicio1.split(':');
-      final time2 = horaInicio2.split(':');
-
-      final hour1 = int.parse(time1[0]);
-      final minute1 = int.parse(time1[1]);
-
-      final hour2 = int.parse(time2[0]);
-      final minute2 = int.parse(time2[1]);
-
-      final inicio1 = DateTime(2024, 1, 1, hour1, minute1);
-
-      final fin1 = inicio1.add(Duration(minutes: duracionReservaMinutos));
-
-      final inicio2 = DateTime(2024, 1, 1, hour2, minute2);
-
-      return fin1.isAtSameMomentAs(inicio2) ||
-          inicio1.isAtSameMomentAs(
-            inicio2.add(Duration(minutes: duracionReservaMinutos)),
-          );
-    } catch (e) {
-      return false;
-    }
-  }
-
   Future<bool> puedeReservarEnDia(
     String usuarioId,
     String fecha,
@@ -284,43 +234,6 @@ class ReservaService {
     final horasTotales = horasReservadas + duracionNueva;
 
     return horasTotales <= instalacion.maxMinutosPorDia;
-  }
-
-  Future<bool> cumpleLimiteReservasPorDia(
-    String usuarioId,
-    String fecha,
-    Instalacion instalacion,
-  ) async {
-    final reservas = await contarReservasEnDia(usuarioId, fecha);
-
-    return reservas < instalacion.maxReservasPorDia;
-  }
-
-  Future<bool> noEsConsecutivaConReservasExistentes(
-    String usuarioId,
-    String fecha,
-    String nuevaHoraInicio,
-    Instalacion instalacion,
-  ) async {
-    try {
-      final reservas = await getReservasUsuarioEnDia(usuarioId, fecha);
-
-      for (var reserva in reservas) {
-        final horaInicioExistente = reserva['horaInicio'] as String;
-
-        if (sonReservasConsecutivas(
-          horaInicioExistente,
-          nuevaHoraInicio,
-          instalacion.duracionReservaMinutos,
-        )) {
-          return false;
-        }
-      }
-
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 
   bool validarAntelacion(DateTime fechaReserva, int maxDiasAntelacion) {
@@ -342,25 +255,6 @@ class ReservaService {
 
     return fechaReservaSinHora.isBefore(fechaLimiteSinHora) ||
         fechaReservaSinHora.isAtSameMomentAs(fechaLimiteSinHora);
-  }
-
-  String _formatearDuracion(int minutos) {
-    if (minutos < 60) {
-      return ' minutos';
-    }
-
-    final horas = minutos ~/ 60;
-    final minutosRestantes = minutos % 60;
-
-    if (minutosRestantes == 0) {
-      return horas == 1 ? '1 hora' : ' horas';
-    }
-
-    if (horas == 1) {
-      return '1 hora y  minutos';
-    }
-
-    return ' horas y  minutos';
   }
 
   bool puedeCancelarReserva(String fecha, String hora) {

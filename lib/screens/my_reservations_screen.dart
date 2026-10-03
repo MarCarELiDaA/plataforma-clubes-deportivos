@@ -7,7 +7,7 @@ import '../services/reserva_service.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
-import 'login_screen.dart';
+
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -261,56 +261,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _surface,
-        title: Text(
-          'Cerrar sesión',
-          style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          '¿Estás seguro de que quieres cerrar sesión?',
-          style: TextStyle(color: _textSecondary),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
-            child: const Text(
-              'Cerrar sesión',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        await _authService.signOut();
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => LoginScreen()),
-            (route) => false,
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al cerrar sesión: ${e.toString()}')),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -325,13 +275,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           drawer: const AppDrawer(),
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            leading: Builder(
-              builder: (context) => IconButton(
-                tooltip: 'Menú',
-                icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
-            ),
+            leadingWidth: 96,
+            leading: AppDrawer.menuConAtras(context),
             title: Text(
               AppConfig.club.nombre,
               style: TextStyle(
@@ -341,11 +286,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               ),
             ),
             actions: [
-              IconButton(
-                tooltip: 'Cerrar sesión',
-                icon: Icon(Icons.logout_outlined, color: _textSecondary),
-                onPressed: _logout,
-              ),
+              AppDrawer.botonCerrarSesion(context),
               SizedBox(width: isWeb ? 12 : 4),
             ],
           ),

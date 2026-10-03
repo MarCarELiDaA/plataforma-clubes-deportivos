@@ -402,16 +402,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         drawer: const AppDrawer(),
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          leading: Builder(
-            builder: (context) => IconButton(
-              tooltip: 'Menú',
-              icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
+          leadingWidth: 96,
+          leading: AppDrawer.menuConAtras(context),
           title: const Text('Mi perfil'),
           backgroundColor: _surface,
           foregroundColor: _textPrimary,
+          actions: [AppDrawer.botonCerrarSesion(context)],
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
@@ -424,16 +420,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       drawer: const AppDrawer(),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (context) => IconButton(
-            tooltip: 'Menú',
-            icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leadingWidth: 96,
+        leading: AppDrawer.menuConAtras(context),
         title: const Text('Mi perfil'),
         backgroundColor: _surface,
         foregroundColor: _textPrimary,
+        actions: [AppDrawer.botonCerrarSesion(context)],
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),

@@ -170,16 +170,12 @@ class _AdminScreenState extends State<AdminScreen> {
         centerTitle: true,
         backgroundColor: _surface,
         foregroundColor: _textPrimary,
+        actions: [AppDrawer.botonCerrarSesion(context)],
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (context) => IconButton(
-            tooltip: 'Menú',
-            icon: Icon(Icons.menu_rounded, color: _textPrimary, size: 27),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leadingWidth: 96,
+        leading: AppDrawer.menuConAtras(context),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

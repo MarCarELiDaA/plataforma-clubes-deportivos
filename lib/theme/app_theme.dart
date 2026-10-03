@@ -25,27 +25,41 @@ class AppTheme {
   // COLORES BASE CONFIGURABLES DEL CLUB
   // ============================================================
 
-  static Color get primary => _colorDesdeHex(AppConfig.club.colorPrimario);
+  static Color get primary => _colorDesdeHex(
+      AppConfig.club.paleta?.primario ?? AppConfig.club.colorPrimario);
 
-  static Color get secondary => _colorDesdeHex(AppConfig.club.colorSecundario);
+  static Color get secondary => _colorDesdeHex(
+      AppConfig.club.paleta?.accion ?? AppConfig.club.colorSecundario);
 
-  static Color get accent => _colorDesdeHex(AppConfig.club.colorAcento);
+  static Color get accent => _colorDesdeHex(
+      AppConfig.club.paleta?.acento ?? AppConfig.club.colorAcento);
 
-  static Color get clubBackground => _colorDesdeHex(AppConfig.club.colorFondo);
+  static Color get clubBackground => _colorDesdeHex(
+      AppConfig.club.paleta?.fondo ?? AppConfig.club.colorFondo);
 
   static Color get clubSurface =>
-      _colorDesdeHex(AppConfig.club.colorSuperficie);
+      AppConfig.club.paleta == null
+          ? _colorDesdeHex(AppConfig.club.colorSuperficie)
+          : Colors.white;
 
   static Color get clubSurfaceSoft =>
-      _colorDesdeHex(AppConfig.club.colorSuperficieAlternativa);
+      AppConfig.club.paleta == null
+          ? _colorDesdeHex(AppConfig.club.colorSuperficieAlternativa)
+          : clubBackground;
 
   static Color get clubTextPrimary =>
-      _colorDesdeHex(AppConfig.club.colorTextoPrincipal);
+      AppConfig.club.paleta == null
+          ? _colorDesdeHex(AppConfig.club.colorTextoPrincipal)
+          : Color.alphaBlend(Colors.black.withValues(alpha: 0.35), primary);
 
   static Color get clubTextSecondary =>
-      _colorDesdeHex(AppConfig.club.colorTextoSecundario);
+      AppConfig.club.paleta == null
+          ? _colorDesdeHex(AppConfig.club.colorTextoSecundario)
+          : Color.alphaBlend(clubTextPrimary.withValues(alpha: 0.80), clubSurface);
 
-  static Color get clubBorder => _colorDesdeHex(AppConfig.club.colorBorde);
+  static Color get clubBorder => AppConfig.club.paleta == null
+      ? _colorDesdeHex(AppConfig.club.colorBorde)
+      : Color.alphaBlend(primary.withValues(alpha: 0.22), clubSurface);
 
   // ============================================================
   // COLORES DERIVADOS DEL TEMA
@@ -55,7 +69,7 @@ class AppTheme {
       Color.alphaBlend(const Color(0x14000000), clubSurfaceSoft);
 
   static Color get clubTextTertiary =>
-      Color.alphaBlend(clubTextSecondary.withValues(alpha: 0.70), clubSurface);
+      Color.alphaBlend(clubTextSecondary.withValues(alpha: 0.90), clubSurface);
 
   static Color get clubBorderSoft =>
       Color.alphaBlend(clubBorder.withValues(alpha: 0.55), clubSurface);
@@ -130,17 +144,17 @@ class AppTheme {
   // COLORES FUNCIONALES
   // ============================================================
 
-  static Color get success => action;
+  static const Color success = Color(0xFF166534);
 
   static Color get successLight =>
-      Color.alphaBlend(action.withValues(alpha: 0.12), surfaceColor);
+      Color.alphaBlend(success.withValues(alpha: 0.12), surfaceColor);
 
-  static Color get warning => accentColor;
+  static const Color warning = Color(0xFF92400E);
 
   static Color get warningLight =>
-      Color.alphaBlend(accentColor.withValues(alpha: 0.12), surfaceColor);
+      Color.alphaBlend(warning.withValues(alpha: 0.12), surfaceColor);
 
-  static const Color error = Color(0xFFE53935);
+  static const Color error = Color(0xFFB91C1C);
 
   static Color get errorLight =>
       Color.alphaBlend(error.withValues(alpha: 0.12), surfaceColor);
@@ -150,7 +164,10 @@ class AppTheme {
   // ============================================================
 
   static Color textoSobreColor(Color fondo) {
-    return fondo.computeLuminance() > 0.45 ? Colors.black : Colors.white;
+    final luminance = fondo.computeLuminance();
+    final contrasteNegro = (luminance + 0.05) / 0.05;
+    final contrasteBlanco = 1.05 / (luminance + 0.05);
+    return contrasteNegro >= contrasteBlanco ? Colors.black : Colors.white;
   }
 
   static Color get textOnPrimary => textoSobreColor(primary);
@@ -180,34 +197,34 @@ class AppTheme {
   static Color get primaryBlue => primary;
 
   // ============================================================
-  // COLORES CONSTANTES DE COMPATIBILIDAD
+  // ALIASES DE COLORES QUE TAMBIÉN SIGUEN LA PALETA
   // ============================================================
 
-  static const Color background = Color(0xFFF7F9FC);
+  static Color get background => pageBackground;
 
-  static const Color surface = Color(0xFFFFFFFF);
+  static Color get surface => surfaceColor;
 
-  static const Color surfaceSoft = Color(0xFFF1F5F9);
+  static Color get surfaceSoft => surfaceSoftColor;
 
-  static const Color surfaceMutedCompatibility = Color(0xFFE8EDF3);
+  static Color get surfaceMutedCompatibility => surfaceMuted;
 
-  static const Color textPrimary = Color(0xFF102033);
+  static Color get textPrimary => textPrimaryColor;
 
-  static const Color textSecondary = Color(0xFF526274);
+  static Color get textSecondary => textSecondaryColor;
 
-  static const Color textTertiary = Color(0xFF7C8A99);
+  static Color get textTertiary => textTertiaryColor;
 
-  static const Color textOnColor = Color(0xFFFFFFFF);
+  static Color get textOnColor => textOnIdentity;
 
-  static const Color border = Color(0xFFD7DEE7);
+  static Color get border => borderColor;
 
-  static const Color borderSoft = Color(0xFFE8EDF3);
+  static Color get borderSoft => borderSoftColor;
 
-  static const Color backgroundDark = background;
+  static Color get backgroundDark => background;
 
   static const Color accentWhite = Colors.white;
 
-  static const Color cardBackground = surface;
+  static Color get cardBackground => surface;
 
   // ============================================================
   // SOMBRAS
@@ -239,6 +256,10 @@ class AppTheme {
       brightness: Brightness.light,
       primary: identity,
       secondary: action,
+      onPrimary: textOnIdentity,
+      onSecondary: textOnAction,
+      onSurface: textPrimaryColor,
+      onError: textoSobreColor(error),
       error: error,
       surface: surfaceColor,
     );

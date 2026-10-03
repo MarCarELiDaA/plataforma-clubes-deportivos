@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../models/club/actividad.dart';
@@ -22,6 +22,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
 
   String _userRole = 'user';
+
+  bool get _esVisitante => _authService.currentUser == null;
+
+  void _openLogin() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
+  bool _redirectVisitanteToLogin() {
+    if (!_esVisitante) return false;
+    _openLogin();
+    return true;
+  }
 
   Color get _accent => AppTheme.primary;
   Color get _background => AppTheme.clubBackground;
@@ -117,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openMisReservas() {
+    if (_redirectVisitanteToLogin()) return;
     if (!_reservasActivas) return;
 
     Navigator.of(context).push(
@@ -125,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openProfile() {
+    if (_redirectVisitanteToLogin()) return;
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
@@ -137,15 +153,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openAdmin() {
+    if (_redirectVisitanteToLogin()) return;
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const AdminScreen()));
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout({bool fromDrawer = false}) async {
+    if (_esVisitante) return;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
+    if (fromDrawer) Navigator.of(context).pop();
+
     final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
+      context: navigator.context,
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: _surface,
           surfaceTintColor: Colors.transparent,
@@ -163,13 +185,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
               child: Text('Cancelar', style: TextStyle(color: _textSecondary)),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.error,
@@ -182,14 +204,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       },
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !navigator.mounted) return;
 
-    await _authService.signOut();
+    try {
+      await _authService.signOut();
+    } catch (_) {
+      if (messenger.mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo cerrar sesión. Inténtalo de nuevo.'),
+          ),
+        );
+      }
+      return;
+    }
 
-    if (!mounted) return;
+    if (!navigator.mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
     );
   }
 
@@ -315,7 +349,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildDrawer(BuildContext context) {
     final user = _authService.currentUser;
 
-    final userName = user?.displayName?.trim().isNotEmpty == true
+    final userName = _esVisitante
+        ? 'Visitante'
+        : user?.displayName?.trim().isNotEmpty == true
         ? user!.displayName!
         : user?.email ?? 'Usuario';
 
@@ -378,57 +414,96 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 children: [
-                  _drawerSection('CUENTA'),
-                  _drawerItem(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Mi perfil',
-                    onTap: _openProfile,
-                  ),
-                  if (_reservasActivas) ...[
+                  if (AppConfig.club.actividades.any((actividad) => actividad.activa)) ...[
+                    _drawerSection('DEPORTES'),
+                    for (final actividad in AppConfig.club.actividades.where(
+                      (actividad) => actividad.activa,
+                    ))
+                      _drawerItem(
+                        icon: null,
+                        title: actividad.nombre,
+                        onTap: () => _openReserva(actividad),
+                      ),
                     const SizedBox(height: 14),
-                    _drawerSection('RESERVAS'),
+                  ],
+                  if (_esVisitante) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _openLogin();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _accent,
+                          foregroundColor: _textOnAccent,
+                        ),
+                        icon: const Icon(Icons.login_rounded),
+                        label: const Text('Iniciar sesión'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _drawerSection('CLUB'),
                     _drawerItem(
-                      icon: Icons.event_available_rounded,
-                      title: 'Mis reservas',
-                      onTap: _openMisReservas,
+                      icon: Icons.info_outline_rounded,
+                      title: 'Información del club',
+                      onTap: _openInfo,
                     ),
                   ],
-                  const SizedBox(height: 14),
-                  _drawerSection('CLUB'),
-                  _drawerItem(
-                    icon: Icons.info_outline_rounded,
-                    title: 'Información del club',
-                    onTap: _openInfo,
-                  ),
-                  if (_userRole == 'admin') ...[
-                    const SizedBox(height: 14),
-                    _drawerSection('ADMINISTRACIÓN'),
+                  if (!_esVisitante) ...[
+                    _drawerSection('CUENTA'),
                     _drawerItem(
-                      icon: Icons.admin_panel_settings_outlined,
-                      title: 'Panel de administración',
-                      onTap: _openAdmin,
+                      icon: Icons.person_outline_rounded,
+                      title: 'Mi perfil',
+                      onTap: _openProfile,
                     ),
+                    if (_reservasActivas) ...[
+                      const SizedBox(height: 14),
+                      _drawerSection('RESERVAS'),
+                      _drawerItem(
+                        icon: Icons.event_available_rounded,
+                        title: 'Mis reservas',
+                        onTap: _openMisReservas,
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    _drawerSection('CLUB'),
+                    _drawerItem(
+                      icon: Icons.info_outline_rounded,
+                      title: 'Información del club',
+                      onTap: _openInfo,
+                    ),
+                    if (_userRole == 'admin') ...[
+                      const SizedBox(height: 14),
+                      _drawerSection('ADMINISTRACIÓN'),
+                      _drawerItem(
+                        icon: Icons.admin_panel_settings_outlined,
+                        title: 'Panel de administración',
+                        onTap: _openAdmin,
+                      ),
+                    ],
                   ],
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                leading: Icon(Icons.logout_rounded, color: AppTheme.error),
-                title: Text(
-                  'Cerrar sesión',
-                  style: TextStyle(
-                    color: AppTheme.error,
-                    fontWeight: FontWeight.w600,
+            if (!_esVisitante)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  leading: Icon(Icons.logout_rounded, color: AppTheme.error),
+                  title: Text(
+                    'Cerrar sesión',
+                    style: TextStyle(
+                      color: AppTheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () => _logout(fromDrawer: true),
                 ),
-                onTap: _logout,
               ),
-            ),
           ],
         ),
       ),
@@ -451,14 +526,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _drawerItem({
-    required IconData icon,
+    required IconData? icon,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      leading: Icon(icon, color: _textSecondary),
+      leading: icon == null ? null : Icon(icon, color: _textSecondary),
       title: Text(
         title,
         style: TextStyle(
@@ -479,7 +554,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (hero.isEmpty) {
       return Container(
-        color: const Color(0xFF0C1B30),
+        color: AppTheme.primaryDark,
         alignment: Alignment.center,
         child: Icon(
           Icons.sports_rounded,
@@ -494,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          color: const Color(0xFF0C1B30),
+          color: AppTheme.primaryDark,
           alignment: Alignment.center,
           child: Icon(
             Icons.sports_rounded,
@@ -509,11 +584,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Color _activityColor(Actividad actividad) {
     switch (actividad.id.toLowerCase()) {
       case 'padel':
-        return const Color(0xFF19B8C8);
+        return AppTheme.action;
       case 'tenis':
-        return const Color(0xFF65B741);
+        return AppTheme.accentColor;
       case 'gimnasio':
-        return const Color(0xFFFFA726);
+        return AppTheme.identity;
       default:
         return _accent;
     }
@@ -562,7 +637,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 child: Icon(
                   _activityIcon(actividad.icono),
-                  color: _textOnAccent,
+                  color: AppTheme.textoSobreColor(activityColor),
                   size: iconSize * 0.50,
                 ),
               ),
@@ -665,9 +740,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  const Color(0xFF07182B).withValues(alpha: 0.98),
-                  const Color(0xFF07182B).withValues(alpha: 0.86),
-                  const Color(0xFF07182B).withValues(alpha: 0.32),
+                  AppTheme.primaryDark.withValues(alpha: 0.98),
+                  AppTheme.primaryDark.withValues(alpha: 0.86),
+                  AppTheme.primaryDark.withValues(alpha: 0.32),
                   Colors.black.withValues(alpha: 0.08),
                 ],
                 stops: const [0.0, 0.30, 0.60, 1.0],
@@ -801,9 +876,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFF07182B).withValues(alpha: 0.18),
-                  const Color(0xFF07182B).withValues(alpha: 0.48),
-                  const Color(0xFF07182B).withValues(alpha: 0.97),
+                  AppTheme.primaryDark.withValues(alpha: 0.18),
+                  AppTheme.primaryDark.withValues(alpha: 0.48),
+                  AppTheme.primaryDark.withValues(alpha: 0.97),
                 ],
               ),
             ),
@@ -991,36 +1066,65 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildQuickAccess({required bool desktop}) {
     final cards = <Widget>[
-      if (_reservasActivas)
-        _buildQuickCard(
-          icon: Icons.calendar_month_rounded,
-          title: 'Mis reservas',
-          subtitle: 'Consulta y gestiona tus reservas.',
-          color: const Color(0xFF2F80ED),
-          onTap: _openMisReservas,
+      if (_esVisitante)
+        OutlinedButton.icon(
+          onPressed: _openLogin,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.action,
+            backgroundColor: _surface,
+            padding: const EdgeInsets.all(15),
+            side: BorderSide(
+              color: AppTheme.action.withValues(alpha: 0.22),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          icon: const Icon(Icons.login_rounded),
+          label: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Iniciar sesión'),
+              Text(
+                'Accede a tu cuenta para reservar.',
+                style: TextStyle(color: _textSecondary, fontSize: 11),
+              ),
+            ],
+          ),
         ),
-      _buildQuickCard(
-        icon: Icons.info_outline_rounded,
-        title: 'Información del club',
-        subtitle: 'Horarios, normas y contacto.',
-        color: const Color(0xFF27AE60),
-        onTap: _openInfo,
-      ),
-      _buildQuickCard(
-        icon: Icons.person_outline_rounded,
-        title: 'Mi perfil',
-        subtitle: 'Consulta y actualiza tus datos.',
-        color: const Color(0xFF8E5BD9),
-        onTap: _openProfile,
-      ),
-      if (_userRole == 'admin')
+      if (!_esVisitante) ...[
+        if (_reservasActivas)
+          _buildQuickCard(
+            icon: Icons.calendar_month_rounded,
+            title: 'Mis reservas',
+            subtitle: 'Consulta y gestiona tus reservas.',
+            color: AppTheme.action,
+            onTap: _openMisReservas,
+          ),
         _buildQuickCard(
-          icon: Icons.settings_outlined,
-          title: 'Administración',
-          subtitle: 'Gestiona usuarios, reservas y club.',
-          color: const Color(0xFFF2994A),
-          onTap: _openAdmin,
+          icon: Icons.info_outline_rounded,
+          title: 'Información del club',
+          subtitle: 'Horarios, normas y contacto.',
+          color: AppTheme.accentColor,
+          onTap: _openInfo,
         ),
+        _buildQuickCard(
+          icon: Icons.person_outline_rounded,
+          title: 'Mi perfil',
+          subtitle: 'Consulta y actualiza tus datos.',
+          color: AppTheme.identity,
+          onTap: _openProfile,
+        ),
+        if (_userRole == 'admin')
+          _buildQuickCard(
+            icon: Icons.settings_outlined,
+            title: 'Administración',
+            subtitle: 'Gestiona usuarios, reservas y club.',
+            color: AppTheme.action,
+            onTap: _openAdmin,
+          ),
+      ],
     ];
 
     return LayoutBuilder(
@@ -1045,11 +1149,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           spacing: spacing,
           runSpacing: spacing,
           children: [
-            for (final card in cards)
-              SizedBox(
-                width: cardWidth,
-                child: card,
-              ),
+            for (final card in cards) SizedBox(width: cardWidth, child: card),
           ],
         );
       },
@@ -1126,16 +1226,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           },
         ),
         actions: [
-          IconButton(
-            tooltip: 'Mi perfil',
-            icon: Icon(Icons.person_outline_rounded, color: _textPrimary),
-            onPressed: _openProfile,
-          ),
-          IconButton(
-            tooltip: 'Cerrar sesión',
-            icon: Icon(Icons.logout_rounded, color: _textPrimary),
-            onPressed: _logout,
-          ),
+          if (_esVisitante)
+            TextButton(
+              onPressed: _openLogin,
+              child: Text(
+                'Iniciar sesión',
+                style: TextStyle(color: _textPrimary),
+              ),
+            ),
+          if (!_esVisitante) ...[
+            IconButton(
+              tooltip: 'Mi perfil',
+              icon: Icon(Icons.person_outline_rounded, color: _textPrimary),
+              onPressed: _openProfile,
+            ),
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              icon: Icon(Icons.logout_rounded, color: _textPrimary),
+              onPressed: _logout,
+            ),
+          ],
           const SizedBox(width: 4),
         ],
       ),

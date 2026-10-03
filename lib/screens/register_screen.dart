@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/app_drawer.dart';
 import '../config/app_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,7 +12,9 @@ import 'privacy_screen.dart';
 import 'terms_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final VoidCallback? onLoginSuccess;
+
+  const RegisterScreen({super.key, this.onLoginSuccess});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -181,7 +184,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(
+            onLoginSuccess: widget.onLoginSuccess,
+          ),
+        ),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -347,6 +354,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
+        leading: AppDrawer.botonAtras(context, habilitado: !_isLoading),
         backgroundColor: _surface,
         elevation: 0,
         centerTitle: true,
@@ -726,12 +734,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       Navigator.of(context).pushReplacement(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const LoginScreen(),
+                                              LoginScreen(
+                                                onLoginSuccess: widget.onLoginSuccess,
+                                              ),
                                         ),
                                       );
                                     },
                               child: Text(
-                                'Inicia sesión',
+                                'Iniciar sesión',
                                 style: TextStyle(
                                   color: _primary,
                                   fontWeight: FontWeight.w600,

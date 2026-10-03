@@ -31,17 +31,13 @@ class InfoScreen extends StatelessWidget {
         ),
         backgroundColor: surface,
         foregroundColor: textPrimary,
+        actions: [AppDrawer.botonCerrarSesion(context)],
         centerTitle: true,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (context) => IconButton(
-            tooltip: 'Menú',
-            icon: Icon(Icons.menu_rounded, color: textPrimary, size: 27),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leadingWidth: 96,
+        leading: AppDrawer.menuConAtras(context),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
