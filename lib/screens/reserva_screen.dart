@@ -817,6 +817,9 @@ class _ReservaScreenState extends State<ReservaScreen> {
     required double width,
     required bool isWide,
   }) {
+    final imagenHorario = AppConfig.club.imagen(
+      'horarios_${widget.actividad?.id ?? ''}',
+    );
     final precioCentimos =
         _instalacionActual?.preciosPorHorarioCentimos[time];
     final availabilityKnown = _availabilityReady;
@@ -876,12 +879,14 @@ class _ReservaScreenState extends State<ReservaScreen> {
               fit: StackFit.expand,
               children: [
                 Image.asset(
-                  _selectedImage,
+                  imagenHorario.isNotEmpty ? imagenHorario : _selectedImage,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(color: _surfaceSoft);
                   },
                 ),
+                if (imagenHorario.isNotEmpty)
+                  ColoredBox(color: Colors.black.withValues(alpha: 0.55)),
                 Positioned(
                   top: 10,
                   left: 10,

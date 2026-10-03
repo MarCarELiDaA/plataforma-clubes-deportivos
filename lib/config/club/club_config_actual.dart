@@ -39,7 +39,7 @@ class ClubConfigActual {
     nombre: 'Club Deportivo Ejemplo',
     deporte: 'Deporte y bienestar',
 
-    logo: 'assets/images/yo_reservo_logo.png',
+    logo: 'assets/images/furtivos_logo.png',
 
     telefono: '900 000 000',
     email: 'info@clubdeportivoejemplo.es',
@@ -51,12 +51,12 @@ class ClubConfigActual {
     fondo: 'assets/images/gimnasio_ia.png',
 
     // Cambiar solo esta selección aplica la paleta completa al club.
-    paleta: PaletasClub.verde,
+    paleta: PaletasClub.naranja,
 
     estilo: 'claro',
 
     hero: 'assets/images/gimnasio_real.jpg',
-    imagenLogin: 'assets/images/padel_ia.png',
+    imagenLogin: 'assets/images/furtivos_logo.png',
     menuIcon: 'menuRounded',
 
     imagenInstalaciones: 'assets/images/gimnasio_real_2.jpg',
@@ -64,7 +64,7 @@ class ClubConfigActual {
     imagenInformacion: 'assets/images/gimnasio_real.jpg',
     imagenBienvenida: 'assets/images/gimnasio_real.jpg',
 
-    imagenes: {},
+    imagenes: {'horarios_padel': 'assets/images/furtivos_horarios.jpg'},
 
     administradores: ['martin.bautista.sanchez@gmail.com'],
 

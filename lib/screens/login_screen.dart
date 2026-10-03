@@ -707,7 +707,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     club.imagenLogin,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    fit: BoxFit.cover,
+                                    fit: club.imagenLogin == club.logo
+                                        ? BoxFit.contain : BoxFit.cover,
                                     errorBuilder:
                                         (context, error, stackTrace) {
                                       return _loginLogoFallback(

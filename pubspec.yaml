@@ -45,6 +45,8 @@ flutter:
     - assets/images/banner_gym.jpeg
     - assets/images/yo_reservo_alternativo.png
     - assets/images/yo_reservo_logo.png
+    - assets/images/furtivos_logo.png
+    - assets/images/furtivos_horarios.jpg
     - assets/images/gimnasio_ia.png
     - assets/images/padel_ia.png
     - assets/images/tenis_ia.png
